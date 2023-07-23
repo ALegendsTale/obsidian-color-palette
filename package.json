@@ -10,7 +10,7 @@
 	},
 	"keywords": [],
 	"author": "JollyBandit",
-	"license": "MIT",
+	"license": "GNU GPLv3",
 	"dependencies": {
 		"colorsea": "1.2.1"
 	},
