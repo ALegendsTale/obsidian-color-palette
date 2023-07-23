@@ -9,7 +9,7 @@
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
 	"keywords": [],
-	"author": "JollyBandit",
+	"author": "ALegendsTale",
 	"license": "GNU GPLv3",
 	"dependencies": {
 		"colorsea": "1.2.1"
