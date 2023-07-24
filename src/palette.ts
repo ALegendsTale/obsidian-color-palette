@@ -8,6 +8,8 @@ export class Palette extends MarkdownRenderChild {
 	input: string;
 	colors: string[];
     invalidPalette: boolean;
+    handleMouseOver: () => void;
+    handleMouseOut: () => void;
 
 	constructor(settings: ColorPaletteSettings, containerEl: HTMLElement, input: string) {
 	  super(containerEl);
@@ -49,7 +51,20 @@ export class Palette extends MarkdownRenderChild {
         this.createPalette();
 	}
 
+    onunload() {
+        this.removePaletteListeners();
+    }
+
+    public removePaletteListeners(){
+        this.containerEl.childNodes.forEach((child) => {
+            if(this.handleMouseOver == null || this.handleMouseOut == null) return;
+            child.removeEventListener('mouseover', this.handleMouseOver);
+            child.removeEventListener('mouseout', this.handleMouseOut);
+        })
+    }
+
     public refresh(){
+        this.removePaletteListeners();
         this.containerEl.empty();
         this.createPalette()
     }
@@ -91,7 +106,7 @@ export class Palette extends MarkdownRenderChild {
                 new Notice(`Copied ${color}`);
                 navigator.clipboard.writeText(color)
             })
-            child.addEventListener('mouseover', (e) => {
+            this.handleMouseOver = () => {
                 if(this.invalidPalette) return;
                 child.setCssStyles({
                     flexBasis: this.settings.paletteDirection === 'row' ? 
@@ -100,12 +115,14 @@ export class Palette extends MarkdownRenderChild {
                     (child.innerHeight / 2).toString() + 'px'
                 });
                 childText.setCssStyles({ display: 'block' });
-            })
-            child.addEventListener('mouseout', (e) => {
+            }
+            this.handleMouseOut = () => {
                 if(this.invalidPalette) return;
                 child.setCssStyles({ flex: '1' });
                 childText.setCssStyles({ display: 'none' });
-            })
+            }
+            child.addEventListener('mouseover', this.handleMouseOver);
+            child.addEventListener('mouseout', this.handleMouseOut);
 		}
     }
 }
