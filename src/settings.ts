@@ -12,7 +12,7 @@ export interface ColorPaletteSettings {
 
 export const DefaultSettings: ColorPaletteSettings = {
     paletteHeight: 150,
-    paletteDirection: 'column',
+    paletteDirection: 'row',
 }
 
 export class SettingsTab extends PluginSettingTab {
