@@ -35,3 +35,4 @@ Commands can be bound to a hotkey in settings.
 
 - Insert Link - Creates a new palette from a URL
 - Convert Link - Converts a selected URL to a palette
+- Convert codeblock link to hex
