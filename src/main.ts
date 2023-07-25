@@ -10,15 +10,13 @@ export default class ColorPalette extends Plugin {
 	palettes?: Palette[];
 
 	async onload() {
+		this.palettes = [];
 		await this.loadSettings();
 
 		this.registerMarkdownCodeBlockProcessor(
 			'palette',
 			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
-				if(!this?.palettes) this.palettes = [];
-				const palette = new Palette(this.settings, el, source.trim());
-				this.palettes.push(palette);
-				ctx.addChild(palette);
+				ctx.addChild(new Palette(this, this.settings, el, source.trim()));
 			}
 		)
 

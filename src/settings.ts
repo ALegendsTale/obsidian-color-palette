@@ -28,9 +28,6 @@ export class SettingsTab extends PluginSettingTab {
         let { settings } = this.plugin;
         
         containerEl.empty();
-
-        containerEl.createEl('h1', {text: 'Color Palette'});
-        containerEl.createEl('h2', {text: 'General'});
         
         new Setting(containerEl)
             .setName('Palette Height')

@@ -1,18 +1,17 @@
 import { MarkdownRenderChild, Notice } from "obsidian";
 import colorsea from 'colorsea';
-import { urlRegex } from "./main";
+import ColorPalette, { urlRegex } from "./main";
 import { ColorPaletteSettings } from "./settings";
 
 export class Palette extends MarkdownRenderChild {
+    plugin: ColorPalette;
     settings: ColorPaletteSettings;
 	input: string;
 	colors: string[];
-    invalidPalette: boolean;
-    handleMouseOver: () => void;
-    handleMouseOut: () => void;
 
-	constructor(settings: ColorPaletteSettings, containerEl: HTMLElement, input: string) {
+	constructor(plugin: ColorPalette, settings: ColorPaletteSettings, containerEl: HTMLElement, input: string) {
 	  super(containerEl);
+      this.plugin = plugin;
       this.settings = settings;
 	  this.input = input;
 	  this.colors = [];
@@ -46,83 +45,55 @@ export class Palette extends MarkdownRenderChild {
         // Not matching
         this.colors[0] = 'Invalid Palette'
 
-        this.invalidPalette = this.colors[0] === "Invalid Palette";
+        // Add new palette to state
+        if(this.colors[0] !== 'Invalid Palette'){
+            this.plugin.palettes?.push(this);
+        }
 
         this.createPalette();
 	}
 
-    onunload() {
-        this.removePaletteListeners();
-    }
-
-    public removePaletteListeners(){
-        this.containerEl.childNodes.forEach((child) => {
-            if(this.handleMouseOver == null || this.handleMouseOut == null) return;
-            child.removeEventListener('mouseover', this.handleMouseOver);
-            child.removeEventListener('mouseout', this.handleMouseOut);
-        })
+    unload() {
+        // Remove palette from state
+        if(this.colors[0] !== 'Invalid Palette'){
+            this.plugin.palettes?.remove(this);
+        }
     }
 
     public refresh(){
-        this.removePaletteListeners();
         this.containerEl.empty();
         this.createPalette()
     }
     
     public createPalette(){
-        this.containerEl.setCssStyles({
-            width: '100%', 
-            height: this.settings.paletteHeight.toString() + 'px', 
-            display: 'flex', 
-            flexDirection: this.settings.paletteDirection, 
-            borderRadius: '5px', 
-            overflow: 'hidden',
-            cursor: 'pointer'
-        })
+        this.containerEl.addClass('palette')
+        this.containerEl.toggleClass('paletteColumn', this.settings.paletteDirection === 'column');
+        // set --palette-height css variable
+        this.containerEl.style.setProperty('--palette-height', this.settings.paletteHeight.toString() + 'px')
 		for(const color of this.colors){
             const csColor = colorsea(color);
 
 			let child = this.containerEl.createEl('div');
-            child.setCssStyles({
-                backgroundColor: color, 
-                flex: '1', 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                transition: 'all 0.1s ease-in-out'
-            });
+            // set --palette-background-color css variable
+            child.style.setProperty('--palette-background-color', color);
+            // set --palette-column-flex-basis css variable
+            child.style.setProperty('--palette-column-flex-basis', (this.settings.paletteHeight / this.colors.length / 2).toString() + 'px');
+
+            const invalidPalette =  this.colors[0] === "Invalid Palette"
             
             let childText = child.createEl('span', { text: color.toUpperCase() });
-            childText.setCssStyles({
-                textAlign: 'center', 
-                display: this.invalidPalette ? 'block' : 'none', 
-                color: (csColor.rgb()[0]*0.299 + csColor.rgb()[1]*0.587 + csColor.rgb()[2]*0.114) > 186 ? '#000000' : '#ffffff', 
-                fontSize: '100%',
-                fontWeight: 'bold'
-            });
+            childText.toggleClass('invalid', invalidPalette);
+            // set --palette-color css variable
+            childText.style.setProperty(
+                '--palette-color', 
+                (csColor.rgb()[0]*0.299 + csColor.rgb()[1]*0.587 + csColor.rgb()[2]*0.114) > 186 ? '#000000' : '#ffffff'
+            )
 
             child.onClickEvent((e) => {
-                if(this.invalidPalette) return;
+                if(invalidPalette) return;
                 new Notice(`Copied ${color}`);
                 navigator.clipboard.writeText(color)
-            })
-            this.handleMouseOver = () => {
-                if(this.invalidPalette) return;
-                child.setCssStyles({
-                    flexBasis: this.settings.paletteDirection === 'row' ? 
-                    (this.settings.paletteHeight / 2).toString() + 'px'
-                    :
-                    (child.innerHeight / 2).toString() + 'px'
-                });
-                childText.setCssStyles({ display: 'block' });
-            }
-            this.handleMouseOut = () => {
-                if(this.invalidPalette) return;
-                child.setCssStyles({ flex: '1' });
-                childText.setCssStyles({ display: 'none' });
-            }
-            child.addEventListener('mouseover', this.handleMouseOver);
-            child.addEventListener('mouseout', this.handleMouseOut);
+            });
 		}
     }
 }

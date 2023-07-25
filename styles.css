@@ -1,0 +1,58 @@
+/* Container */
+.palette {
+    /* fallback vars */
+    --palette-height: 150px;
+    --palette-background-color: transparent;
+    --palette-color: #000;
+    --palette-column-flex-basis: 20px;
+    
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    border-radius: 5px;
+    overflow: hidden;
+    cursor: pointer;
+    height: var(--palette-height);
+}
+
+.palette.paletteColumn {
+    flex-direction: column;
+}
+
+/* Child */
+.palette > div {
+    display: flex;
+    flex: 1;
+    flex-basis: 0px;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.1s ease-in-out;
+    background-color: var(--palette-background-color);
+}
+
+.palette.paletteColumn > div:hover {
+    flex-basis: var(--palette-column-flex-basis);
+}
+
+.palette:not(.paletteColumn) > div:hover {
+    flex-basis: 80px;
+}
+
+.palette > div:hover > span {
+    display: block;
+}
+
+/* Child Text */
+.palette > div > span {
+    display: none;
+    text-align: center;
+    font-size: 100%;
+    font-weight: bold;
+    color: var(--palette-color);
+}
+
+/* Display invalid text */
+.palette > div > span.invalid {
+    display: block;
+}
