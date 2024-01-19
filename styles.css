@@ -31,6 +31,16 @@
     background-color: var(--palette-background-color);
 }
 
+.palette > canvas {
+    position: relative;
+    transition: all 0.1s ease-in-out;
+    object-fit: contain;
+}
+
+.palette > canvas.gradient {
+    background: linear-gradient(to right, var(--palette-background-color));
+}
+
 .palette.paletteColumn > div:hover {
     flex-basis: var(--palette-column-flex-basis);
 }
@@ -52,7 +62,71 @@
     color: var(--palette-color);
 }
 
-/* Display invalid text */
-.palette > div > span.invalid {
-    display: block;
+.tooltip {
+    position: absolute;
+    display: none;
+    background: #000000C0;
+    width: max-content;
+    min-width: 100px;
+    height: 40px;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 100%;
+}
+
+.palette > canvas:hover ~ .tooltip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.palette > .invalid {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: var(--palette-height);
+    width: 100%;
+    background-color: #000000C0;
+}
+
+.palette > .invalid > span {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    background-color: #000;
+    width: 100%;
+    height: 30%;
+    text-align: center;
+}
+
+.create-color-picker {
+    display: flex;
+    flex-direction: row-reverse;
+    flex: 1;
+    justify-content: center;
+    gap: 20%;
+}
+
+.create-url {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.create-colors {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.create-colors > div {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 20%;
+    margin: 5% 0;
 }

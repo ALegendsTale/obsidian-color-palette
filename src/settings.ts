@@ -1,66 +1,46 @@
 import ColorPalette from "./main";
 import { App, PluginSettingTab, Setting } from "obsidian";
 
-type direction = 
-    | 'row' 
-    | 'column'
-
 export interface ColorPaletteSettings {
-    paletteHeight: number;
-    paletteDirection: direction
+	noticeDuration: number;
 }
 
 export const DefaultSettings: ColorPaletteSettings = {
-    paletteHeight: 150,
-    paletteDirection: 'row',
-}
+	noticeDuration: 10000,
+};
 
 export class SettingsTab extends PluginSettingTab {
-    plugin: ColorPalette;
+	plugin: ColorPalette;
 
-    constructor(app: App, plugin: ColorPalette){
-        super(app, plugin);
-        this.plugin = plugin;
-    }
+	constructor(app: App, plugin: ColorPalette) {
+		super(app, plugin);
+		this.plugin = plugin;
+	}
 
-    display() {
-        const { containerEl } = this;
-        let { settings } = this.plugin;
-        
-        containerEl.empty();
-        
-        new Setting(containerEl)
-            .setName('Palette Height')
-            .setDesc('How tall the palette should be')
-            .addText((text) => {
-                text
-                    .setValue(settings.paletteHeight.toString())
-                    .onChange(async (value) => {
-                        settings.paletteHeight = Number(value);
-                        await this.plugin.saveSettings();
-                    })
-                })
+	display() {
+		const { containerEl } = this;
+		let { settings } = this.plugin;
 
-        new Setting(containerEl)
-            .setName('Palette Direction')
-            .setDesc('Which direction the colors should face')
-            .addDropdown((dropdown) => {
-                dropdown
-                    // Inverted to match user expectations
-                    .addOptions({'row': 'column', 'column': 'row'})
-                    .setValue(settings.paletteDirection)
-                    .onChange(async (value) => {
-                        settings.paletteDirection = value as direction;
-                        await this.plugin.saveSettings();
-                    })
-            })
-    }
+		containerEl.empty();
 
-    hide() {
-        if(this.plugin?.palettes){
-            for(let palette of this.plugin.palettes){
-                palette.refresh();
-            }
-        }
-    }
+		new Setting(containerEl)
+			.setName("Notice Duration")
+			.setDesc("How long error messages are show in seconds (Set 0 for indefinite)")
+			.addText((text) => {
+				text
+					.setValue((settings.noticeDuration / 1000).toString())
+					.onChange(async (value) => {
+						settings.noticeDuration = Number(value) * 1000;
+						await this.plugin.saveSettings();
+					});
+			});
+	}
+
+	hide() {
+		if (this.plugin?.palettes) {
+			for (let palette of this.plugin.palettes) {
+				palette.refresh();
+			}
+		}
+	}
 }

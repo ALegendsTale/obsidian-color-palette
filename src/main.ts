@@ -3,7 +3,7 @@ import { CommandInput } from 'src/commandInput';
 import { Palette } from 'src/palette';
 import { ColorPaletteSettings, DefaultSettings, SettingsTab } from 'src/settings';
 
-export const urlRegex = /\/([^\/]+)\/?$/
+export const urlRegex = /(?:https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(?:\.[a-zA-Z0-9]{2,})(?:\.[a-zA-Z0-9]{2,})?\/palette\/([a-zA-Z0-9-]{2,})/
 
 export default class ColorPalette extends Plugin {
 	settings: ColorPaletteSettings;
@@ -21,12 +21,11 @@ export default class ColorPalette extends Plugin {
 		)
 
 		this.addCommand({
-			id: 'insert-link',
-			name: 'Insert Link',
+			id: 'create',
+			name: 'Create',
 			editorCallback: (editor: Editor) => {
 				new CommandInput(this.app, (result) => {
 					try {
-						if(!result?.match(urlRegex)) throw new Error('Entered text is not a link.');
 						const codeBlock = `\`\`\`palette\n${result}\n\`\`\`\n`;
 						const cursor = editor.getCursor();
 						editor.transaction({
@@ -48,7 +47,7 @@ export default class ColorPalette extends Plugin {
 
 		this.addCommand({
 			id: 'convert-link',
-			name: 'Convert Link',
+			name: 'Convert link',
 			editorCallback: (editor: Editor) => {
 				try {
 					const link = editor.getSelection();

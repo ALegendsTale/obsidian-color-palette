@@ -6,6 +6,7 @@ Create beautiful & functional color palettes that enhance the appearance of your
 
 ## Key Features
 - Create color palettes from popular palette websites like coolors & colorhunt.
+- Style like a pro with gorgeous gradients.
 - Convert links already present within your notes into palettes.
 - Easily copy the hex code of a color by selecting it.
 
@@ -16,8 +17,7 @@ Palettes can be created manually by adding a codeblock with the hex codes desire
 
 <pre>
 ```palette
-#ffffff
-#000
+#ffffff, #000
 ```
 </pre>
 
@@ -30,9 +30,22 @@ https://colorhunt.co/ffffff
 ```
 </pre>
 
+Optional settings can be applied to each palette within the codeblock.
+<pre>
+```palette
+#fff, #000fff00
+{"gradient": true}
+```
+</pre>
+
+### Optional Settings
+- gradient (true/false)
+- direction (row/column)
+- height (number)
+
 ### Commands
 Commands can be bound to a hotkey in settings.
 
-- Insert Link - Creates a new palette from a URL
+- Create - Creates a new palette using the colors or URL provided
 - Convert Link - Converts a selected URL to a palette
 - Convert codeblock link to hex
