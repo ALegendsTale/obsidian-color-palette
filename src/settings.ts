@@ -25,7 +25,7 @@ export class SettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Notice Duration")
-			.setDesc("How long error messages are show in seconds (Set 0 for indefinite)")
+			.setDesc("How long error messages are show for in seconds (0 for indefinite)")
 			.addText((text) => {
 				text
 					.setValue((settings.noticeDuration / 1000).toString())

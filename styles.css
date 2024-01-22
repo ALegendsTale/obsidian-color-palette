@@ -101,32 +101,54 @@
     text-align: center;
 }
 
-.create-color-picker {
+/* Container */
+.create-palette {
+    --selected-colors-display: none;
+    --trash-background-color: #000000;
+    --trash-color: #ffffff;
+}
+
+.create-palette > .or-container {
     display: flex;
-    flex-direction: row-reverse;
+    justify-content: center;
+    align-items: center;
+}
+
+.create-palette > .or-container > span {
+    font-weight: bold;
+}
+
+.color-picker-container {
+    border-top: none;
+}
+
+.color-picker {
+    display: flex;
     flex: 1;
-    justify-content: center;
-    gap: 20%;
-}
-
-.create-url {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.create-colors {
-    display: flex;
     flex-direction: column;
-    align-items: center;
     justify-content: center;
+    align-items: flex-end;
 }
 
-.create-colors > div {
+/* Selected Colors Container */
+.color-picker > div {
+    display: var(--selected-colors-display);
+    flex-direction: column;
+    width: 100%;
+    margin-top: 5%;
+}
+
+/* Colors Container */
+.color-picker > div > div {
     display: flex;
-    flex-direction: row;
+    justify-content: flex-end;
     align-items: center;
-    justify-content: center;
-    gap: 20%;
-    margin: 5% 0;
+    margin: 8px 0;
+    gap: 8px;
+}
+
+/* Colors Button */
+.color-picker > div > div > button {
+    background-color: var(--trash-background-color);
+    color: var(--trash-color);
 }

@@ -1,6 +1,7 @@
 import { App, Modal, Notice, Setting, setIcon } from "obsidian";
 import { PaletteSettings, direction } from "./palette";
 import { urlRegex } from "./main";
+import colorsea from "colorsea";
 
 export class CommandInput extends Modal {
     result: string;
@@ -23,6 +24,7 @@ export class CommandInput extends Modal {
         const { contentEl } = this;
         
         contentEl.createEl('h1', { text: 'Create Palette' })
+        contentEl.addClass('create-palette');
 
         new Setting(contentEl)
         .setName("URL")
@@ -33,40 +35,41 @@ export class CommandInput extends Modal {
             })
         })
 
-        let urlOrPickerContainer = contentEl.createEl('div')
-        urlOrPickerContainer.addClass('create-url');
-        let uopSpan = urlOrPickerContainer.createEl('span');
-        uopSpan.setText('OR');
-        uopSpan.style.setProperty('font-weight', 'bold');
+        let orContainer = contentEl.createEl('div')
+        orContainer.addClass('or-container');
+        let orSpan = orContainer.createEl('span');
+        orSpan.setText('OR');
 
         let colorPicker = new Setting(contentEl)
         .setName("Color Picker")
         .addColorPicker((color) => {
             color.onChange((value) => {
                 this.colors.push(value);
+                colorsContainer.style.setProperty('--selected-colors-display', this.colors.length === 0 ? 'none' : 'flex');
                 let colorContainer = colorsContainer.createEl('div');
                 let colorSpan = colorContainer.createEl('span');
                 colorSpan.setText(value);
                 let trash = colorContainer.createEl('button');
                 setIcon(trash, 'trash-2');
-                trash.style.setProperty('background-color', value);
+                trash.style.setProperty('--trash-background-color', value);
+                const csColor = colorsea(value);
+                trash.style.setProperty('--trash-color', (csColor.rgb()[0]*0.299 + csColor.rgb()[1]*0.587 + csColor.rgb()[2]*0.114) > 186 ? '#000000' : '#ffffff');
                 trash.addEventListener('click', (e) => {
                     const iContainers = this.colorContainers.indexOf(colorContainer);
                     this.colorContainers.splice(iContainers, 1);
                     const iColors = this.colors.indexOf(value);
                     this.colors.splice(iColors, 1);
                     colorsContainer.removeChild(colorContainer);
+                    colorsContainer.style.setProperty('--selected-colors-display', this.colors.length === 0 ? 'none' : 'flex');
                 })
                 this.colorContainers.push(colorContainer);
             })
         })
-        colorPicker.controlEl.addClass('create-color-picker');
-        colorPicker.settingEl.style.setProperty('border-top', 'none');
+        colorPicker.settingEl.addClass('color-picker-container');
+        colorPicker.controlEl.addClass('color-picker');
 
+        // Selected Colors Container
         let colorsContainer = colorPicker.controlEl.createEl('div');
-        colorsContainer.addClass('create-colors');
-        let colorsText = colorsContainer.createEl('span');
-        colorsText.setText('Colors:');
 
         new Setting(contentEl)
         .setName("Gradient")
@@ -103,7 +106,7 @@ export class CommandInput extends Modal {
         new Setting(contentEl)
         .addButton((button) => 
             button
-            .setButtonText("create")
+            .setButtonText("Create")
             .setCta()
             .onClick(() => {
                 try{

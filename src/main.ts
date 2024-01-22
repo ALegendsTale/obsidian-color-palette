@@ -51,7 +51,7 @@ export default class ColorPalette extends Plugin {
 			editorCallback: (editor: Editor) => {
 				try {
 					const link = editor.getSelection();
-					if(!link.match(urlRegex)) throw new Error('Selected text is not a link.');
+					if(!link.match(`^${urlRegex.source}$`)) throw new Error('Selected text is not a link.');
 					const codeBlock = `\`\`\`palette\n${link}\n\`\`\`\n`;
 					const cursor = editor.getCursor();
 					editor.replaceSelection(codeBlock);
@@ -73,22 +73,24 @@ export default class ColorPalette extends Plugin {
 			editorCallback: (editor: Editor) => {
 				try {
 					const codeBlock = editor.getSelection();
-					const split = codeBlock.split('\n')
-					const link = split[1];
+					const multiReg = RegExp(/(?:\`{3}palette)\n(?<url>.*)(?:\n(?<settings>.+))?\n\`{3}/, 'g');
+					const content = [...codeBlock.matchAll(multiReg)]?.[0]?.slice(1);
+					const url = content?.[0];
+					if(url == null) throw new Error('Selected text is not a codeblock with a link.');
 					let colors: string[] = [];
 					// Check if link & contains dashes (coolor url)
-					link.match(urlRegex) && link.contains('-') ? 
-					colors = link.substring(link.lastIndexOf('/') + 1).split('-').map(i => '#' + i)
+					url.match(urlRegex) && url.contains('-') ? 
+					colors = url.substring(url.lastIndexOf('/') + 1).split('-').map(i => '#' + i)
 					:
 					// Check if link (colorhunt)
-					link.match(urlRegex) ?
-					colors = link.substring(link.lastIndexOf('/') + 1).match(/.{1,6}/g)?.map(i => '#' + i) || ['Invalid Palette']
+					url.match(urlRegex) ?
+					colors = url.substring(url.lastIndexOf('/') + 1).match(/.{1,6}/g)?.map(i => '#' + i) || ['Invalid Palette']
 					: 
 					colors = ['Invalid Palette']
 	
-					if(colors[0] === 'Invalid Palette') throw new Error('Selected codeblock could not be converted to hex.');
+					if(colors[0] === 'Invalid Palette') throw new Error('Selected codeblock can not be converted to hex.');
 	
-					const newBlock = `\`\`\`palette\n${colors.toString()}\n\`\`\``;
+					const newBlock = `\`\`\`palette\n${colors.toString()}${content?.[1] ? '\n' + content[1] : ''}\n\`\`\``;
 					editor.replaceSelection(newBlock)
 					new Notice(`Converted codeblock link to hex`)
 				} 
