@@ -5,6 +5,7 @@
     --palette-background-color: transparent;
     --palette-color: #000;
     --palette-column-flex-basis: 20px;
+    --notice-duration: 2.5s;
     
     display: flex;
     flex-direction: row;
@@ -13,6 +14,18 @@
     overflow: hidden;
     cursor: pointer;
     height: var(--palette-height);
+}
+
+.palette-pulse {
+    animation: pulse var(--notice-duration) infinite;
+    transform: scale(1);
+    border: transparent 1px solid;
+}
+
+@keyframes pulse {
+    50% {
+        background-color: #FFFF0080;
+    }
 }
 
 .palette.paletteColumn {
@@ -88,6 +101,7 @@
     height: var(--palette-height);
     width: 100%;
     background-color: #000000C0;
+    border-radius: 5px;
 }
 
 .palette > .invalid > span {

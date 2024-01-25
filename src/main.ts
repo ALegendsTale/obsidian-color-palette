@@ -1,5 +1,5 @@
 import { Editor, MarkdownPostProcessorContext, Notice, Plugin } from 'obsidian'
-import { CommandInput } from 'src/commandInput';
+import { createCommand } from 'src/createCommand';
 import { Palette } from 'src/palette';
 import { ColorPaletteSettings, DefaultSettings, SettingsTab } from 'src/settings';
 
@@ -24,7 +24,7 @@ export default class ColorPalette extends Plugin {
 			id: 'create',
 			name: 'Create',
 			editorCallback: (editor: Editor) => {
-				new CommandInput(this.app, (result) => {
+				new createCommand(this.app, (result) => {
 					try {
 						const codeBlock = `\`\`\`palette\n${result}\n\`\`\`\n`;
 						const cursor = editor.getCursor();

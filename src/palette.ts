@@ -14,11 +14,13 @@ export type direction =
     | 'row' 
     | 'column'
 
-type Validity = 
-    | "Valid"
-    | "Invalid Colors"
-    | "Invalid Settings"
-    | "Invalid Colors & Settings"
+enum Status {
+    VALID,
+    INVALID_COLORS,
+    INVALID_SETTINGS,
+    INVALID_COLORS_AND_SETTINGS,
+    INVALID_GRADIENT
+}
 
 // Identifies whether color palette hex codes or url are valid
 const fullRegex = /^((?:#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})(?:,\s*|$))+|(?:https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(?:\.[a-zA-Z0-9]{2,})(?:\.[a-zA-Z0-9]{2,})?\/palette\/([a-zA-Z0-9-]{2,}))(?<!,|,s*)$/
@@ -31,7 +33,7 @@ export class Palette extends MarkdownRenderChild {
 	input: string;
 	colors: string[];
     settings: PaletteSettings;
-    validity: Validity
+    status: Status
 
 	constructor(plugin: ColorPalette, settings: ColorPaletteSettings, containerEl: HTMLElement, input: string) {
         super(containerEl);
@@ -40,29 +42,34 @@ export class Palette extends MarkdownRenderChild {
         this.input = input;
         this.colors = [];
         this.settings = {gradient: false, height: 150, width: 700, direction: "column"};
-        this.validity = "Valid";
+        this.status = Status.VALID;
 	}
   
 	onload() {
         // Combines regex to create full palette validation regex (should end up being same as fullRegex const)
         const paletteRegex = new RegExp(`^(?:${colorsRegex.source}|${urlRegex.source})(?<!,|,\s*)$`);
         let split = this.input.split('\n')
-        // Trim in case there are trailing whitespaces the user added to the last hex code.
-        let rawColors = split[0]?.trim()
+        let rawColors = split.filter((val) => {
+            // Filter only the colors
+            if(!val.contains('{'))
+                // Trim in case there are trailing whitespaces the user added
+                return val.trim();
+                // Convert array to comma delimited string
+        }).toString();
         // Set local settings if specified
-        if(split.length === 2){
+        if(split.some((val) => val.contains('{')) && split.length !== 1){
             try {
                 // Extract JSON settings from the palette
-                const parsedSplit: PaletteSettings = JSON.parse(split[1]);
+                const parsedSplit: PaletteSettings = JSON.parse(split[split.length - 1]);
                 this.settings = {...this.settings, ...parsedSplit};
             } catch (error) {
-                this.validity = "Invalid Settings";
+                this.status = Status.INVALID_SETTINGS;
             }
         }
         // Check for invalid Palette
         rawColors.match(paletteRegex) === null ?
-        // Set validity to Invalid Colors & Settings if settings were deemed invalid
-        this.validity === "Invalid Settings" ? this.validity = "Invalid Colors & Settings" : this.validity = "Invalid Colors"
+        // Set status to Invalid Colors & Settings if settings were deemed invalid
+        this.status === Status.INVALID_SETTINGS ? this.status = Status.INVALID_COLORS_AND_SETTINGS : this.status = Status.INVALID_COLORS
         :
         // Check if colors are derived from hex codes
         rawColors.match(colorsRegex)?.[0] ?
@@ -77,17 +84,15 @@ export class Palette extends MarkdownRenderChild {
         this.colors = rawColors.substring(rawColors.lastIndexOf('/') + 1).match(/.{1,6}/g)?.map(i => '#' + i) || []
 
         // Add new palette to state
-        if(this.validity === "Valid") this.plugin.palettes?.push(this);
+        if(this.status === Status.VALID) this.plugin.palettes?.push(this);
 
         // Create new palette
         this.createPalette(this.colors, this.settings);
-        // Create invalid palette if not valid
-        if(this.validity !== "Valid") this.createInvalidPalette(this.validity, rawColors);
 	}
 
     unload() {
         // Remove palette from state
-        if(this.validity === "Valid") this.plugin.palettes?.remove(this);
+        if(this.status === Status.VALID) this.plugin.palettes?.remove(this);
     }
 
     public refresh(){
@@ -98,15 +103,25 @@ export class Palette extends MarkdownRenderChild {
     public createPalette(colors: string[], settings: PaletteSettings){
         this.containerEl.addClass('palette')
         this.containerEl.toggleClass('paletteColumn', settings.direction === 'row');
-        // set --palette-height css variable
         this.containerEl.style.setProperty('--palette-height', `${settings.height}px`);
 
-        this.settings.gradient ?
-        createGradientPalette(this.containerEl, colors, settings)
-        :
-        createColorPalette(this.containerEl, colors, settings.height);
+        try{
+            // Throw error & create Invalid Palette
+            if(this.status !== Status.VALID) throw new PaletteError(this.status);
+            this.settings.gradient ?
+            createGradientPalette(this.containerEl, colors, settings)
+            :
+            createColorPalette(this.containerEl, colors, settings.height);
+        }
+        catch(err){
+            if(err instanceof PaletteError)
+            this.createInvalidPalette(err.status, err.message);
+            else
+            new Notice(err);
+        }
 
         function createGradientPalette(containerEl: HTMLElement, colors: string[], settings: PaletteSettings){
+            if(colors.length <= 1) throw new PaletteError(Status.INVALID_GRADIENT);
             let child = containerEl.createEl('canvas');
             child.width = settings.width;
             child.height = settings.height;
@@ -199,24 +214,48 @@ export class Palette extends MarkdownRenderChild {
         }
     }
 
-    public createInvalidPalette(type: Validity, rawColors: string){
+    public createInvalidPalette(type: Status, message = ''){
         this.containerEl.style.setProperty('--palette-height', `${this.settings.height}px`);
         const invalidSection = this.containerEl.createEl('section');
         invalidSection.toggleClass('invalid', true);
+        const invalidSpan = invalidSection.createEl('span');
+        const colors = this.colors.toString() !== '' ? this.colors.toString() : this.input;
+        const split =  this.input.split('\n');
+        const settings = split[split.length - 1];
 
         switch(type) {
-            case "Invalid Colors":
-                invalidSection.createEl('span', {text: 'Invalid Colors'});
-                new Notice(`Palette ${rawColors} colors are defined incorrectly`, this.pluginSettings.noticeDuration);
+            case Status.INVALID_COLORS:
+                invalidSpan.setText('Invalid Colors');
+                new Notice(message ? message : `Palette:\nColors are defined incorrectly\n${colors}`, this.pluginSettings.noticeDuration);
                 break;
-            case "Invalid Settings":
-                invalidSection.createEl('span', {text: 'Invalid Settings'});
-                new Notice(`Palette ${rawColors} had issues parsing settings`, this.pluginSettings.noticeDuration);
+            case Status.INVALID_SETTINGS:
+                invalidSpan.setText('Invalid Settings');
+                new Notice(message ? message : `Palette:\nIssues parsing settings\n${settings}`, this.pluginSettings.noticeDuration);
                 break;
-            case "Invalid Colors & Settings":
-                invalidSection.createEl('span', {text: 'Invalid Colors & Settings'});
-                new Notice(`Palette colors and settings defined incorrectly. Please check again`, this.pluginSettings.noticeDuration);
+            case Status.INVALID_COLORS_AND_SETTINGS:
+                invalidSpan.setText('Invalid Colors & Settings');
+                new Notice(message ? message : `Palette:\nColors and settings are defined incorrectly\n${this.input}`, this.pluginSettings.noticeDuration);
                 break;
+            case Status.INVALID_GRADIENT:
+                invalidSpan.setText('Invalid Gradient');
+                new Notice(message ? message : `Palette:\nGradients require more than 1 color to display\n${colors}`, this.pluginSettings.noticeDuration);
         }
+        
+        // Pulse the Invalid Palette to show its location
+        if(this.pluginSettings.errorPulse){
+            this.containerEl.style.setProperty('--notice-duration', ((this.pluginSettings.noticeDuration / 1000) / 2).toString() + 's')
+            this.containerEl.toggleClass('palette-pulse', true);
+            setTimeout(() => this.containerEl.toggleClass('palette-pulse', false), this.pluginSettings.noticeDuration);
+        }
+    }
+}
+
+class PaletteError extends Error {
+    status: Status;
+    message: string;
+    
+    constructor(status: Status, message = '') {
+        super(message);
+        this.status = status;
     }
 }

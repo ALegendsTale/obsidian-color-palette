@@ -3,7 +3,7 @@ import { PaletteSettings, direction } from "./palette";
 import { urlRegex } from "./main";
 import colorsea from "colorsea";
 
-export class CommandInput extends Modal {
+export class createCommand extends Modal {
     result: string;
     url: string;
     paletteSettings: PaletteSettings
