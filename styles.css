@@ -75,7 +75,7 @@
     color: var(--palette-color);
 }
 
-.tooltip {
+.palette-tooltip {
     position: absolute;
     display: none;
     background: #000000C0;
@@ -87,7 +87,7 @@
     font-size: 100%;
 }
 
-.palette > canvas:hover ~ .tooltip {
+.palette > canvas:hover ~ .palette-tooltip {
     display: flex;
     align-items: center;
     justify-content: center;

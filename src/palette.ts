@@ -127,7 +127,7 @@ export class Palette extends MarkdownRenderChild {
             child.height = settings.height;
 
             const tooltip = containerEl.createEl('section');
-            tooltip.addClass('tooltip');
+            tooltip.addClasses(['tooltip', 'palette-tooltip']);
             const tooltipText = tooltip.createEl('span');
 
             let context = child.getContext('2d', {willReadFrequently: true});
