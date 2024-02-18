@@ -34,7 +34,7 @@ Optional settings can be applied to each palette within the codeblock.
 <pre>
 ```palette
 #fff, #000fff00
-{"gradient": true}
+{"gradient": true, "aliases": ["white", "black"]}
 ```
 </pre>
 
@@ -42,6 +42,7 @@ Optional settings can be applied to each palette within the codeblock.
 - gradient (true/false)
 - direction (row/column)
 - height (number)
+- aliases (string array)
 
 ### Commands
 Commands can be bound to a hotkey in settings.

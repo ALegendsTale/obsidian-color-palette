@@ -1,13 +1,14 @@
 import { MarkdownRenderChild, Notice } from "obsidian";
 import colorsea from 'colorsea';
 import ColorPalette, { urlRegex } from "./main";
-import { ColorPaletteSettings } from "./settings";
+import { AliasModeType, ColorPaletteSettings } from "./settings";
 
 export type PaletteSettings = {
     gradient: boolean
     height: number
     width: number
     direction: direction
+    aliases: string[]
 }
 
 export type direction = 
@@ -41,7 +42,7 @@ export class Palette extends MarkdownRenderChild {
         this.pluginSettings = settings;
         this.input = input;
         this.colors = [];
-        this.settings = {gradient: false, height: 150, width: 700, direction: "column"};
+        this.settings = {gradient: false, height: 150, width: 700, direction: "column", aliases: []};
         this.status = Status.VALID;
 	}
   
@@ -102,7 +103,8 @@ export class Palette extends MarkdownRenderChild {
     
     public createPalette(colors: string[], settings: PaletteSettings){
         this.containerEl.addClass('palette')
-        this.containerEl.toggleClass('paletteColumn', settings.direction === 'row');
+        this.containerEl.style.setProperty('--palette-direction', settings.direction === 'row' ? 'column' : 'row');
+        this.containerEl.style.setProperty('--not-palette-direction', settings.direction);
         this.containerEl.style.setProperty('--palette-height', `${settings.height}px`);
 
         try{
@@ -111,7 +113,7 @@ export class Palette extends MarkdownRenderChild {
             this.settings.gradient ?
             createGradientPalette(this.containerEl, colors, settings)
             :
-            createColorPalette(this.containerEl, colors, settings.height);
+            createColorPalette(this.containerEl, colors, settings.height, this.pluginSettings.aliasMode);
         }
         catch(err){
             if(err instanceof PaletteError)
@@ -192,7 +194,7 @@ export class Palette extends MarkdownRenderChild {
             }
         }
         
-        function createColorPalette(containerEl: HTMLElement, colors: string[], paletteHeight: number){
+        function createColorPalette(containerEl: HTMLElement, colors: string[], paletteHeight: number, aliasMode: AliasModeType){
             for(const [i, color] of colors.entries()){
                 const csColor = colorsea(color.trim());
     
@@ -202,9 +204,13 @@ export class Palette extends MarkdownRenderChild {
                 // set --palette-column-flex-basis css variable
                 child.style.setProperty('--palette-column-flex-basis', (paletteHeight / colors.length / 2).toString() + 'px');
                 
-                let childText = child.createEl('span', { text: color.toUpperCase() });
-                // set --palette-color css variable
-                childText.style.setProperty('--palette-color', (csColor.rgb()[0]*0.299 + csColor.rgb()[1]*0.587 + csColor.rgb()[2]*0.114) > 186 ? '#000000' : '#ffffff');
+                // Display hex if alias mode is set to both OR if alias is not set
+                if(aliasMode === 'Both' || settings.aliases[i] == null || settings.aliases[i].trim() === ''){
+                    let childText = child.createEl('span', { text: color.toUpperCase() });
+                    childText.style.setProperty('--palette-color', (csColor.rgb()[0]*0.299 + csColor.rgb()[1]*0.587 + csColor.rgb()[2]*0.114) > 186 ? '#000000' : '#ffffff');
+                }
+                let childAlias = child.createEl('span', { text: settings.aliases[i] });
+                childAlias.style.setProperty('--palette-color', (csColor.rgb()[0]*0.299 + csColor.rgb()[1]*0.587 + csColor.rgb()[2]*0.114) > 186 ? '#000000' : '#ffffff');
     
                 child.onClickEvent((e) => {
                     new Notice(`Copied ${color}`);

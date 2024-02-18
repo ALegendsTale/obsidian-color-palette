@@ -1,14 +1,20 @@
 import ColorPalette from "./main";
 import { App, PluginSettingTab, Setting } from "obsidian";
 
+export type AliasModeType = 
+	| 'Both'
+	| 'Prefer Alias'
+
 export interface ColorPaletteSettings {
 	noticeDuration: number;
 	errorPulse: boolean;
+	aliasMode: AliasModeType;
 }
 
 export const DefaultSettings: ColorPaletteSettings = {
 	noticeDuration: 10000,
 	errorPulse: true,
+	aliasMode: 'Both'
 };
 
 export class SettingsTab extends PluginSettingTab {
@@ -45,6 +51,20 @@ export class SettingsTab extends PluginSettingTab {
 				.setValue(settings.errorPulse)
 				.onChange(async (value) => {
 					settings.errorPulse = value;
+					await this.plugin.saveSettings();
+				})
+			})
+
+		new Setting(containerEl)
+			.setName('Alias Mode')
+			.setDesc('What will be shown when aliases option is set in local palette options. Defaults to showing both hex and alias.')
+			.addDropdown((dropdown) => {
+				dropdown
+				.addOption('Both', 'Both')
+				.addOption('Prefer Alias', 'Prefer Alias')
+				.setValue(this.plugin.settings.aliasMode.toString())
+				.onChange(async (value) => {
+					settings.aliasMode = value as AliasModeType;
 					await this.plugin.saveSettings();
 				})
 			})

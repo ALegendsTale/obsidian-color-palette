@@ -2,13 +2,15 @@
 .palette {
     /* fallback vars */
     --palette-height: 150px;
+    --palette-direction: row;
+    --not-palette-direction: row;
     --palette-background-color: transparent;
     --palette-color: #000;
     --palette-column-flex-basis: 20px;
     --notice-duration: 2.5s;
     
     display: flex;
-    flex-direction: row;
+    flex-direction: var(--palette-direction);
     width: 100%;
     border-radius: 5px;
     overflow: hidden;
@@ -28,20 +30,17 @@
     }
 }
 
-.palette.paletteColumn {
-    flex-direction: column;
-}
-
 /* Child */
 .palette > div {
     display: flex;
     flex: 1;
     flex-basis: 0px;
-    flex-direction: row;
+    flex-direction: var(--not-palette-direction);
     justify-content: center;
     align-items: center;
     transition: all 0.1s ease-in-out;
     background-color: var(--palette-background-color);
+    gap: 3%;
 }
 
 .palette > canvas {
@@ -161,7 +160,16 @@
     gap: 8px;
 }
 
-/* Colors Button */
+.color-picker > div > div > span {
+    padding: 2%;
+}
+
+.color-picker > div > div > .color-span-editable {
+    border-width: 2px;
+    border-style: solid;
+}
+
+/* Color Trash Button */
 .color-picker > div > div > button {
     background-color: var(--trash-background-color);
     color: var(--trash-color);

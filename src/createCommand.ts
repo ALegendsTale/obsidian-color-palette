@@ -15,7 +15,7 @@ export class createCommand extends Modal {
         super(app);
         this.onSubmit = onSubmit;
         this.url = '';
-        this.paletteSettings = {gradient: false, direction: 'column', height: 150, width: 700};
+        this.paletteSettings = {gradient: false, direction: 'column', height: 150, width: 700, aliases: []};
         this.colors = [];
         this.colorContainers = [];
     }
@@ -45,9 +45,25 @@ export class createCommand extends Modal {
         .addColorPicker((color) => {
             color.onChange((value) => {
                 this.colors.push(value);
+                this.paletteSettings.aliases.push('');
                 colorsContainer.style.setProperty('--selected-colors-display', this.colors.length === 0 ? 'none' : 'flex');
                 let colorContainer = colorsContainer.createEl('div');
                 let colorSpan = colorContainer.createEl('span');
+                // Focus color & allow for editing alias
+                colorSpan.addEventListener('click', (e) => {
+                    colorSpan.contentEditable = 'true';
+                    colorSpan.toggleClass('color-span-editable', true);
+                })
+                // Set alias if changed & de-focus
+                colorSpan.addEventListener('focusout', (e) => {
+                    colorSpan.contentEditable = 'false';
+                    colorSpan.toggleClass('color-span-editable', false);
+                    // Set alias color if user modified text
+                    if(colorSpan.getText() !== value){
+                        this.paletteSettings.aliases[this.colors.findIndex(val => val === value)] = colorSpan.getText();
+                    }
+                })
+                colorSpan.style.borderColor = value;
                 colorSpan.setText(value);
                 let trash = colorContainer.createEl('button');
                 setIcon(trash, 'trash-2');
@@ -110,7 +126,10 @@ export class createCommand extends Modal {
             .setCta()
             .onClick(() => {
                 try{
-                    this.result = `${this.url.match(urlRegex) ? this.url : this.colors.toString()}\n{"gradient": ${this.paletteSettings.gradient}, "direction": "${this.paletteSettings.direction}", "height": ${this.paletteSettings.height}}`
+                    this.result = `${this.url.match(urlRegex) ? 
+                    this.url 
+                    : 
+                    this.colors.toString()}\n{"gradient": ${this.paletteSettings.gradient}, "direction": "${this.paletteSettings.direction}", "height": ${this.paletteSettings.height}, "aliases": ${JSON.stringify(this.paletteSettings.aliases)}}`
                     if(this.url === '' && this.colors.length === 0) throw new Error('URL or colors were not provided.');
                     if(!this.url.match(urlRegex) && this.colors.length === 0) throw new Error('URL provided is not valid.');
                     this.close();
