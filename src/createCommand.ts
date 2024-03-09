@@ -2,20 +2,21 @@ import { App, Modal, Notice, Setting, setIcon } from "obsidian";
 import { PaletteSettings, direction } from "./palette";
 import { urlRegex } from "./main";
 import colorsea from "colorsea";
+import { ColorPaletteSettings } from "./settings";
 
 export class createCommand extends Modal {
     result: string;
     url: string;
-    paletteSettings: PaletteSettings
+    settings: PaletteSettings
     colors: string[]
     colorContainers: HTMLDivElement[]
     onSubmit: (result: string) => void
 
-    constructor(app: App, onSubmit: (result: string) => void) {
+    constructor(app: App, pluginSettings: ColorPaletteSettings, onSubmit: (result: string) => void) {
         super(app);
         this.onSubmit = onSubmit;
         this.url = '';
-        this.paletteSettings = {gradient: false, direction: 'column', height: 150, width: 700, aliases: []};
+        this.settings = {gradient: false, direction: 'column', height: pluginSettings.height, width: 700, aliases: []};
         this.colors = [];
         this.colorContainers = [];
     }
@@ -45,7 +46,7 @@ export class createCommand extends Modal {
         .addColorPicker((color) => {
             color.onChange((value) => {
                 this.colors.push(value);
-                this.paletteSettings.aliases.push('');
+                this.settings.aliases.push('');
                 colorsContainer.style.setProperty('--selected-colors-display', this.colors.length === 0 ? 'none' : 'flex');
                 let colorContainer = colorsContainer.createEl('div');
                 let colorSpan = colorContainer.createEl('span');
@@ -60,7 +61,7 @@ export class createCommand extends Modal {
                     colorSpan.toggleClass('color-span-editable', false);
                     // Set alias color if user modified text
                     if(colorSpan.getText() !== value){
-                        this.paletteSettings.aliases[this.colors.findIndex(val => val === value)] = colorSpan.getText();
+                        this.settings.aliases[this.colors.findIndex(val => val === value)] = colorSpan.getText();
                     }
                 })
                 colorSpan.style.borderColor = value;
@@ -91,9 +92,9 @@ export class createCommand extends Modal {
         .setName("Gradient")
         .addToggle((toggle) => {
             toggle
-            .setValue(this.paletteSettings.gradient)
+            .setValue(this.settings.gradient)
             .onChange((value) => {
-                this.paletteSettings.gradient = value;
+                this.settings.gradient = value;
             })
         })
 
@@ -103,9 +104,9 @@ export class createCommand extends Modal {
             dropdown
             .addOption('column', 'column')
             .addOption('row', 'row')
-            .setValue(this.paletteSettings.direction.toString())
+            .setValue(this.settings.direction.toString())
             .onChange((value) => {
-                this.paletteSettings.direction = value as direction;
+                this.settings.direction = value as direction;
             })
         })
 
@@ -113,9 +114,9 @@ export class createCommand extends Modal {
         .setName("Height")
         .addText((text) => {
             text
-            .setValue(this.paletteSettings.height.toString())
+            .setValue(this.settings.height.toString())
             .onChange((value) => {
-                this.paletteSettings.height = Number(value);
+                this.settings.height = Number(value);
             })
         })
 
@@ -129,7 +130,7 @@ export class createCommand extends Modal {
                     this.result = `${this.url.match(urlRegex) ? 
                     this.url 
                     : 
-                    this.colors.toString()}\n{"gradient": ${this.paletteSettings.gradient}, "direction": "${this.paletteSettings.direction}", "height": ${this.paletteSettings.height}, "aliases": ${JSON.stringify(this.paletteSettings.aliases)}}`
+                    this.colors.toString()}\n{"gradient": ${this.settings.gradient}, "direction": "${this.settings.direction}", "height": ${this.settings.height}, "aliases": ${JSON.stringify(this.settings.aliases)}}`
                     if(this.url === '' && this.colors.length === 0) throw new Error('URL or colors were not provided.');
                     if(!this.url.match(urlRegex) && this.colors.length === 0) throw new Error('URL provided is not valid.');
                     this.close();

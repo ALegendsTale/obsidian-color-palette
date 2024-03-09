@@ -1,7 +1,7 @@
 import { Editor, MarkdownPostProcessorContext, Notice, Plugin } from 'obsidian'
 import { createCommand } from 'src/createCommand';
 import { Palette } from 'src/palette';
-import { ColorPaletteSettings, DefaultSettings, SettingsTab } from 'src/settings';
+import { ColorPaletteSettings, defaultSettings, SettingsTab } from 'src/settings';
 
 export const urlRegex = /(?:https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(?:\.[a-zA-Z0-9]{2,})(?:\.[a-zA-Z0-9]{2,})?\/palette\/([a-zA-Z0-9-]{2,})/
 
@@ -24,7 +24,7 @@ export default class ColorPalette extends Plugin {
 			id: 'create',
 			name: 'Create',
 			editorCallback: (editor: Editor) => {
-				new createCommand(this.app, (result) => {
+				new createCommand(this.app, this.settings, (result) => {
 					try {
 						const codeBlock = `\`\`\`palette\n${result}\n\`\`\`\n`;
 						const cursor = editor.getCursor();
@@ -104,7 +104,7 @@ export default class ColorPalette extends Plugin {
 	}
 	
 	async loadSettings() {
-		this.settings = Object.assign({}, DefaultSettings, await this.loadData());
+		this.settings = Object.assign({}, defaultSettings, await this.loadData());
 	}
 
 	async saveSettings() {

@@ -9,12 +9,14 @@ export interface ColorPaletteSettings {
 	noticeDuration: number;
 	errorPulse: boolean;
 	aliasMode: AliasModeType;
+	height: number;
 }
 
-export const DefaultSettings: ColorPaletteSettings = {
+export const defaultSettings: ColorPaletteSettings = {
 	noticeDuration: 10000,
 	errorPulse: true,
-	aliasMode: 'Both'
+	aliasMode: 'Both',
+	height: 150
 };
 
 export class SettingsTab extends PluginSettingTab {
@@ -68,8 +70,21 @@ export class SettingsTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				})
 			})
+		
+		new Setting(containerEl)
+			.setName('Default Palette Height')
+			.setDesc('The default palette height, which can still be overriden by setting the height directly on the palette codeblock.')
+			.addText((text) => {
+				text
+				.setValue(settings.height.toString())
+				.onChange(async (value) => {
+					settings.height = Number(value);
+					await this.plugin.saveSettings();
+				})
+			})
 	}
 
+	// Called when settings are exited
 	hide() {
 		if (this.plugin?.palettes) {
 			for (let palette of this.plugin.palettes) {

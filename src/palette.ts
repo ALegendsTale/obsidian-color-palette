@@ -36,17 +36,20 @@ export class Palette extends MarkdownRenderChild {
     settings: PaletteSettings;
     status: Status
 
-	constructor(plugin: ColorPalette, settings: ColorPaletteSettings, containerEl: HTMLElement, input: string) {
+	constructor(plugin: ColorPalette, pluginSettings: ColorPaletteSettings, containerEl: HTMLElement, input: string) {
         super(containerEl);
         this.plugin = plugin;
-        this.pluginSettings = settings;
+        this.pluginSettings = pluginSettings;
         this.input = input;
         this.colors = [];
-        this.settings = {gradient: false, height: 150, width: 700, direction: "column", aliases: []};
+        this.settings = { gradient: false, height: pluginSettings.height, width: 700, direction: "column", aliases: [] };
         this.status = Status.VALID;
 	}
-  
-	onload() {
+
+    /**
+     * Calculates colors and settings based on codeblock contents
+     */
+    updateColorsAndSettings() {
         // Combines regex to create full palette validation regex (should end up being same as fullRegex const)
         const paletteRegex = new RegExp(`^(?:${colorsRegex.source}|${urlRegex.source})(?<!,|,\s*)$`);
         let split = this.input.split('\n')
@@ -83,6 +86,10 @@ export class Palette extends MarkdownRenderChild {
         :
         // Add hex between URL path colors (coolors)
         this.colors = rawColors.substring(rawColors.lastIndexOf('/') + 1).match(/.{1,6}/g)?.map(i => '#' + i) || []
+    }
+  
+	onload() {
+        this.updateColorsAndSettings();
 
         // Add new palette to state
         if(this.status === Status.VALID) this.plugin.palettes?.push(this);
@@ -96,11 +103,25 @@ export class Palette extends MarkdownRenderChild {
         if(this.status === Status.VALID) this.plugin.palettes?.remove(this);
     }
 
+    /**
+     * Refreshes the palette contents
+     */
     public refresh(){
+        // Reset settings to default before re-calculating colors & settings
+        this.settings = { gradient: false, height: this.pluginSettings.height, width: 700, direction: "column", aliases: [] };
+        // Recalculate colors & settings
+        this.updateColorsAndSettings();
+        // Remove palette contents
         this.containerEl.empty();
+        // Create new palette
         this.createPalette(this.colors, this.settings)
     }
     
+    /**
+     * Create new palette contents based on colors & settings
+     * @param colors 
+     * @param settings 
+     */
     public createPalette(colors: string[], settings: PaletteSettings){
         this.containerEl.addClass('palette')
         this.containerEl.style.setProperty('--palette-direction', settings.direction === 'row' ? 'column' : 'row');
@@ -220,8 +241,13 @@ export class Palette extends MarkdownRenderChild {
         }
     }
 
+    /**
+     * Create invalid palette based on palette status
+     * @param type Palette status type
+     * @param message Custom message
+     */
     public createInvalidPalette(type: Status, message = ''){
-        this.containerEl.style.setProperty('--palette-height', `${this.settings.height}px`);
+        this.containerEl.style.setProperty('--palette-height', '150px');
         const invalidSection = this.containerEl.createEl('section');
         invalidSection.toggleClass('invalid', true);
         const invalidSpan = invalidSection.createEl('span');
