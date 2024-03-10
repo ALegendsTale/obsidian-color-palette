@@ -1,8 +1,8 @@
 import { App, Modal, Notice, Setting, setIcon } from "obsidian";
-import { PaletteSettings, direction } from "./palette";
+import { PaletteSettings } from "./palette";
 import { urlRegex } from "./main";
 import colorsea from "colorsea";
-import { ColorPaletteSettings } from "./settings";
+import { Direction, ColorPaletteSettings } from "./settings";
 
 export class createCommand extends Modal {
     result: string;
@@ -16,7 +16,7 @@ export class createCommand extends Modal {
         super(app);
         this.onSubmit = onSubmit;
         this.url = '';
-        this.settings = {gradient: false, direction: 'column', height: pluginSettings.height, width: 700, aliases: []};
+        this.settings = { gradient: pluginSettings.gradient, direction: pluginSettings.direction, height: pluginSettings.height, width: pluginSettings.width, aliases: [] };
         this.colors = [];
         this.colorContainers = [];
     }
@@ -102,11 +102,11 @@ export class createCommand extends Modal {
         .setName("Direction")
         .addDropdown((dropdown) => {
             dropdown
-            .addOption('column', 'column')
-            .addOption('row', 'row')
+            .addOption(Direction.Column, Direction.Column)
+            .addOption(Direction.Row, Direction.Row)
             .setValue(this.settings.direction.toString())
             .onChange((value) => {
-                this.settings.direction = value as direction;
+                this.settings.direction = value as Direction;
             })
         })
 

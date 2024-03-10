@@ -1,22 +1,34 @@
 import ColorPalette from "./main";
 import { App, PluginSettingTab, Setting } from "obsidian";
 
-export type AliasModeType = 
-	| 'Both'
-	| 'Prefer Alias'
+export enum Direction {
+    Row = 'row',
+    Column = 'column'
+}
+
+export enum AliasMode {
+	Both = 'Both',
+	Alias = 'Prefer Alias'
+}
 
 export interface ColorPaletteSettings {
 	noticeDuration: number;
 	errorPulse: boolean;
-	aliasMode: AliasModeType;
+	aliasMode: AliasMode;
 	height: number;
+	width: number;
+	direction: Direction,
+	gradient: boolean
 }
 
 export const defaultSettings: ColorPaletteSettings = {
 	noticeDuration: 10000,
 	errorPulse: true,
-	aliasMode: 'Both',
-	height: 150
+	aliasMode: AliasMode.Both,
+	height: 150,
+	width: 700,
+	direction: Direction.Column,
+	gradient: false
 };
 
 export class SettingsTab extends PluginSettingTab {
@@ -62,18 +74,19 @@ export class SettingsTab extends PluginSettingTab {
 			.setDesc('What will be shown when aliases option is set in local palette options. Defaults to showing both hex and alias.')
 			.addDropdown((dropdown) => {
 				dropdown
-				.addOption('Both', 'Both')
-				.addOption('Prefer Alias', 'Prefer Alias')
-				.setValue(this.plugin.settings.aliasMode.toString())
+				.addOption(AliasMode.Both, AliasMode.Both)
+				.addOption(AliasMode.Alias, AliasMode.Alias)
+				.setValue(this.plugin.settings.aliasMode)
 				.onChange(async (value) => {
-					settings.aliasMode = value as AliasModeType;
+					settings.aliasMode = value as AliasMode;
 					await this.plugin.saveSettings();
 				})
 			})
+
+		containerEl.createEl('h2').setText('Defaults');
 		
 		new Setting(containerEl)
-			.setName('Default Palette Height')
-			.setDesc('The default palette height, which can still be overriden by setting the height directly on the palette codeblock.')
+			.setName('Height')
 			.addText((text) => {
 				text
 				.setValue(settings.height.toString())
@@ -82,6 +95,42 @@ export class SettingsTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				})
 			})
+
+		new Setting(containerEl)
+		.setName('Width')
+		.setDesc('Caution - Can cause palettes to display incorrectly.')
+		.addText((text) => {
+			text
+			.setValue(settings.width.toString())
+			.onChange(async (value) => {
+				settings.width = Number(value);
+				await this.plugin.saveSettings();
+			})
+		})
+
+		new Setting(containerEl)
+		.setName('Direction')
+		.addDropdown((dropdown) => {
+			dropdown
+			.addOption(Direction.Column, Direction.Column)
+			.addOption(Direction.Row, Direction.Row)
+			.setValue(this.plugin.settings.direction)
+			.onChange(async (value) => {
+				settings.direction = value as Direction
+				await this.plugin.saveSettings();
+			})
+		})
+
+		new Setting(containerEl)
+		.setName('Gradient')
+		.addToggle((toggle) => {
+            toggle
+            .setValue(this.plugin.settings.gradient)
+            .onChange(async (value) => {
+                settings.gradient = value;
+				await this.plugin.saveSettings();
+            })
+		})
 	}
 
 	// Called when settings are exited

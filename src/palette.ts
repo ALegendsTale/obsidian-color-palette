@@ -1,26 +1,22 @@
 import { MarkdownRenderChild, Notice } from "obsidian";
 import colorsea from 'colorsea';
 import ColorPalette, { urlRegex } from "./main";
-import { AliasModeType, ColorPaletteSettings } from "./settings";
+import { Direction, AliasMode, ColorPaletteSettings } from "./settings";
 
 export type PaletteSettings = {
     gradient: boolean
     height: number
     width: number
-    direction: direction
+    direction: Direction
     aliases: string[]
 }
 
-export type direction = 
-    | 'row' 
-    | 'column'
-
 enum Status {
-    VALID,
-    INVALID_COLORS,
-    INVALID_SETTINGS,
-    INVALID_COLORS_AND_SETTINGS,
-    INVALID_GRADIENT
+    VALID = 'Valid',
+    INVALID_COLORS = 'Invalid Colors',
+    INVALID_SETTINGS = 'Invalid Settings',
+    INVALID_COLORS_AND_SETTINGS = 'Invalid Colors & Settings',
+    INVALID_GRADIENT = 'Invalid Gradient'
 }
 
 // Identifies whether color palette hex codes or url are valid
@@ -42,9 +38,16 @@ export class Palette extends MarkdownRenderChild {
         this.pluginSettings = pluginSettings;
         this.input = input;
         this.colors = [];
-        this.settings = { gradient: false, height: pluginSettings.height, width: 700, direction: "column", aliases: [] };
         this.status = Status.VALID;
+        this.setDefaultSettings();
 	}
+
+    /**
+     * Set the initial default settings
+     */
+    private setDefaultSettings() {
+        this.settings = { gradient: this.pluginSettings.gradient, direction: this.pluginSettings.direction, height: this.pluginSettings.height, width: this.pluginSettings.width, aliases: [] };
+    }
 
     /**
      * Calculates colors and settings based on codeblock contents
@@ -108,7 +111,7 @@ export class Palette extends MarkdownRenderChild {
      */
     public refresh(){
         // Reset settings to default before re-calculating colors & settings
-        this.settings = { gradient: false, height: this.pluginSettings.height, width: 700, direction: "column", aliases: [] };
+        this.setDefaultSettings();
         // Recalculate colors & settings
         this.updateColorsAndSettings();
         // Remove palette contents
@@ -124,7 +127,7 @@ export class Palette extends MarkdownRenderChild {
      */
     public createPalette(colors: string[], settings: PaletteSettings){
         this.containerEl.addClass('palette')
-        this.containerEl.style.setProperty('--palette-direction', settings.direction === 'row' ? 'column' : 'row');
+        this.containerEl.style.setProperty('--palette-direction', settings.direction === Direction.Row ? Direction.Column : Direction.Row);
         this.containerEl.style.setProperty('--not-palette-direction', settings.direction);
         this.containerEl.style.setProperty('--palette-height', `${settings.height}px`);
 
@@ -155,7 +158,7 @@ export class Palette extends MarkdownRenderChild {
 
             let context = child.getContext('2d', {willReadFrequently: true});
             if(context != null){
-                let gradient = settings.direction === 'column' ? context.createLinearGradient(0, 0, settings.width, 0) : context.createLinearGradient(0, 0, 0, settings.height);
+                let gradient = settings.direction === Direction.Column ? context.createLinearGradient(0, 0, settings.width, 0) : context.createLinearGradient(0, 0, 0, settings.height);
 
                 for(const[i, color] of colors.entries()){
                     gradient.addColorStop(i / (colors.length - 1), color);
@@ -215,7 +218,7 @@ export class Palette extends MarkdownRenderChild {
             }
         }
         
-        function createColorPalette(containerEl: HTMLElement, colors: string[], paletteHeight: number, aliasMode: AliasModeType){
+        function createColorPalette(containerEl: HTMLElement, colors: string[], paletteHeight: number, aliasMode: AliasMode){
             for(const [i, color] of colors.entries()){
                 const csColor = colorsea(color.trim());
     
@@ -226,7 +229,7 @@ export class Palette extends MarkdownRenderChild {
                 child.style.setProperty('--palette-column-flex-basis', (paletteHeight / colors.length / 2).toString() + 'px');
                 
                 // Display hex if alias mode is set to both OR if alias is not set
-                if(aliasMode === 'Both' || settings.aliases[i] == null || settings.aliases[i].trim() === ''){
+                if(aliasMode === AliasMode.Both || settings.aliases[i] == null || settings.aliases[i].trim() === ''){
                     let childText = child.createEl('span', { text: color.toUpperCase() });
                     childText.style.setProperty('--palette-color', (csColor.rgb()[0]*0.299 + csColor.rgb()[1]*0.587 + csColor.rgb()[2]*0.114) > 186 ? '#000000' : '#ffffff');
                 }
@@ -257,19 +260,19 @@ export class Palette extends MarkdownRenderChild {
 
         switch(type) {
             case Status.INVALID_COLORS:
-                invalidSpan.setText('Invalid Colors');
+                invalidSpan.setText(Status.INVALID_COLORS);
                 new Notice(message ? message : `Palette:\nColors are defined incorrectly\n${colors}`, this.pluginSettings.noticeDuration);
                 break;
             case Status.INVALID_SETTINGS:
-                invalidSpan.setText('Invalid Settings');
+                invalidSpan.setText(Status.INVALID_SETTINGS);
                 new Notice(message ? message : `Palette:\nIssues parsing settings\n${settings}`, this.pluginSettings.noticeDuration);
                 break;
             case Status.INVALID_COLORS_AND_SETTINGS:
-                invalidSpan.setText('Invalid Colors & Settings');
+                invalidSpan.setText(Status.INVALID_COLORS_AND_SETTINGS);
                 new Notice(message ? message : `Palette:\nColors and settings are defined incorrectly\n${this.input}`, this.pluginSettings.noticeDuration);
                 break;
             case Status.INVALID_GRADIENT:
-                invalidSpan.setText('Invalid Gradient');
+                invalidSpan.setText(Status.INVALID_GRADIENT);
                 new Notice(message ? message : `Palette:\nGradients require more than 1 color to display\n${colors}`, this.pluginSettings.noticeDuration);
         }
         
