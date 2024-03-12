@@ -12,7 +12,8 @@
 	"author": "ALegendsTale",
 	"license": "GNU GPLv3",
 	"dependencies": {
-		"colorsea": "1.2.1"
+		"colorsea": "1.2.1",
+		"validate-color": "^2.2.4"
 	},
 	"devDependencies": {
 		"@types/node": "^16.11.6",

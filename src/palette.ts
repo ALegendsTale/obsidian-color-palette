@@ -1,5 +1,6 @@
 import { MarkdownRenderChild, Notice } from "obsidian";
 import colorsea from 'colorsea';
+import validateColor from "validate-color";
 import ColorPalette, { urlRegex } from "./main";
 import { Direction, AliasMode, ColorPaletteSettings } from "./settings";
 
@@ -18,11 +19,6 @@ enum Status {
     INVALID_COLORS_AND_SETTINGS = 'Invalid Colors & Settings',
     INVALID_GRADIENT = 'Invalid Gradient'
 }
-
-// Identifies whether color palette hex codes or url are valid
-const fullRegex = /^((?:#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})(?:,\s*|$))+|(?:https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(?:\.[a-zA-Z0-9]{2,})(?:\.[a-zA-Z0-9]{2,})?\/palette\/([a-zA-Z0-9-]{2,}))(?<!,|,s*)$/
-// Hex code validation
-const colorsRegex = /(?:#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})(?:,\s*|$))+/
 
 export class Palette extends MarkdownRenderChild {
     plugin: ColorPalette;
@@ -50,45 +46,95 @@ export class Palette extends MarkdownRenderChild {
     }
 
     /**
+     * Parses input & extracts colors based on color space or URL
+     * @param input colors from codeblock
+     * @returns Array of colors or Status if colors are not valid
+     */
+    private parseColors(input: string[]): string[] | Status {        
+        let colors = input.flatMap((color) => {
+            // Split RGB / HSL delimited by semicolons
+            if(color.includes('(')){
+                return color.split(';').flatMap((postSplitColor) => {
+                    return postSplitColor.trim();
+                // Remove whitespace elements from array
+                }).filter((color) => color.match(/\s/));
+            }
+            // Split colors delimited by commas
+            return color.split(',').flatMap((postSplitColor) => {
+                return postSplitColor.trim();
+            })
+        // Remove semicolons
+        }).flatMap((color) => color.trim().replace(';', ''));
+
+        // Combine colors array into string
+        const rawColors = colors.join('');
+
+        // If URL parse and return
+        if(rawColors.match(urlRegex)) return parseUrl(rawColors);
+
+        // Return status if colors are invalid
+        for(let color of colors) {
+            if(!validateColor(color)) return Status.INVALID_COLORS;
+        }
+
+        // Return final colors array
+        return colors;
+
+        /**
+         * Parse input url & extract colors
+         * @param url URL from color input
+         * @returns Array of colors
+         */
+        function parseUrl(url: string) {
+            // Check if url colors contain dashes in-between
+            if(url.includes('-')) {
+                // Replace dashes with hexes (colorhunt)
+                return url.substring(url.lastIndexOf('/') + 1).split('-').map(i => '#' + i);
+            }
+            // Add hex between URL path colors (coolors)
+            else return url.substring(url.lastIndexOf('/') + 1).match(/.{1,6}/g)?.map(i => '#' + i) || [];
+        }
+    }
+
+    /**
+     * Parses input & extracts settings
+     * @param input settings from codeblock
+     * @returns PaletteSettings or Status if settings are not valid
+     */
+    private parseSettings(input: string): PaletteSettings | Status {
+        try {
+            // Extract JSON settings from the palette
+            return JSON.parse(input);
+        }
+        catch(error) {
+            return Status.INVALID_SETTINGS;
+        }
+    }
+
+    /**
      * Calculates colors and settings based on codeblock contents
      */
-    updateColorsAndSettings() {
-        // Combines regex to create full palette validation regex (should end up being same as fullRegex const)
-        const paletteRegex = new RegExp(`^(?:${colorsRegex.source}|${urlRegex.source})(?<!,|,\s*)$`);
-        let split = this.input.split('\n')
-        let rawColors = split.filter((val) => {
-            // Filter only the colors
-            if(!val.contains('{'))
-                // Trim in case there are trailing whitespaces the user added
-                return val.trim();
-                // Convert array to comma delimited string
-        }).toString();
-        // Set local settings if specified
-        if(split.some((val) => val.contains('{')) && split.length !== 1){
-            try {
-                // Extract JSON settings from the palette
-                const parsedSplit: PaletteSettings = JSON.parse(split[split.length - 1]);
-                this.settings = {...this.settings, ...parsedSplit};
-            } catch (error) {
-                this.status = Status.INVALID_SETTINGS;
-            }
+    private updateColorsAndSettings() {
+        // Splits input by newline creaitng an array
+        const split = this.input.split('\n')
+        // Returns true if palette settings are defined
+        const hasSettings = split.some((val) => val.includes(('{')));
+        
+        // Retrieve colors from input
+        const inputColors = hasSettings ? split.slice(0, split.length - 1) : split;
+        const colors = this.parseColors(inputColors)
+        if(typeof colors === 'string') this.status = colors;
+        if(typeof colors === 'object') this.colors = colors;
+
+        // Retrieve settings from input
+        const inputSettings = split.pop();
+        // Parse settings if set
+        if(hasSettings && inputSettings) {
+            const settings = this.parseSettings(inputSettings);
+            // Set status to Invalid Colors & Settings if settings were deemed invalid
+            if(typeof settings === 'string') this.status = this.status === Status.INVALID_COLORS ? Status.INVALID_COLORS_AND_SETTINGS : Status.INVALID_SETTINGS;
+            if(typeof settings === 'object') this.settings = {...this.settings, ...settings};
         }
-        // Check for invalid Palette
-        rawColors.match(paletteRegex) === null ?
-        // Set status to Invalid Colors & Settings if settings were deemed invalid
-        this.status === Status.INVALID_SETTINGS ? this.status = Status.INVALID_COLORS_AND_SETTINGS : this.status = Status.INVALID_COLORS
-        :
-        // Check if colors are derived from hex codes
-        rawColors.match(colorsRegex)?.[0] ?
-        this.colors = rawColors.split(',').filter((v) => v.trim())
-        :
-        // Check if url colors contain dashes in-between
-        rawColors.match(urlRegex) && rawColors.contains('-') ?
-        // Replace dashes with hexes (colorhunt)
-        this.colors = rawColors.substring(rawColors.lastIndexOf('/') + 1).split('-').map(i => '#' + i)
-        :
-        // Add hex between URL path colors (coolors)
-        this.colors = rawColors.substring(rawColors.lastIndexOf('/') + 1).match(/.{1,6}/g)?.map(i => '#' + i) || []
     }
   
 	onload() {

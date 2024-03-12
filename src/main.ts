@@ -79,7 +79,7 @@ export default class ColorPalette extends Plugin {
 					if(url == null) throw new Error('Selected text is not a codeblock with a link.');
 					let colors: string[] = [];
 					// Check if link & contains dashes (coolor url)
-					url.match(urlRegex) && url.contains('-') ? 
+					url.match(urlRegex) && url.includes('-') ? 
 					colors = url.substring(url.lastIndexOf('/') + 1).split('-').map(i => '#' + i)
 					:
 					// Check if link (colorhunt)
