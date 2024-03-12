@@ -5,19 +5,26 @@ Create beautiful & functional color palettes that enhance the appearance of your
 ![Color Palette Demo](ColorPaletteDemo.png)
 
 ## Key Features
+- Supports most CSS color formats (including Hex, RGB, HSL, etc.)
 - Create color palettes from popular palette websites like coolors & colorhunt.
 - Style like a pro with gorgeous gradients.
 - Convert links already present within your notes into palettes.
-- Easily copy the hex code of a color by selecting it.
+- Easily copy color codes by selecting them.
 
 ## Usage
 
-Palettes can be created manually by adding a codeblock with the hex codes desired.\
-*Currently only supports hex values.*
+Palettes can be created manually by adding a codeblock with the color codes desired.
 
 <pre>
 ```palette
 #ffffff, #000
+```
+</pre>
+
+<pre>
+```palette
+rgb(125, 255, 255);
+rgb(255, 255, 125);
 ```
 </pre>
 
@@ -42,11 +49,13 @@ Optional settings can be applied to each palette within the codeblock.
 - gradient (true/false)
 - direction (row/column)
 - height (number)
+- width (number)
 - aliases (string array)
+> Caution - using width can cause palettes to display incorrectly.
 
 ### Commands
 Commands can be bound to a hotkey in settings.
 
 - Create - Creates a new palette using the colors or URL provided
-- Convert Link - Converts a selected URL to a palette
+- Convert link - Converts a selected URL to a palette
 - Convert codeblock link to hex
