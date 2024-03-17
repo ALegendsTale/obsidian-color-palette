@@ -59,3 +59,4 @@ Commands can be bound to a hotkey in settings.
 - Create - Creates a new palette using the colors or URL provided
 - Convert link - Converts a selected URL to a palette
 - Convert codeblock link to hex
+- Generate random palette - Creates a new random palette based on color theory combinations
