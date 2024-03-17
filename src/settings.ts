@@ -98,7 +98,7 @@ export class SettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 		.setName('Width')
-		.setDesc('Caution - Can cause palettes to display incorrectly.')
+		.setDesc('Caution - Might cause palettes to display incorrectly.')
 		.addText((text) => {
 			text
 			.setValue(settings.width.toString())

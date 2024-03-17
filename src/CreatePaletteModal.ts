@@ -3,6 +3,7 @@ import { PaletteSettings } from "./palette";
 import { urlRegex } from "./main";
 import colorsea from "colorsea";
 import { Direction, ColorPaletteSettings } from "./settings";
+import { Combination, generateRandomColors } from "./utils/generateRandom";
 
 export class CreatePaletteModal extends Modal {
     result: string;
@@ -10,6 +11,7 @@ export class CreatePaletteModal extends Modal {
     settings: PaletteSettings
     colors: string[]
     colorContainers: HTMLDivElement[]
+    combination: Combination
     onSubmit: (result: string) => void
 
     constructor(app: App, pluginSettings: ColorPaletteSettings, onSubmit: (result: string) => void) {
@@ -17,8 +19,9 @@ export class CreatePaletteModal extends Modal {
         this.onSubmit = onSubmit;
         this.url = '';
         this.settings = { gradient: pluginSettings.gradient, direction: pluginSettings.direction, height: pluginSettings.height, width: pluginSettings.width, aliases: [] };
-        this.colors = [];
+        this.colors = []
         this.colorContainers = [];
+        this.combination = Combination.Random;
     }
 
     onOpen(): void {
@@ -27,8 +30,13 @@ export class CreatePaletteModal extends Modal {
         contentEl.createEl('h1', { text: 'Create Palette' })
         contentEl.addClass('create-palette');
 
-        new Setting(contentEl)
+        const colorsContainer = contentEl.createEl('section');
+        // Create header for colors section
+        colorsContainer.createEl('h3').setText('Colors');
+
+        new Setting(colorsContainer)
         .setName("URL")
+        .setDesc('Only coolors.co & colorhunt.co are currently supported.')
         .addText((text) => {
             text
             .onChange((value) => {
@@ -36,19 +44,15 @@ export class CreatePaletteModal extends Modal {
             })
         })
 
-        let orContainer = contentEl.createEl('div')
-        orContainer.addClass('or-container');
-        let orSpan = orContainer.createEl('span');
-        orSpan.setText('OR');
-
-        let colorPicker = new Setting(contentEl)
+        let colorPicker = new Setting(colorsContainer)
         .setName("Color Picker")
+        .setDesc('Use handpicked colors')
         .addColorPicker((color) => {
             color.onChange((value) => {
                 this.colors.push(value);
                 this.settings.aliases.push('');
-                colorsContainer.style.setProperty('--selected-colors-display', this.colors.length === 0 ? 'none' : 'flex');
-                let colorContainer = colorsContainer.createEl('div');
+                selectedColorsContainer.style.setProperty('--selected-colors-display', this.colors.length === 0 ? 'none' : 'flex');
+                let colorContainer = selectedColorsContainer.createEl('div');
                 let colorSpan = colorContainer.createEl('span');
                 // Focus color & allow for editing alias
                 colorSpan.addEventListener('click', (e) => {
@@ -76,19 +80,37 @@ export class CreatePaletteModal extends Modal {
                     this.colorContainers.splice(iContainers, 1);
                     const iColors = this.colors.indexOf(value);
                     this.colors.splice(iColors, 1);
-                    colorsContainer.removeChild(colorContainer);
-                    colorsContainer.style.setProperty('--selected-colors-display', this.colors.length === 0 ? 'none' : 'flex');
+                    selectedColorsContainer.removeChild(colorContainer);
+                    selectedColorsContainer.style.setProperty('--selected-colors-display', this.colors.length === 0 ? 'none' : 'flex');
                 })
                 this.colorContainers.push(colorContainer);
             })
         })
-        colorPicker.settingEl.addClass('color-picker-container');
         colorPicker.controlEl.addClass('color-picker');
 
-        // Selected Colors Container
-        let colorsContainer = colorPicker.controlEl.createEl('div');
+        let selectedColorsContainer = colorPicker.controlEl.createEl('div');
 
-        new Setting(contentEl)
+        new Setting(colorsContainer)
+        .setName("Generate Random")
+        .setDesc('Generate random colors based on color theory')
+        .addDropdown((dropdown) => {
+            Object.keys(Combination).forEach((combination) => {
+                dropdown.addOption(combination, combination);
+            })
+            dropdown
+            .setValue(this.combination)
+            .onChange((value) => {
+                const combination = value as Combination;
+                this.combination = combination;
+                this.colors = generateRandomColors(combination).colors;
+            })
+        })
+
+        const settingsContainer = contentEl.createEl('section');
+        // Create header for settings section
+        settingsContainer.createEl('h3').setText('Settings');
+
+        new Setting(settingsContainer)
         .setName("Gradient")
         .addToggle((toggle) => {
             toggle
@@ -98,7 +120,7 @@ export class CreatePaletteModal extends Modal {
             })
         })
 
-        new Setting(contentEl)
+        new Setting(settingsContainer)
         .setName("Direction")
         .addDropdown((dropdown) => {
             dropdown
@@ -110,7 +132,7 @@ export class CreatePaletteModal extends Modal {
             })
         })
 
-        new Setting(contentEl)
+        new Setting(settingsContainer)
         .setName("Height")
         .addText((text) => {
             text
@@ -120,19 +142,31 @@ export class CreatePaletteModal extends Modal {
             })
         })
 
-        new Setting(contentEl)
+        new Setting(settingsContainer)
+        .setName("Width")
+        .setDesc('Caution - Might cause palette to display incorrectly.')
+        .addText((text) => {
+            text
+            .setValue(this.settings.width.toString())
+            .onChange((value) => {
+                this.settings.width = Number(value);
+            })
+        })
+
+        new Setting(settingsContainer)
         .addButton((button) => 
             button
             .setButtonText("Create")
             .setCta()
             .onClick(() => {
                 try{
+                    if(!this.url.match(urlRegex) && this.url !== '') throw new Error('URL provided is not valid.');
+                    // Generate random colors if none are provided
+                    if(this.colors.length === 0) this.colors = generateRandomColors(Combination.Random).colors;;
                     this.result = `${this.url.match(urlRegex) ? 
                     this.url 
                     : 
                     this.colors.toString()}\n{"gradient": ${this.settings.gradient}, "direction": "${this.settings.direction}", "height": ${this.settings.height}, "aliases": ${JSON.stringify(this.settings.aliases)}}`
-                    if(this.url === '' && this.colors.length === 0) throw new Error('URL or colors were not provided.');
-                    if(!this.url.match(urlRegex) && this.colors.length === 0) throw new Error('URL provided is not valid.');
                     this.close();
                     this.onSubmit(this.result);
                 }

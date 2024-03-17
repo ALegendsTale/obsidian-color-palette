@@ -1,5 +1,7 @@
+import colorsea from 'colorsea';
 import { Editor, MarkdownPostProcessorContext, Notice, Plugin } from 'obsidian'
 import { CreatePaletteModal } from 'src/CreatePaletteModal';
+import { GeneratePaletteModal } from './GeneratePaletteModal';
 import { Palette } from 'src/palette';
 import { ColorPaletteSettings, defaultSettings, SettingsTab } from 'src/settings';
 
@@ -97,6 +99,14 @@ export default class ColorPalette extends Plugin {
 				catch (error) {
 					new Notice(error);
 				}
+			}
+		})
+
+		this.addCommand({
+			id: 'generate-random-palette',
+			name: 'Generate random palette',
+			editorCallback: (editor: Editor) => {
+				new GeneratePaletteModal(this.app, editor, this.settings).open();
 			}
 		})
 

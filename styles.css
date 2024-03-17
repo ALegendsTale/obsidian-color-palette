@@ -131,10 +131,6 @@
     font-weight: bold;
 }
 
-.color-picker-container {
-    border-top: none;
-}
-
 .color-picker {
     display: flex;
     flex: 1;

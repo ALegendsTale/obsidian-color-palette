@@ -51,7 +51,7 @@ Optional settings can be applied to each palette within the codeblock.
 - height (number)
 - width (number)
 - aliases (string array)
-> Caution - using width can cause palettes to display incorrectly.
+> Caution - using width might cause palettes to display incorrectly.
 
 ### Commands
 Commands can be bound to a hotkey in settings.
