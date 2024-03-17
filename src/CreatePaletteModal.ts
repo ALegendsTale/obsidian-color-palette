@@ -4,7 +4,7 @@ import { urlRegex } from "./main";
 import colorsea from "colorsea";
 import { Direction, ColorPaletteSettings } from "./settings";
 
-export class createCommand extends Modal {
+export class CreatePaletteModal extends Modal {
     result: string;
     url: string;
     settings: PaletteSettings
