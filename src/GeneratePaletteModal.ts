@@ -1,7 +1,10 @@
 import { App, Editor, Notice, SuggestModal } from "obsidian";
 import { PaletteSettings } from "./palette";
 import { ColorPaletteSettings } from "./settings";
-import { Combination, generateRandomColors } from "./utils/generateRandom";
+import { Combination, generateColors, generateRandomColors } from "./utils/generateRandom";
+import validateColor from "validate-color";
+import colorsea from "colorsea";
+import EditorUtils from "./utils/editorUtils";
 
 export class GeneratePaletteModal extends SuggestModal<Combination> {
     editor: Editor;
@@ -28,24 +31,16 @@ export class GeneratePaletteModal extends SuggestModal<Combination> {
     // Perform action on the selected suggestion.
     onChooseSuggestion(combination: Combination, evt: MouseEvent | KeyboardEvent) {
         try {
-            const { colors, settings } = generateRandomColors(combination, this.settings);
+            const selTextOrLine = this.editor.somethingSelected() ? this.editor.getSelection() : this.editor.getLine(this.editor.getCursor().line);
+            const isLineEmpty = this.editor.getLine(this.editor.getCursor().line).length === 0;
+            const isColor = validateColor(selTextOrLine);
+            const { colors, settings } = isColor ? generateColors(colorsea(selTextOrLine), combination, this.settings) : generateRandomColors(combination, this.settings);
             const newBlock = `\`\`\`palette\n${colors.toString()}\n${JSON.stringify(settings)}\n\`\`\`\n`;
-            this.insertEditor(this.editor, newBlock);
+            const editorUtils = new EditorUtils(this.editor);
+            editorUtils.insertContent(newBlock, !isColor && !isLineEmpty);
         }
         catch (error) {
             new Notice(error);
         }
-    }
-    
-    insertEditor(editor: Editor, data: string): void {
-        editor.somethingSelected()
-        ?
-        editor.replaceSelection(data)
-        :
-        editor.setLine(
-            editor.getCursor().line,
-            data
-        );
-        editor.setCursor({ ch: 0, line: editor.getCursor().line + 4 });
     }
   }
