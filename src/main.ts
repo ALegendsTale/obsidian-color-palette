@@ -5,7 +5,7 @@ import { GeneratePaletteModal } from './GeneratePaletteModal';
 import { Palette } from 'src/palette';
 import { ColorPaletteSettings, defaultSettings, SettingsTab } from 'src/settings';
 
-export const urlRegex = /(?:https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(?:\.[a-zA-Z0-9]{2,})(?:\.[a-zA-Z0-9]{2,})?\/palette\/([a-zA-Z0-9-]{2,})/
+export const urlRegex = /(?:https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(?:\.[a-zA-Z0-9]{2,})(?:\.[a-zA-Z0-9]{2,})?\/(?:palette\/)?([a-zA-Z0-9-]{2,})/
 
 export default class ColorPalette extends Plugin {
 	settings: ColorPaletteSettings;
