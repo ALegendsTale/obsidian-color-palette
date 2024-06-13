@@ -1,4 +1,3 @@
-import colorsea from 'colorsea';
 import { Editor, MarkdownPostProcessorContext, Notice, Plugin } from 'obsidian'
 import { CreatePaletteModal } from 'src/CreatePaletteModal';
 import { GeneratePaletteModal } from './GeneratePaletteModal';

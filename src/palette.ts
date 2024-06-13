@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Notice } from "obsidian";
+import { MarkdownRenderChild, Notice, Platform } from "obsidian";
 import colorsea from 'colorsea';
 import validateColor from "validate-color";
 import ColorPalette, { urlRegex } from "./main";
@@ -214,37 +214,53 @@ export class Palette extends MarkdownRenderChild {
                 context.fillRect(0, 0, settings.width, settings.height);
             }
             
-            // add the event listener to the element
-            child.addEventListener(
-                "mousemove", 
-                (e) =>{
-                    // Canvas bounds
-                    const rect = child.getBoundingClientRect();
-                    // Set tooltip position left or right side of mouse based on whether cursor is halfway
-                    let lrPosition = e.clientX - rect.left > rect.width / 2 ? (e.clientX - rect.left - 56) : (e.clientX - rect.left + 64);
-                    tooltip.style.left = lrPosition + "px";
-                    // Keep tooltip stable and visible at bottom of palette bounds, otherwise follow cursor
-                    let bottomPosition = rect.bottom - e.clientY < 32 ? rect.height - 40 : (e.clientY - rect.top - 8);
-                    tooltip.style.top = bottomPosition + "px";
+            // Check if mobile & add the event listener to the element to track position for the tooltip
+            if(!Platform.isMobile) child.addEventListener("mousemove", (e) => setTooltipPosition(e.clientX, e.clientY));
+            else child.addEventListener("touchmove", (e) => setTooltipPosition(e.touches[0].clientX, e.touches[0].clientY));
 
-                    const hex = getCanvasHex(e, rect);
-                    tooltipText.setText(hex.toUpperCase());
-                }
-            );
+            /**
+             * Sets the tooltip position based on current cursor or touch position
+             */
+            function setTooltipPosition(clientX: number, clientY: number) {
+                // Canvas bounds
+                const rect = child.getBoundingClientRect();
+
+                // Get tooltip bounds
+                let tooltipWidth = tooltip.offsetWidth;
+                let tooltipHeight = tooltip.offsetHeight;
+
+                // Set tooltip position left or right side of mouse based on whether cursor is halfway
+                let leftPosition = clientX - rect.left > rect.width / 2 ? (clientX - rect.left - 56) : (clientX - rect.left + 64);
+                // Clamp to left edge
+                if (leftPosition < 0 + 50) leftPosition = 0 + 50;
+                else if (leftPosition + tooltipWidth > rect.width + 50) leftPosition = rect.width - tooltipWidth + 50;
+                tooltip.style.left = leftPosition + "px";
+
+                // Get cursor position & align tooltip centered to cursor (1/4 tooltip height)
+                let topPosition = clientY - rect.top - (tooltipHeight / 4);
+                // Clamp to top edge
+                if (topPosition < 0) topPosition = 0;
+                // Clamp to bottom edge
+                else if (topPosition + tooltipHeight > rect.height) topPosition = rect.height - tooltipHeight;
+                tooltip.style.top = topPosition + "px";
+
+                const hex = getCanvasHex(clientX, clientY, rect);
+                tooltipText.setText(hex.toUpperCase());
+            }
 
             child.onClickEvent((e) => {
                 // Canvas bounds
                 const rect = child.getBoundingClientRect();
-                const hex = getCanvasHex(e, rect);
+                const hex = getCanvasHex(e.clientX, e.clientY, rect);
                 new Notice(`Copied ${hex.toUpperCase()}`);
                 navigator.clipboard.writeText(hex.toUpperCase())
             });
             
             // Retrieves the hex from the mouse position
-            const getCanvasHex = (e: MouseEvent, canvasBounds: DOMRect) => {
+            const getCanvasHex = (clientX: number, clientY: number, canvasBounds: DOMRect) => {
                 let context = child.getContext('2d', {willReadFrequently: true});
-                let x = e.clientX - canvasBounds.left;
-                let y = e.clientY - canvasBounds.top;
+                let x = clientX - canvasBounds.left;
+                let y = clientY - canvasBounds.top;
                 let [r, g, b, a] = context?.getImageData(x, y, 1, 1).data || [0, 0, 0, 0];
                 // Convert alpha from 0-255 to 0-1
                 const aConv = Math.round((a/255) * 100);
