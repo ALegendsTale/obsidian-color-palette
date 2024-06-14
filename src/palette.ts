@@ -5,10 +5,11 @@ import ColorPalette, { urlRegex } from "./main";
 import { Direction, AliasMode, ColorPaletteSettings } from "./settings";
 
 export type PaletteSettings = {
-    gradient: boolean
     height: number
     width: number
     direction: Direction
+    gradient: boolean
+    hover: boolean
     aliases: string[]
 }
 
@@ -42,7 +43,8 @@ export class Palette extends MarkdownRenderChild {
      * Set the initial default settings
      */
     private setDefaultSettings() {
-        this.settings = { gradient: this.pluginSettings.gradient, direction: this.pluginSettings.direction, height: this.pluginSettings.height, width: this.pluginSettings.width, aliases: [] };
+        this.settings = { height: this.pluginSettings.height, width: this.pluginSettings.width, direction: this.pluginSettings.direction, gradient: this.pluginSettings.gradient, hover: this.pluginSettings.hover, aliases: [] };
+        this.containerEl.style.setProperty('--palette-corners', this.pluginSettings.corners ? '5px' : '0px');
     }
 
     /**
@@ -188,6 +190,8 @@ export class Palette extends MarkdownRenderChild {
         this.containerEl.style.setProperty('--palette-direction', settings.direction === Direction.Row ? Direction.Column : Direction.Row);
         this.containerEl.style.setProperty('--not-palette-direction', settings.direction);
         this.containerEl.style.setProperty('--palette-height', `${settings.height}px`);
+        this.containerEl.toggleClass('paletteHover', settings.hover);
+        console.log(settings.hover);
 
         try{
             // Throw error & create Invalid Palette
@@ -210,7 +214,7 @@ export class Palette extends MarkdownRenderChild {
 
             // Set Canvas width to parent width, unless width is set by user
             let gradientWidth = settings.width === defaultWidth ? containerEl.offsetWidth : settings.width;
-            
+
             child.width = gradientWidth;
             child.height = settings.height;
 

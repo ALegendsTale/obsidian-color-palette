@@ -15,20 +15,24 @@ export interface ColorPaletteSettings {
 	noticeDuration: number;
 	errorPulse: boolean;
 	aliasMode: AliasMode;
+	corners: boolean;
 	height: number;
 	width: number;
 	direction: Direction,
-	gradient: boolean
+	gradient: boolean,
+	hover: boolean
 }
 
 export const defaultSettings: ColorPaletteSettings = {
 	noticeDuration: 10000,
 	errorPulse: true,
 	aliasMode: AliasMode.Both,
+	corners: true,
 	height: 150,
 	width: 700,
 	direction: Direction.Column,
-	gradient: false
+	gradient: false,
+	hover: true
 };
 
 export class SettingsTab extends PluginSettingTab {
@@ -46,18 +50,6 @@ export class SettingsTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName("Notice Duration")
-			.setDesc("How long error messages are show for in seconds (0 for indefinite)")
-			.addText((text) => {
-				text
-				.setValue((settings.noticeDuration / 1000).toString())
-				.onChange(async (value) => {
-					settings.noticeDuration = Number(value) * 1000;
-					await this.plugin.saveSettings();
-				});
-			});
-		
-		new Setting(containerEl)
 			.setName("Palette Error Pulse")
 			.setDesc("Whether the affected palette should pulse when encountering an error")
 			.addToggle((toggle) => {
@@ -68,6 +60,18 @@ export class SettingsTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				})
 			})
+
+		new Setting(containerEl)
+			.setName("Notice Duration")
+			.setDesc("How long error messages are show for in seconds (0 for indefinite)")
+			.addText((text) => {
+				text
+				.setValue((settings.noticeDuration / 1000).toString())
+				.onChange(async (value) => {
+					settings.noticeDuration = Number(value) * 1000;
+					await this.plugin.saveSettings();
+				});
+			});
 
 		new Setting(containerEl)
 			.setName('Alias Mode')
@@ -83,7 +87,19 @@ export class SettingsTab extends PluginSettingTab {
 				})
 			})
 
-		containerEl.createEl('h2').setText('Defaults');
+		new Setting(containerEl)
+			.setName("Palette Corners")
+			.setDesc("Minor aesthetic change which toggles whether the corners on palettes are rounded.")
+			.addToggle((toggle) => {
+				toggle
+				.setValue(settings.corners)
+				.onChange(async (value) => {
+					settings.corners = value;
+					await this.plugin.saveSettings();
+				})
+			})
+
+		containerEl.createEl('h2').setText('Palette Defaults');
 		
 		new Setting(containerEl)
 			.setName('Height')
@@ -97,40 +113,52 @@ export class SettingsTab extends PluginSettingTab {
 			})
 
 		new Setting(containerEl)
-		.setName('Width')
-		.setDesc('Caution - Might cause palettes to display incorrectly.')
-		.addText((text) => {
-			text
-			.setValue(settings.width.toString())
-			.onChange(async (value) => {
-				settings.width = Number(value);
-				await this.plugin.saveSettings();
+			.setName('Width')
+			.setDesc('Caution - Might cause palettes to display incorrectly.')
+			.addText((text) => {
+				text
+				.setValue(settings.width.toString())
+				.onChange(async (value) => {
+					settings.width = Number(value);
+					await this.plugin.saveSettings();
+				})
 			})
-		})
 
 		new Setting(containerEl)
-		.setName('Direction')
-		.addDropdown((dropdown) => {
-			dropdown
-			.addOption(Direction.Column, Direction.Column)
-			.addOption(Direction.Row, Direction.Row)
-			.setValue(this.plugin.settings.direction)
-			.onChange(async (value) => {
-				settings.direction = value as Direction
-				await this.plugin.saveSettings();
+			.setName('Direction')
+			.addDropdown((dropdown) => {
+				dropdown
+				.addOption(Direction.Column, Direction.Column)
+				.addOption(Direction.Row, Direction.Row)
+				.setValue(this.plugin.settings.direction)
+				.onChange(async (value) => {
+					settings.direction = value as Direction
+					await this.plugin.saveSettings();
+				})
 			})
-		})
 
 		new Setting(containerEl)
-		.setName('Gradient')
-		.addToggle((toggle) => {
-            toggle
-            .setValue(this.plugin.settings.gradient)
-            .onChange(async (value) => {
-                settings.gradient = value;
-				await this.plugin.saveSettings();
-            })
-		})
+			.setName('Gradient')
+			.addToggle((toggle) => {
+				toggle
+				.setValue(this.plugin.settings.gradient)
+				.onChange(async (value) => {
+					settings.gradient = value;
+					await this.plugin.saveSettings();
+				})
+			})
+
+		new Setting(containerEl)
+			.setName("Hover")
+			.setDesc("Toggles whether palettes can be hovered")
+			.addToggle((toggle) => {
+				toggle
+				.setValue(settings.hover)
+				.onChange(async (value) => {
+					settings.hover = value;
+					await this.plugin.saveSettings();
+				})
+			})
 	}
 
 	// Called when settings are exited

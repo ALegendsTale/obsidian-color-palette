@@ -18,7 +18,7 @@ export class CreatePaletteModal extends Modal {
         super(app);
         this.onSubmit = onSubmit;
         this.url = '';
-        this.settings = { gradient: pluginSettings.gradient, direction: pluginSettings.direction, height: pluginSettings.height, width: pluginSettings.width, aliases: [] };
+        this.settings = { height: pluginSettings.height, width: pluginSettings.width, direction: pluginSettings.direction, gradient: pluginSettings.gradient, hover: pluginSettings.hover, aliases: [] };
         this.colors = []
         this.colorContainers = [];
         this.combination = Combination.Random;
@@ -111,6 +111,39 @@ export class CreatePaletteModal extends Modal {
         settingsContainer.createEl('h3').setText('Settings');
 
         new Setting(settingsContainer)
+            .setName("Height")
+            .addText((text) => {
+                text
+                .setValue(this.settings.height.toString())
+                .onChange((value) => {
+                    this.settings.height = Number(value);
+                })
+            })
+
+        new Setting(settingsContainer)
+            .setName("Width")
+            .setDesc('Caution - Might cause palette to display incorrectly.')
+            .addText((text) => {
+                text
+                .setValue(this.settings.width.toString())
+                .onChange((value) => {
+                    this.settings.width = Number(value);
+                })
+            })
+
+        new Setting(settingsContainer)
+            .setName("Direction")
+            .addDropdown((dropdown) => {
+                dropdown
+                .addOption(Direction.Column, Direction.Column)
+                .addOption(Direction.Row, Direction.Row)
+                .setValue(this.settings.direction.toString())
+                .onChange((value) => {
+                    this.settings.direction = value as Direction;
+                })
+            })
+
+        new Setting(settingsContainer)
         .setName("Gradient")
         .addToggle((toggle) => {
             toggle
@@ -121,35 +154,13 @@ export class CreatePaletteModal extends Modal {
         })
 
         new Setting(settingsContainer)
-        .setName("Direction")
-        .addDropdown((dropdown) => {
-            dropdown
-            .addOption(Direction.Column, Direction.Column)
-            .addOption(Direction.Row, Direction.Row)
-            .setValue(this.settings.direction.toString())
-            .onChange((value) => {
-                this.settings.direction = value as Direction;
-            })
-        })
-
-        new Setting(settingsContainer)
-        .setName("Height")
-        .addText((text) => {
-            text
-            .setValue(this.settings.height.toString())
-            .onChange((value) => {
-                this.settings.height = Number(value);
-            })
-        })
-
-        new Setting(settingsContainer)
-        .setName("Width")
-        .setDesc('Caution - Might cause palette to display incorrectly.')
-        .addText((text) => {
-            text
-            .setValue(this.settings.width.toString())
-            .onChange((value) => {
-                this.settings.width = Number(value);
+        .setName("Hover")
+        .setDesc("Toggles whether palettes can be hovered")
+        .addToggle((toggle) => {
+            toggle
+            .setValue(this.settings.hover)
+            .onChange(async (value) => {
+                this.settings.hover = value;
             })
         })
 
@@ -166,7 +177,7 @@ export class CreatePaletteModal extends Modal {
                     this.result = `${this.url.match(urlRegex) ? 
                     this.url 
                     : 
-                    this.colors.toString()}\n{"gradient": ${this.settings.gradient}, "direction": "${this.settings.direction}", "height": ${this.settings.height}, "aliases": ${JSON.stringify(this.settings.aliases)}}`
+                    this.colors.toString()}\n{"height": ${this.settings.height}, "direction": "${this.settings.direction}", "gradient": ${this.settings.gradient}, "hover": ${this.settings.hover}, "aliases": ${JSON.stringify(this.settings.aliases)}}`
                     this.close();
                     this.onSubmit(this.result);
                 }

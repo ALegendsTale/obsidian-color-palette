@@ -8,11 +8,12 @@
     --palette-color: #000;
     --palette-column-flex-basis: 20px;
     --notice-duration: 2.5s;
+    --palette-corners: 5px;
     
     display: flex;
     flex-direction: var(--palette-direction);
     width: 100%;
-    border-radius: 5px;
+    border-radius: var(--palette-corners);
     overflow: hidden;
     cursor: pointer;
     height: var(--palette-height);
@@ -54,15 +55,15 @@
     background: linear-gradient(to right, var(--palette-background-color));
 }
 
-.palette.paletteColumn > div:hover {
+.palette.paletteColumn.paletteHover > div:hover {
     flex-basis: var(--palette-column-flex-basis);
 }
 
-.palette:not(.paletteColumn) > div:hover {
+.palette:not(.paletteColumn).paletteHover > div:hover {
     flex-basis: 80px;
 }
 
-.palette > div:hover > span {
+.palette.paletteHover > div:hover > span {
     display: block;
 }
 
@@ -87,7 +88,7 @@
     font-size: 100%;
 }
 
-.palette > canvas:hover ~ .palette-tooltip {
+.palette.paletteHover > canvas:hover ~ .palette-tooltip {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -101,7 +102,7 @@
     height: var(--palette-height);
     width: 100%;
     background-color: #000000C0;
-    border-radius: 5px;
+    border-radius: var(--palette-corners);;
 }
 
 .palette > .invalid > span {
