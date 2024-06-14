@@ -5,6 +5,7 @@ Create beautiful & functional color palettes that enhance the appearance of your
 ![Color Palette Demo](ColorPaletteDemo.png)
 
 ## Key Features
+
 - Supports most CSS color formats (including Hex, RGB, HSL, etc.)
 - Create color palettes from popular palette websites like coolors & colorhunt.
 - Style like a pro with gorgeous gradients.
@@ -46,14 +47,18 @@ Optional settings can be applied to each palette within the codeblock.
 </pre>
 
 ### Optional Settings
-- gradient (true/false)
-- direction (row/column)
+
 - height (number)
 - width (number)
+- direction (row/column)
+- gradient (true/false)
+- hover (true/false)
 - aliases (string array)
+
 > Caution - using width might cause palettes to display incorrectly.
 
 ### Commands
+
 Commands can be bound to a hotkey in settings.
 
 - Create - Creates a new palette using the colors or URL provided

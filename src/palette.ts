@@ -191,7 +191,6 @@ export class Palette extends MarkdownRenderChild {
         this.containerEl.style.setProperty('--not-palette-direction', settings.direction);
         this.containerEl.style.setProperty('--palette-height', `${settings.height}px`);
         this.containerEl.toggleClass('paletteHover', settings.hover);
-        console.log(settings.hover);
 
         try{
             // Throw error & create Invalid Palette
