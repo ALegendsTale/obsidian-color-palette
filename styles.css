@@ -16,6 +16,7 @@
     overflow: hidden;
     cursor: pointer;
     height: var(--palette-height);
+    position: relative;
 }
 
 .palette-pulse {

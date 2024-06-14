@@ -145,6 +145,18 @@ export class Palette extends MarkdownRenderChild {
 
         // Create new palette
         this.createPalette(this.colors, this.settings);
+
+        // Refresh gradient palettes when Obsidian resizes
+        const resizeObserver = new ResizeObserver((palettes) => {
+            for (const palette of palettes) {
+                for (const children of Array.from(palette.target.children)) {
+                    if ( children.nodeName === 'CANVAS') {
+                        this.refresh();
+                    }
+                }  
+            }
+        })
+        resizeObserver.observe(this.containerEl);
 	}
 
     unload() {
@@ -181,7 +193,7 @@ export class Palette extends MarkdownRenderChild {
             // Throw error & create Invalid Palette
             if(this.status !== Status.VALID) throw new PaletteError(this.status);
             this.settings.gradient ?
-            createGradientPalette(this.containerEl, colors, settings)
+            createGradientPalette(this.containerEl, colors, settings, this.pluginSettings.width)
             :
             createColorPalette(this.containerEl, colors, settings.height, this.pluginSettings.aliasMode);
         }
@@ -192,10 +204,14 @@ export class Palette extends MarkdownRenderChild {
             new Notice(err);
         }
 
-        function createGradientPalette(containerEl: HTMLElement, colors: string[], settings: PaletteSettings){
+        function createGradientPalette(containerEl: HTMLElement, colors: string[], settings: PaletteSettings, defaultWidth: number){
             if(colors.length <= 1) throw new PaletteError(Status.INVALID_GRADIENT);
             let child = containerEl.createEl('canvas');
-            child.width = settings.width;
+
+            // Set Canvas width to parent width, unless width is set by user
+            let gradientWidth = settings.width === defaultWidth ? containerEl.offsetWidth : settings.width;
+            
+            child.width = gradientWidth;
             child.height = settings.height;
 
             const tooltip = containerEl.createEl('section');
@@ -204,14 +220,14 @@ export class Palette extends MarkdownRenderChild {
 
             let context = child.getContext('2d', {willReadFrequently: true});
             if(context != null){
-                let gradient = settings.direction === Direction.Column ? context.createLinearGradient(0, 0, settings.width, 0) : context.createLinearGradient(0, 0, 0, settings.height);
+                let gradient = settings.direction === Direction.Column ? context.createLinearGradient(0, 0, gradientWidth, 0) : context.createLinearGradient(0, 0, 0, settings.height);
 
                 for(const[i, color] of colors.entries()){
                     gradient.addColorStop(i / (colors.length - 1), color);
                 }
 
                 context.fillStyle = gradient || '#000';
-                context.fillRect(0, 0, settings.width, settings.height);
+                context.fillRect(0, 0, gradientWidth, settings.height);
             }
             
             // Check if mobile & add the event listener to the element to track position for the tooltip
@@ -231,9 +247,10 @@ export class Palette extends MarkdownRenderChild {
 
                 // Set tooltip position left or right side of mouse based on whether cursor is halfway
                 let leftPosition = clientX - rect.left > rect.width / 2 ? (clientX - rect.left - 56) : (clientX - rect.left + 64);
+                let halfTooltipWidth = tooltipWidth / 2;
                 // Clamp to left edge
-                if (leftPosition < 0 + 50) leftPosition = 0 + 50;
-                else if (leftPosition + tooltipWidth > rect.width + 50) leftPosition = rect.width - tooltipWidth + 50;
+                if (leftPosition < 0 + halfTooltipWidth) leftPosition = 0 + halfTooltipWidth;
+                else if (leftPosition + tooltipWidth > rect.width + halfTooltipWidth) leftPosition = rect.width - tooltipWidth + halfTooltipWidth;
                 tooltip.style.left = leftPosition + "px";
 
                 // Get cursor position & align tooltip centered to cursor (1/4 tooltip height)
