@@ -59,7 +59,7 @@ export class Palette extends MarkdownRenderChild {
                 return color.split(';').flatMap((postSplitColor) => {
                     return postSplitColor.trim();
                 // Remove whitespace elements from array
-                }).filter((color) => color.match(/\s/));
+                }).filter((color) => color !== '');
             }
             // Split colors delimited by commas
             return color.split(',').flatMap((postSplitColor) => {
