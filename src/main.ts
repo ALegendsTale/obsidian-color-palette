@@ -50,18 +50,27 @@ export default class ColorPalette extends Plugin {
 		this.addCommand({
 			id: 'convert-link',
 			name: 'Convert link',
-			editorCallback: (editor: Editor) => {
+			editorCallback: async (editor: Editor) => {
 				try {
-					const link = editor.getSelection();
-					if(!link.match(`^${urlRegex.source}$`)) throw new Error('Selected text is not a link.');
+					let link = '';
+					const editorSelection = editor.getSelection();
+					const clipboardText = await navigator.clipboard.readText();
+
+					// Check if selection text matches regex
+					if(editorSelection.match(`^${urlRegex.source}$`)) link = editorSelection;
+					// Check if clipboard text matches regex
+					else if(clipboardText.match(`^${urlRegex.source}$`)) link = clipboardText;
+					// Throw error if selection & clipboard don't match URL regex
+					else throw new Error('Failed to convert link. Please select or copy a link, then try again.');
+					
 					const codeBlock = `\`\`\`palette\n${link}\n\`\`\`\n`;
 					const cursor = editor.getCursor();
 					editor.replaceSelection(codeBlock);
 					editor.setCursor({
 						line: cursor.line + codeBlock.split('\n').length,
 						ch: 0
-					})
-					new Notice(`Converted ${editor.getSelection()}`)
+					});
+					new Notice(`Converted ${editorSelection || clipboardText}`);
 				} 
 				catch (error) {
 					new Notice(error);
