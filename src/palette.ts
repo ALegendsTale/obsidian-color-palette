@@ -57,10 +57,9 @@ export class Palette extends MarkdownRenderChild {
         let colors = input.flatMap((color) => {
             // Split RGB / HSL delimited by semicolons
             if(color.includes('(')){
-                return color.split(';').flatMap((postSplitColor) => {
-                    return postSplitColor.trim();
+                return color.split(';').flatMap((postSplitColor) => postSplitColor.trim())
                 // Remove whitespace elements from array
-                }).filter((color) => color !== '');
+                .filter((color) => color !== '');
             }
             // Split colors delimited by commas
             return color.split(',').flatMap((postSplitColor) => {

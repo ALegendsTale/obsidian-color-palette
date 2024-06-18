@@ -144,25 +144,25 @@ export class CreatePaletteModal extends Modal {
             })
 
         new Setting(settingsContainer)
-        .setName("Gradient")
-        .addToggle((toggle) => {
-            toggle
-            .setValue(this.settings.gradient)
-            .onChange((value) => {
-                this.settings.gradient = value;
+            .setName("Gradient")
+            .addToggle((toggle) => {
+                toggle
+                .setValue(this.settings.gradient)
+                .onChange((value) => {
+                    this.settings.gradient = value;
+                })
             })
-        })
 
         new Setting(settingsContainer)
-        .setName("Hover")
-        .setDesc("Toggles whether palettes can be hovered")
-        .addToggle((toggle) => {
-            toggle
-            .setValue(this.settings.hover)
-            .onChange(async (value) => {
-                this.settings.hover = value;
+            .setName("Hover")
+            .setDesc("Toggles whether palettes can be hovered")
+            .addToggle((toggle) => {
+                toggle
+                .setValue(this.settings.hover)
+                .onChange(async (value) => {
+                    this.settings.hover = value;
+                })
             })
-        })
 
         new Setting(settingsContainer)
             .setName("Override")
@@ -184,7 +184,7 @@ export class CreatePaletteModal extends Modal {
                 try{
                     if(!this.url.match(urlRegex) && this.url !== '') throw new Error('URL provided is not valid.');
                     // Generate random colors if none are provided
-                    if(this.colors.length === 0) this.colors = generateRandomColors(Combination.Random).colors;;
+                    if(this.colors.length === 0) this.colors = generateRandomColors(Combination.Random).colors;
                     this.result = `${this.url.match(urlRegex) ? 
                     this.url 
                     : 
