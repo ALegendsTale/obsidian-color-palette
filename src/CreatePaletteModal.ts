@@ -4,6 +4,7 @@ import { urlRegex } from "./main";
 import colorsea from "colorsea";
 import { Direction, ColorPaletteSettings } from "./settings";
 import { Combination, generateRandomColors } from "./utils/generateRandom";
+import { getModifiedSettingsAsString } from "./utils/basicUtils";
 
 export class CreatePaletteModal extends Modal {
     result: string;
@@ -185,10 +186,12 @@ export class CreatePaletteModal extends Modal {
                     if(!this.url.match(urlRegex) && this.url !== '') throw new Error('URL provided is not valid.');
                     // Generate random colors if none are provided
                     if(this.colors.length === 0) this.colors = generateRandomColors(Combination.Random).colors;
+                    const settings: PaletteSettings = JSON.parse(`{"height": ${this.settings.height}, "direction": "${this.settings.direction}", "gradient": ${this.settings.gradient}, "hover": ${this.settings.hover}, "override": ${this.settings.override}, "aliases": ${JSON.stringify(this.settings.aliases)}}`);
+                    const moddedSettings = getModifiedSettingsAsString(settings);
                     this.result = `${this.url.match(urlRegex) ? 
                     this.url 
                     : 
-                    this.colors.toNString()}\n{"height": ${this.settings.height}, "direction": "${this.settings.direction}", "gradient": ${this.settings.gradient}, "hover": ${this.settings.hover}, "override": ${this.settings.override}, "aliases": ${JSON.stringify(this.settings.aliases)}}`
+                    this.colors.toNString()}${moddedSettings ? `\n${moddedSettings}` : ''.trim()}`
                     this.close();
                     this.onSubmit(this.result);
                 }

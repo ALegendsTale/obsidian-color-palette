@@ -3,7 +3,7 @@ import { CreatePaletteModal } from 'src/CreatePaletteModal';
 import { GeneratePaletteModal } from './GeneratePaletteModal';
 import { Palette } from 'src/palette';
 import { ColorPaletteSettings, defaultSettings, SettingsTab } from 'src/settings';
-import './utils/basicUtils'
+import './utils/prototypeUtils'
 
 export const urlRegex = /(?:https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(?:\.[a-zA-Z0-9]{2,})(?:\.[a-zA-Z0-9]{2,})?\/(?:palette\/)?([a-zA-Z0-9-]{2,})/
 
@@ -62,7 +62,7 @@ export default class ColorPalette extends Plugin {
 					else if(clipboardText.match(`^${urlRegex.source}$`)) link = clipboardText;
 					// Throw error if selection & clipboard don't match URL regex
 					else throw new Error('Failed to convert link. Please select or copy a link, then try again.');
-					
+
 					const codeBlock = `\`\`\`palette\n${link}\n\`\`\`\n`;
 					const cursor = editor.getCursor();
 					editor.replaceSelection(codeBlock);
