@@ -13,7 +13,7 @@ export class GeneratePaletteModal extends SuggestModal<Combination> {
     constructor(app: App, editor: Editor, pluginSettings: ColorPaletteSettings) {
         super(app);
         this.editor = editor;
-        this.settings = { height: pluginSettings.height, width: pluginSettings.width, direction: pluginSettings.direction, gradient: pluginSettings.gradient, hover: pluginSettings.hover, aliases: [] };
+        this.settings = { height: pluginSettings.height, width: pluginSettings.width, direction: pluginSettings.direction, gradient: pluginSettings.gradient, hover: pluginSettings.hover, override: pluginSettings.override, aliases: [] };
     }
 
     // Returns all available suggestions.

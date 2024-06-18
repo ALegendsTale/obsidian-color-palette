@@ -10,6 +10,7 @@ export type PaletteSettings = {
     direction: Direction
     gradient: boolean
     hover: boolean
+    override: boolean
     aliases: string[]
 }
 
@@ -43,7 +44,7 @@ export class Palette extends MarkdownRenderChild {
      * Set the initial default settings
      */
     private setDefaultSettings() {
-        this.settings = { height: this.pluginSettings.height, width: this.pluginSettings.width, direction: this.pluginSettings.direction, gradient: this.pluginSettings.gradient, hover: this.pluginSettings.hover, aliases: [] };
+        this.settings = { height: this.pluginSettings.height, width: this.pluginSettings.width, direction: this.pluginSettings.direction, gradient: this.pluginSettings.gradient, hover: this.pluginSettings.hover, override: this.pluginSettings.override, aliases: [] };
         this.containerEl.style.setProperty('--palette-corners', this.pluginSettings.corners ? '5px' : '0px');
     }
 
@@ -75,8 +76,10 @@ export class Palette extends MarkdownRenderChild {
         if(rawColors.match(urlRegex)) return parseUrl(rawColors);
 
         // Return status if colors are invalid
-        for(let color of colors) {
-            if(!validateColor(color)) return Status.INVALID_COLORS;
+        if (!this.settings.override) {
+            for(let color of colors) {
+                if(!validateColor(color)) return Status.INVALID_COLORS;
+            }
         }
 
         // Return final colors array
@@ -121,22 +124,19 @@ export class Palette extends MarkdownRenderChild {
         const split = this.input.split('\n')
         // Returns true if palette settings are defined
         const hasSettings = split.some((val) => val.includes(('{')));
-        
-        // Retrieve colors from input
-        const inputColors = hasSettings ? split.slice(0, split.length - 1) : split;
-        const colors = this.parseColors(inputColors)
-        if(typeof colors === 'string') this.status = colors;
-        if(typeof colors === 'object') this.colors = colors;
 
-        // Retrieve settings from input
-        const inputSettings = split.pop();
         // Parse settings if set
-        if(hasSettings && inputSettings) {
-            const settings = this.parseSettings(inputSettings);
-            // Set status to Invalid Colors & Settings if settings were deemed invalid
-            if(typeof settings === 'string') this.status = this.status === Status.INVALID_COLORS ? Status.INVALID_COLORS_AND_SETTINGS : Status.INVALID_SETTINGS;
+        if(hasSettings) {
+            // Remove and parse the last split index (settings are always defined on the last index)
+            const settings = this.parseSettings(split.pop() || '');
+            if(typeof settings === 'string') this.status = Status.INVALID_SETTINGS;
             if(typeof settings === 'object') this.settings = {...this.settings, ...settings};
         }
+        
+        const colors = this.parseColors(split);
+        // Set status to Invalid Colors & Settings if colors were also invalid
+        if(typeof colors === 'string') this.status = this.status === Status.INVALID_SETTINGS ? Status.INVALID_COLORS_AND_SETTINGS : Status.INVALID_COLORS;
+        if(typeof colors === 'object') this.colors = colors;
     }
   
 	onload() {

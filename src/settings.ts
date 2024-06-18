@@ -20,7 +20,8 @@ export interface ColorPaletteSettings {
 	width: number;
 	direction: Direction,
 	gradient: boolean,
-	hover: boolean
+	hover: boolean,
+	override: boolean
 }
 
 export const defaultSettings: ColorPaletteSettings = {
@@ -32,7 +33,8 @@ export const defaultSettings: ColorPaletteSettings = {
 	width: 700,
 	direction: Direction.Column,
 	gradient: false,
-	hover: true
+	hover: true,
+	override: false
 };
 
 export class SettingsTab extends PluginSettingTab {
@@ -156,6 +158,18 @@ export class SettingsTab extends PluginSettingTab {
 				.setValue(settings.hover)
 				.onChange(async (value) => {
 					settings.hover = value;
+					await this.plugin.saveSettings();
+				})
+			})
+
+		new Setting(containerEl)
+			.setName("Override")
+			.setDesc("Disables color validation for full control (advanced)")
+			.addToggle((toggle) => {
+				toggle
+				.setValue(settings.override)
+				.onChange(async (value) => {
+					settings.override = value;
 					await this.plugin.saveSettings();
 				})
 			})

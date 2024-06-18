@@ -18,7 +18,7 @@ export class CreatePaletteModal extends Modal {
         super(app);
         this.onSubmit = onSubmit;
         this.url = '';
-        this.settings = { height: pluginSettings.height, width: pluginSettings.width, direction: pluginSettings.direction, gradient: pluginSettings.gradient, hover: pluginSettings.hover, aliases: [] };
+        this.settings = { height: pluginSettings.height, width: pluginSettings.width, direction: pluginSettings.direction, gradient: pluginSettings.gradient, hover: pluginSettings.hover, override: pluginSettings.override, aliases: [] };
         this.colors = []
         this.colorContainers = [];
         this.combination = Combination.Random;
@@ -165,6 +165,17 @@ export class CreatePaletteModal extends Modal {
         })
 
         new Setting(settingsContainer)
+            .setName("Override")
+            .setDesc("Disables color validation for full control (advanced)")
+            .addToggle((toggle) => {
+                toggle
+                .setValue(this.settings.override)
+                .onChange(async (value) => {
+                    this.settings.override = value;
+                })
+            })
+
+        new Setting(settingsContainer)
         .addButton((button) => 
             button
             .setButtonText("Create")
@@ -177,7 +188,7 @@ export class CreatePaletteModal extends Modal {
                     this.result = `${this.url.match(urlRegex) ? 
                     this.url 
                     : 
-                    this.colors.toString()}\n{"height": ${this.settings.height}, "direction": "${this.settings.direction}", "gradient": ${this.settings.gradient}, "hover": ${this.settings.hover}, "aliases": ${JSON.stringify(this.settings.aliases)}}`
+                    this.colors.toString()}\n{"height": ${this.settings.height}, "direction": "${this.settings.direction}", "gradient": ${this.settings.gradient}, "hover": ${this.settings.hover}, "override": ${this.settings.override}, "aliases": ${JSON.stringify(this.settings.aliases)}}`
                     this.close();
                     this.onSubmit(this.result);
                 }
