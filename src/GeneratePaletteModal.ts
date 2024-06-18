@@ -35,7 +35,7 @@ export class GeneratePaletteModal extends SuggestModal<Combination> {
             const isLineEmpty = this.editor.getLine(this.editor.getCursor().line).length === 0;
             const isColor = validateColor(selTextOrLine);
             const { colors, settings } = isColor ? generateColors(colorsea(selTextOrLine), combination, this.settings) : generateRandomColors(combination, this.settings);
-            const newBlock = `\`\`\`palette\n${colors.toString()}\n${JSON.stringify(settings)}\n\`\`\`\n`;
+            const newBlock = `\`\`\`palette\n${colors.toNString()}\n${JSON.stringify(settings)}\n\`\`\`\n`;
             const editorUtils = new EditorUtils(this.editor);
             editorUtils.insertContent(newBlock, !isColor && !isLineEmpty);
         }

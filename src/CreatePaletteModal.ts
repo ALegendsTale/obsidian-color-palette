@@ -188,7 +188,7 @@ export class CreatePaletteModal extends Modal {
                     this.result = `${this.url.match(urlRegex) ? 
                     this.url 
                     : 
-                    this.colors.toString()}\n{"height": ${this.settings.height}, "direction": "${this.settings.direction}", "gradient": ${this.settings.gradient}, "hover": ${this.settings.hover}, "override": ${this.settings.override}, "aliases": ${JSON.stringify(this.settings.aliases)}}`
+                    this.colors.toNString()}\n{"height": ${this.settings.height}, "direction": "${this.settings.direction}", "gradient": ${this.settings.gradient}, "hover": ${this.settings.hover}, "override": ${this.settings.override}, "aliases": ${JSON.stringify(this.settings.aliases)}}`
                     this.close();
                     this.onSubmit(this.result);
                 }

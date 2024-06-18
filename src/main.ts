@@ -3,6 +3,7 @@ import { CreatePaletteModal } from 'src/CreatePaletteModal';
 import { GeneratePaletteModal } from './GeneratePaletteModal';
 import { Palette } from 'src/palette';
 import { ColorPaletteSettings, defaultSettings, SettingsTab } from 'src/settings';
+import './utils/basicUtils'
 
 export const urlRegex = /(?:https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(?:\.[a-zA-Z0-9]{2,})(?:\.[a-zA-Z0-9]{2,})?\/(?:palette\/)?([a-zA-Z0-9-]{2,})/
 
@@ -91,7 +92,7 @@ export default class ColorPalette extends Plugin {
 	
 					if(colors[0] === 'Invalid Palette') throw new Error('Selected codeblock can not be converted to hex.');
 	
-					const newBlock = `\`\`\`palette\n${colors.toString()}${content?.[1] ? '\n' + content[1] : ''}\n\`\`\``;
+					const newBlock = `\`\`\`palette\n${colors.toNString()}${content?.[1] ? '\n' + content[1] : ''}\n\`\`\``;
 					editor.replaceSelection(newBlock)
 					new Notice(`Converted codeblock link to hex`)
 				} 
