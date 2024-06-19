@@ -103,7 +103,11 @@ export class CreatePaletteModal extends Modal {
             .onChange((value) => {
                 const combination = value as Combination;
                 this.combination = combination;
-                this.colors = generateRandomColors(combination).colors;
+
+                // Generate colors & settings
+                const generated = generateRandomColors(combination, this.settings);
+                this.colors = generated.colors;
+                if(generated.settings) this.settings = generated.settings;
             })
         })
 
