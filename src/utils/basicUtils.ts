@@ -50,3 +50,31 @@ export function getModifiedSettingsAsString (settings: PaletteSettings) {
     const moddedSettings = getModifiedSettings(settings);
     if(moddedSettings) return JSON.stringify(moddedSettings);
 }
+
+export function convertStringSettings(settings: PaletteSettings) {
+    return JSON.parse(
+        `{
+        "height": ${settings.height}, 
+        "direction": "${settings.direction}", 
+        "gradient": ${settings.gradient}, 
+        "hover": ${settings.hover}, 
+        "override": ${settings.override}, 
+        "aliases": ${JSON.stringify(settings.aliases)}
+        }`
+    )
+}
+
+/**
+ * Parse input url & extract colors
+ * @param url URL from color input
+ * @returns Array of colors
+ */
+export function parseUrl(url: string) {
+    // Check if url colors contain dashes in-between
+    if(url.includes('-')) {
+        // Replace dashes with hexes (colorhunt)
+        return url.substring(url.lastIndexOf('/') + 1).split('-').map(i => '#' + i);
+    }
+    // Add hex between URL path colors (coolors)
+    else return url.substring(url.lastIndexOf('/') + 1).match(/.{1,6}/g)?.map(i => '#' + i) || [];
+}

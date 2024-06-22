@@ -10,6 +10,11 @@ export enum Combination {
     Random = "Random"
 }
 
+type OptionalParams = {
+    baseColor?: ReturnType<typeof colorsea>
+    settings?: PaletteSettings
+}
+
 /**
  * Generate colors based on color theory
  * @param baseColor Initial color to generate the rest from
@@ -17,7 +22,10 @@ export enum Combination {
  * @param settings The settings for the palette
  * @returns Generated colors & settings
  */
-export function generateColors(baseColor: ReturnType<typeof colorsea>, combination: Combination, settings?: PaletteSettings) {
+export function generateColors(combination: Combination, optional: OptionalParams = { baseColor: colorsea.random() }) {
+    let { baseColor, settings } = optional;
+    // Never called because baseColor is set by default in parameters
+    if(!baseColor) baseColor = colorsea.random();
     let colors: string[] = [];
 
     switch(combination) {
@@ -53,25 +61,16 @@ export function generateColors(baseColor: ReturnType<typeof colorsea>, combinati
             if(settings) settings.aliases = ['Base', 'Tetradic Second', 'Tetradic Third', 'Tetradic Fourth'];
             break;
         case Combination.Random:
-            const randomNumber = Math.round(Math.random() * 10);
+            // Clamp to a minimum value of 2
+            const randomNumber = Math.max(Math.round(Math.random() * 10), 2);
             let randomColors: string[] = [];
             for(let i = 0; i < randomNumber; i++){
                 randomColors.push(colorsea.random().hex());
             }
             colors = randomColors;
+            if(settings) settings.aliases = [];
             break;
     }
 
     return { colors, settings };
-}
-
-/**
- * Generate random colors based on color theory
- * @param combination The type of color theory combination to use
- * @param settings The settings for the palette
- * @returns Generated colors & settings
- */
-export function generateRandomColors(combination: Combination, settings?: PaletteSettings) {
-    const randomHex = colorsea.random();
-    return generateColors(randomHex, combination, settings);
 }

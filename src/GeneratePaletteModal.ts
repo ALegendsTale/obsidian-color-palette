@@ -1,7 +1,7 @@
 import { App, Editor, Notice, SuggestModal } from "obsidian";
 import { PaletteSettings } from "./palette";
 import { ColorPaletteSettings } from "./settings";
-import { Combination, generateColors, generateRandomColors } from "./utils/generateRandom";
+import { Combination, generateColors } from "./utils/generateRandom";
 import validateColor from "validate-color";
 import colorsea from "colorsea";
 import EditorUtils from "./utils/editorUtils";
@@ -35,7 +35,7 @@ export class GeneratePaletteModal extends SuggestModal<Combination> {
             const selTextOrLine = this.editor.somethingSelected() ? this.editor.getSelection() : this.editor.getLine(this.editor.getCursor().line);
             const isLineEmpty = this.editor.getLine(this.editor.getCursor().line).length === 0;
             const isColor = validateColor(selTextOrLine);
-            const { colors, settings } = isColor ? generateColors(colorsea(selTextOrLine), combination, this.settings) : generateRandomColors(combination, this.settings);
+            const { colors, settings } = isColor ? generateColors(combination, { baseColor: colorsea(selTextOrLine), settings: this.settings }) : generateColors(combination, { settings: this.settings });
             const moddedSettings = settings ? getModifiedSettingsAsString(settings) : undefined;
             const newBlock = `\`\`\`palette\n${colors.toNString()}${moddedSettings ? `\n${moddedSettings}` : ''.trim()}\n\`\`\`\n`;
             const editorUtils = new EditorUtils(this.editor);
@@ -45,4 +45,4 @@ export class GeneratePaletteModal extends SuggestModal<Combination> {
             new Notice(error);
         }
     }
-  }
+}

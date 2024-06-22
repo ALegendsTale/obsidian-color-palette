@@ -1,119 +1,283 @@
-import { App, Modal, Notice, Setting, setIcon } from "obsidian";
-import { PaletteSettings } from "./palette";
+import { App, ColorComponent, DropdownComponent, Modal, Notice, Setting, setIcon } from "obsidian";
+import { Palette, PaletteSettings } from "./palette";
 import { urlRegex } from "./main";
 import colorsea from "colorsea";
 import { Direction, ColorPaletteSettings } from "./settings";
-import { Combination, generateRandomColors } from "./utils/generateRandom";
-import { getModifiedSettingsAsString } from "./utils/basicUtils";
+import { Combination, generateColors } from "./utils/generateRandom";
+import { convertStringSettings, getModifiedSettingsAsString, parseUrl } from "./utils/basicUtils";
+
+enum SelectedInput {
+    URL = "URL",
+    Color_Picker = "Color Picker",
+    Generate = "Generate"
+}
 
 export class CreatePaletteModal extends Modal {
-    result: string;
-    url: string;
+    pluginSettings: ColorPaletteSettings
     settings: PaletteSettings
     colors: string[]
-    colorContainers: HTMLDivElement[]
+    selectedInput: SelectedInput
     combination: Combination
+    baseColor: ReturnType<typeof colorsea> | undefined
     onSubmit: (result: string) => void
 
     constructor(app: App, pluginSettings: ColorPaletteSettings, onSubmit: (result: string) => void) {
         super(app);
         this.onSubmit = onSubmit;
-        this.url = '';
+        this.pluginSettings = pluginSettings;
         this.settings = { height: pluginSettings.height, width: pluginSettings.width, direction: pluginSettings.direction, gradient: pluginSettings.gradient, hover: pluginSettings.hover, override: pluginSettings.override, aliases: [] };
         this.colors = []
-        this.colorContainers = [];
+        this.selectedInput = SelectedInput.Color_Picker;
         this.combination = Combination.Random;
+        this.baseColor = undefined;
     }
 
     onOpen(): void {
         const { contentEl } = this;
         
+        // Header
         contentEl.createEl('h1', { text: 'Create Palette' })
         contentEl.addClass('create-palette');
 
+        // Add Colors
         const colorsContainer = contentEl.createEl('section');
         // Create header for colors section
-        colorsContainer.createEl('h3').setText('Colors');
+        colorsContainer.createEl('h3').setText('Add Colors');
 
-        new Setting(colorsContainer)
-        .setName("URL")
-        .setDesc('Only coolors.co & colorhunt.co are currently supported.')
-        .addText((text) => {
-            text
-            .onChange((value) => {
-                this.url = value;
-            })
-        })
+        // Tabs
+        let controlContainer = colorsContainer.appendChild(createDiv());
+        controlContainer.addClass('control-container');
 
-        let colorPicker = new Setting(colorsContainer)
-        .setName("Color Picker")
-        .setDesc('Use handpicked colors')
-        .addColorPicker((color) => {
-            color.onChange((value) => {
-                this.colors.push(value);
-                this.settings.aliases.push('');
-                selectedColorsContainer.style.setProperty('--selected-colors-display', this.colors.length === 0 ? 'none' : 'flex');
-                let colorContainer = selectedColorsContainer.createEl('div');
-                let colorSpan = colorContainer.createEl('span');
-                // Focus color & allow for editing alias
-                colorSpan.addEventListener('click', (e) => {
-                    colorSpan.contentEditable = 'true';
-                    colorSpan.toggleClass('color-span-editable', true);
-                })
-                // Set alias if changed & de-focus
-                colorSpan.addEventListener('focusout', (e) => {
-                    colorSpan.contentEditable = 'false';
-                    colorSpan.toggleClass('color-span-editable', false);
-                    // Set alias color if user modified text
-                    if(colorSpan.getText() !== value){
-                        this.settings.aliases[this.colors.findIndex(val => val === value)] = colorSpan.getText();
-                    }
-                })
-                colorSpan.style.borderColor = value;
-                colorSpan.setText(value);
-                let trash = colorContainer.createEl('button');
-                setIcon(trash, 'trash-2');
-                trash.style.setProperty('--trash-background-color', value);
-                const csColor = colorsea(value);
-                trash.style.setProperty('--trash-color', (csColor.rgb()[0]*0.299 + csColor.rgb()[1]*0.587 + csColor.rgb()[2]*0.114) > 186 ? '#000000' : '#ffffff');
-                trash.addEventListener('click', (e) => {
-                    const iContainers = this.colorContainers.indexOf(colorContainer);
-                    this.colorContainers.splice(iContainers, 1);
-                    const iColors = this.colors.indexOf(value);
-                    this.colors.splice(iColors, 1);
-                    selectedColorsContainer.removeChild(colorContainer);
-                    selectedColorsContainer.style.setProperty('--selected-colors-display', this.colors.length === 0 ? 'none' : 'flex');
-                })
-                this.colorContainers.push(colorContainer);
-            })
-        })
-        colorPicker.controlEl.addClass('color-picker');
+        // Preview
+        const previewContainer = contentEl.createEl('section');
+        previewContainer.createEl('h3').setText('Preview');
 
-        let selectedColorsContainer = colorPicker.controlEl.createEl('div');
-
-        new Setting(colorsContainer)
-        .setName("Generate Random")
-        .setDesc('Generate random colors based on color theory')
-        .addDropdown((dropdown) => {
-            Object.keys(Combination).forEach((combination) => {
-                dropdown.addOption(combination, combination);
-            })
-            dropdown
-            .setValue(this.combination)
-            .onChange((value) => {
-                const combination = value as Combination;
-                this.combination = combination;
-
-                // Generate colors & settings
-                const generated = generateRandomColors(combination, this.settings);
-                this.colors = generated.colors;
-                if(generated.settings) this.settings = generated.settings;
-            })
-        })
-
+        // Settings
         const settingsContainer = contentEl.createEl('section');
         // Create header for settings section
         settingsContainer.createEl('h3').setText('Settings');
+
+        const urlBtn = controlContainer.appendChild(createEl('button'));
+        setIcon(urlBtn, 'link');
+        urlBtn.title = 'URL';
+        urlBtn.addEventListener('click', () => {
+            changeSelectedInput(SelectedInput.URL);
+        })
+        const colorPickerBtn = controlContainer.appendChild(createEl('button'));
+        setIcon(colorPickerBtn, 'pipette');
+        colorPickerBtn.title = 'Color Picker';
+        colorPickerBtn.addEventListener('click', () => {
+            changeSelectedInput(SelectedInput.Color_Picker);
+        })
+        const generateBtn = controlContainer.appendChild(createEl('button'));
+        setIcon(generateBtn, 'shuffle');
+        generateBtn.title = 'Generate';
+        generateBtn.addEventListener('click', () => {
+            changeSelectedInput(SelectedInput.Generate);
+        })
+
+        let addColorsContainer = new Setting(colorsContainer);
+
+        function changeSelectedInput(selectedInput: SelectedInput) {
+            switch(selectedInput) {
+                case SelectedInput.Color_Picker:
+                    resetStyle();
+                    colorPickerBtn.style.setProperty('background', 'rgb(138, 92, 245)');
+                    addColorsContainer.clear();
+                    createColorPicker(addColorsContainer);
+                    break;
+                case SelectedInput.Generate:
+                    resetStyle();
+                    generateBtn.style.setProperty('background', 'rgb(138, 92, 245)');
+                    addColorsContainer.clear()
+                    createGenerate(addColorsContainer);
+                    break;
+                case SelectedInput.URL:
+                    resetStyle();
+                    urlBtn.style.setProperty('background', 'rgb(138, 92, 245)');
+                    addColorsContainer.clear();
+                    createURL(addColorsContainer);
+                    break;
+            }
+
+            function resetStyle() {
+                colorPickerBtn.style.setProperty('background', 'rgb(49, 50, 68)');
+                generateBtn.style.setProperty('background', 'rgb(49, 50, 68)');
+                urlBtn.style.setProperty('background', 'rgb(49, 50, 68)');
+            }
+        }
+
+        const createColorPicker = (addColors: Setting) => {
+            addColors
+            .setName("Color Picker")
+            .setDesc('Use handpicked colors')
+            .addColorPicker((color) => {
+                color.onChange((value) => {
+                    this.colors.push(value);
+                    this.settings.aliases.push('');
+                    displayPreview();
+                })
+            })
+        }
+
+        const createGenerate = (addColors: Setting) => {
+            addColors
+            .setName("Generate")
+            .setDesc('Generate colors based on color theory')
+            .addDropdown((dropdown) => {
+                Object.keys(Combination).forEach((combination) => {
+                    dropdown.addOption(combination, combination);
+                })
+                dropdown
+                .setValue(this.combination)
+                .onChange((value) => {
+                    this.combination = value as Combination;
+                    // Disable color picker if selected combination is random
+                    genColorPicker.setDisabled(this.combination === Combination.Random ? true : false);
+                })
+            })
+            .addColorPicker((color) => {
+                color.onChange((value) => {
+                    this.baseColor = colorsea(value);
+                })
+                color.setDisabled(this.combination === Combination.Random ? true : false);
+                const colorPicker2 = Array.from(addColors.controlEl.children)[1] as HTMLInputElement
+                colorPicker2.addEventListener('contextmenu', (e) => {
+                    color.setValue(colorsea('#000').hex());
+                    this.baseColor = undefined;
+                });
+            })
+            .addButton((button) => {
+                button.setIcon('shuffle')
+                button.onClick((e) => {
+                    // Generate colors & settings
+                    const generated = generateColors(this.combination, { baseColor: this.baseColor, settings: this.settings });
+                    this.colors = generated.colors;
+                    if(generated.settings) this.settings = generated.settings;
+
+                    displayPreview();
+                })
+            })
+    
+            const [genDropdown, genColorPicker] = addColors.components as [DropdownComponent, ColorComponent];
+        }
+
+        const createURL = (addColors: Setting) => {
+            let urlText = '';
+
+            addColors
+            .setName("URL")
+            .setDesc('Only coolors.co & colorhunt.co are currently supported.')
+            .addText((text) => {
+                text.onChange((value) => {
+                    urlText = value;
+                })
+            })
+            .addButton((button) => {
+                button.setIcon('link');
+                button.onClick((e) => {
+                    try {
+                        if(!urlText.match(urlRegex) && urlText !== '') throw new Error('URL provided is not valid.');
+                        this.colors = parseUrl(urlText);
+                        this.settings.aliases = [];
+                        displayPreview();
+                    }
+                    catch(e) {
+                        new Notice(e);
+                    }
+                })
+            })
+        }
+
+        // Set intiial selectedInput
+        changeSelectedInput(this.selectedInput);
+
+        let colorPreview = previewContainer.appendChild(createDiv());
+        colorPreview.addClass('color-preview');
+
+        const colorPreviewPalette = colorPreview.appendChild(createDiv());
+        const palette = new Palette({...this.pluginSettings, hover: false}, colorPreviewPalette, this.colors.toNString() || '#000');
+        colorPreview.appendChild(palette.containerEl);
+
+        /**
+         * Displays a preview of the palette
+         */
+        const displayPreview = () => {
+            palette.unload();
+            palette.colors = this.colors;
+            palette.settings = this.settings;
+            palette.load();
+            console.log(palette.settings);
+            refreshTrash();
+        }
+
+        const refreshTrash = () => {
+            if(palette.containerEl.children.length === 0 || this.colors.length === 0) return;
+            for(const [index, child] of Array.from(palette.containerEl.children).entries()){
+                child.appendChild(createTrash(this.colors[index]));
+            }
+        }
+
+        const createTrash = (color: string) => {
+            let trashContainer = createEl('div');
+            trashContainer.addClass('trash-container');
+
+            const csColor = colorsea(color);
+            const contrastColor = (csColor.rgb()[0]*0.299 + csColor.rgb()[1]*0.587 + csColor.rgb()[2]*0.114) > 186 ? '#000000' : '#ffffff';
+
+            trashContainer.style.setProperty('--trash-background-color', color);
+            trashContainer.style.setProperty('--trash-color', contrastColor);
+            
+            let colorSpan = trashContainer.createEl('span');
+            colorSpan.setText(this.settings.aliases[this.colors.findIndex(val => val === color)] || color);
+
+            let storedAlias = colorSpan.getText();
+
+            // Focus color & allow for editing alias
+            colorSpan.addEventListener('click', (e) => {
+                e.stopPropagation();
+                setEditable(true);
+                colorSpan.focus();
+            })
+            colorSpan.addEventListener('keypress', (e) => {
+                if(e.key === 'Enter') {
+                    setAlias();
+                    setEditable(false);
+                }
+            })
+            // Set alias if changed & de-focus
+            colorSpan.addEventListener('focusout', (e) => {
+                setAlias();
+                setEditable(false);
+            })
+
+            const setAlias = () => {
+                // Reset span text to original if user left it empty
+                if(colorSpan.getText().trim() === '') colorSpan.setText(storedAlias);
+                // Set alias color if user modified text
+                else if(colorSpan.getText() !== color) this.settings.aliases[this.colors.findIndex(val => val === color)] = colorSpan.getText();
+            }
+
+            const setEditable = (editable: boolean) => {
+                if(editable === true) {
+                    storedAlias = colorSpan.getText();
+                    colorSpan.setText('');
+                }
+                colorSpan.contentEditable = `${editable}`;
+                colorSpan.toggleClass('color-span-editable', editable);
+            }
+
+            let trash = trashContainer.createEl('button');
+            setIcon(trash, 'trash-2');
+            trash.addEventListener('click', (e) => {
+                const deletedIndex = this.colors.indexOf(color);
+                this.colors.splice(deletedIndex, 1);
+                this.settings.aliases.splice(deletedIndex, 1);
+                palette.refresh();
+                refreshTrash();
+            })
+            return trashContainer;
+        }
 
         new Setting(settingsContainer)
             .setName("Height")
@@ -187,17 +351,11 @@ export class CreatePaletteModal extends Modal {
             .setCta()
             .onClick(() => {
                 try{
-                    if(!this.url.match(urlRegex) && this.url !== '') throw new Error('URL provided is not valid.');
                     // Generate random colors if none are provided
-                    if(this.colors.length === 0) this.colors = generateRandomColors(Combination.Random).colors;
-                    const settings: PaletteSettings = JSON.parse(`{"height": ${this.settings.height}, "direction": "${this.settings.direction}", "gradient": ${this.settings.gradient}, "hover": ${this.settings.hover}, "override": ${this.settings.override}, "aliases": ${JSON.stringify(this.settings.aliases)}}`);
-                    const moddedSettings = getModifiedSettingsAsString(settings);
-                    this.result = `${this.url.match(urlRegex) ? 
-                    this.url 
-                    : 
-                    this.colors.toNString()}${moddedSettings ? `\n${moddedSettings}` : ''.trim()}`
+                    if(this.colors.length === 0) this.colors = generateColors(Combination.Random).colors;
+                    const moddedSettings = getModifiedSettingsAsString(convertStringSettings(this.settings));
                     this.close();
-                    this.onSubmit(this.result);
+                    this.onSubmit(`${this.colors.toNString()}${moddedSettings ? `\n${moddedSettings}` : ''.trim()}`);
                 }
                 catch(e){
                     new Notice(e);

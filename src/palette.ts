@@ -1,8 +1,9 @@
-import { MarkdownRenderChild, Notice, Platform } from "obsidian";
+import { Notice, Platform } from "obsidian";
 import colorsea from 'colorsea';
 import validateColor from "validate-color";
 import ColorPalette, { urlRegex } from "./main";
 import { Direction, AliasMode, ColorPaletteSettings } from "./settings";
+import { parseUrl } from "./utils/basicUtils";
 
 export type PaletteSettings = {
     height: number
@@ -14,7 +15,7 @@ export type PaletteSettings = {
     aliases: string[]
 }
 
-enum Status {
+export enum Status {
     VALID = 'Valid',
     INVALID_COLORS = 'Invalid Colors',
     INVALID_SETTINGS = 'Invalid Settings',
@@ -22,22 +23,22 @@ enum Status {
     INVALID_GRADIENT = 'Invalid Gradient'
 }
 
-export class Palette extends MarkdownRenderChild {
-    plugin: ColorPalette;
+export class Palette {
+    containerEl: HTMLElement;
     pluginSettings: ColorPaletteSettings;
 	input: string;
 	colors: string[];
     settings: PaletteSettings;
     status: Status
 
-	constructor(plugin: ColorPalette, pluginSettings: ColorPaletteSettings, containerEl: HTMLElement, input: string) {
-        super(containerEl);
-        this.plugin = plugin;
+	constructor(pluginSettings: ColorPaletteSettings, containerEl: HTMLElement, input: string) {
+        this.containerEl = containerEl;
         this.pluginSettings = pluginSettings;
         this.input = input;
         this.colors = [];
         this.status = Status.VALID;
         this.setDefaultSettings();
+        this.load();
 	}
 
     /**
@@ -46,6 +47,51 @@ export class Palette extends MarkdownRenderChild {
     private setDefaultSettings() {
         this.settings = { height: this.pluginSettings.height, width: this.pluginSettings.width, direction: this.pluginSettings.direction, gradient: this.pluginSettings.gradient, hover: this.pluginSettings.hover, override: this.pluginSettings.override, aliases: [] };
         this.containerEl.style.setProperty('--palette-corners', this.pluginSettings.corners ? '5px' : '0px');
+    }
+
+    /**
+     * Loads the palette
+     */
+    public load() {
+        // Only update if colors array is empty
+        if(this.colors.length === 0) {
+            this.updateColorsAndSettings();
+            this.status = Status.VALID;
+        }
+
+        // Create new palette
+        this.createPalette(this.colors, this.settings);
+
+        // Refresh gradient palettes when Obsidian resizes
+        const resizeObserver = new ResizeObserver((palettes) => {
+            for (const palette of palettes) {
+                for (const children of Array.from(palette.target.children)) {
+                    if ( children.nodeName === 'CANVAS') {
+                        this.refresh();
+                    }
+                }  
+            }
+        })
+        resizeObserver.observe(this.containerEl);
+	}
+
+    /**
+     * Removes palette contents
+     */
+    public unload(){
+        // Reset settings to default before re-calculating colors & settings
+        this.setDefaultSettings();
+        // Remove palette contents
+        this.containerEl.empty();
+    }
+
+    /**
+     * Refreshes the palette contents
+     */
+    public refresh(){
+        this.unload();
+        // Reload by recalculating colors and settings & creating a new palette
+        this.load();
     }
 
     /**
@@ -83,21 +129,6 @@ export class Palette extends MarkdownRenderChild {
 
         // Return final colors array
         return colors;
-
-        /**
-         * Parse input url & extract colors
-         * @param url URL from color input
-         * @returns Array of colors
-         */
-        function parseUrl(url: string) {
-            // Check if url colors contain dashes in-between
-            if(url.includes('-')) {
-                // Replace dashes with hexes (colorhunt)
-                return url.substring(url.lastIndexOf('/') + 1).split('-').map(i => '#' + i);
-            }
-            // Add hex between URL path colors (coolors)
-            else return url.substring(url.lastIndexOf('/') + 1).match(/.{1,6}/g)?.map(i => '#' + i) || [];
-        }
     }
 
     /**
@@ -119,6 +150,9 @@ export class Palette extends MarkdownRenderChild {
      * Calculates colors and settings based on codeblock contents
      */
     private updateColorsAndSettings() {
+        // Empty colors before calculating
+        this.colors = [];
+
         // Splits input by newline creaitng an array
         const split = this.input.split('\n')
         // Returns true if palette settings are defined
@@ -137,54 +171,13 @@ export class Palette extends MarkdownRenderChild {
         if(typeof colors === 'string') this.status = this.status === Status.INVALID_SETTINGS ? Status.INVALID_COLORS_AND_SETTINGS : Status.INVALID_COLORS;
         if(typeof colors === 'object') this.colors = colors;
     }
-  
-	onload() {
-        this.updateColorsAndSettings();
-
-        // Add new palette to state
-        if(this.status === Status.VALID) this.plugin.palettes?.push(this);
-
-        // Create new palette
-        this.createPalette(this.colors, this.settings);
-
-        // Refresh gradient palettes when Obsidian resizes
-        const resizeObserver = new ResizeObserver((palettes) => {
-            for (const palette of palettes) {
-                for (const children of Array.from(palette.target.children)) {
-                    if ( children.nodeName === 'CANVAS') {
-                        this.refresh();
-                    }
-                }  
-            }
-        })
-        resizeObserver.observe(this.containerEl);
-	}
-
-    unload() {
-        // Remove palette from state
-        if(this.status === Status.VALID) this.plugin.palettes?.remove(this);
-    }
-
-    /**
-     * Refreshes the palette contents
-     */
-    public refresh(){
-        // Reset settings to default before re-calculating colors & settings
-        this.setDefaultSettings();
-        // Recalculate colors & settings
-        this.updateColorsAndSettings();
-        // Remove palette contents
-        this.containerEl.empty();
-        // Create new palette
-        this.createPalette(this.colors, this.settings)
-    }
     
     /**
      * Create new palette contents based on colors & settings
      * @param colors 
      * @param settings 
      */
-    public createPalette(colors: string[], settings: PaletteSettings){
+    private createPalette(colors: string[], settings: PaletteSettings){
         this.containerEl.addClass('palette')
         this.containerEl.style.setProperty('--palette-direction', settings.direction === Direction.Row ? Direction.Column : Direction.Row);
         this.containerEl.style.setProperty('--not-palette-direction', settings.direction);
@@ -330,7 +323,7 @@ export class Palette extends MarkdownRenderChild {
      * @param type Palette status type
      * @param message Custom message
      */
-    public createInvalidPalette(type: Status, message = ''){
+    private createInvalidPalette(type: Status, message = ''){
         this.containerEl.style.setProperty('--palette-height', '150px');
         const invalidSection = this.containerEl.createEl('section');
         invalidSection.toggleClass('invalid', true);

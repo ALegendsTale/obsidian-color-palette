@@ -1,15 +1,15 @@
 import { Editor, MarkdownPostProcessorContext, Notice, Plugin } from 'obsidian'
 import { CreatePaletteModal } from 'src/CreatePaletteModal';
 import { GeneratePaletteModal } from './GeneratePaletteModal';
-import { Palette } from 'src/palette';
 import { ColorPaletteSettings, defaultSettings, SettingsTab } from 'src/settings';
 import './utils/prototypeUtils'
+import { PaletteMRC } from './paletteMRC';
 
 export const urlRegex = /(?:https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(?:\.[a-zA-Z0-9]{2,})(?:\.[a-zA-Z0-9]{2,})?\/(?:palette\/)?([a-zA-Z0-9-]{2,})/
 
 export default class ColorPalette extends Plugin {
 	settings: ColorPaletteSettings;
-	palettes?: Palette[];
+	palettes?: PaletteMRC[];
 
 	async onload() {
 		this.palettes = [];
@@ -18,7 +18,7 @@ export default class ColorPalette extends Plugin {
 		this.registerMarkdownCodeBlockProcessor(
 			'palette',
 			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
-				ctx.addChild(new Palette(this, this.settings, el, source.trim()));
+				ctx.addChild(new PaletteMRC(this, this.settings, el, source.trim()));
 			}
 		)
 

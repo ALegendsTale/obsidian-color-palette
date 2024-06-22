@@ -179,7 +179,7 @@ export class SettingsTab extends PluginSettingTab {
 	hide() {
 		if (this.plugin?.palettes) {
 			for (let palette of this.plugin.palettes) {
-				palette.refresh();
+				palette.palette.refresh();
 			}
 		}
 	}

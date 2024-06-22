@@ -40,6 +40,7 @@
     flex-direction: var(--not-palette-direction);
     justify-content: center;
     align-items: center;
+    height: var(--palette-height);
     transition: all 0.1s ease-in-out;
     background-color: var(--palette-background-color);
     gap: 3%;
@@ -116,59 +117,46 @@
     text-align: center;
 }
 
-/* Container */
-.create-palette {
-    --selected-colors-display: none;
-    --trash-background-color: #000000;
-    --trash-color: #ffffff;
-}
-
-.create-palette > .or-container {
+/* Tabs */
+.create-palette > section > .control-container {
     display: flex;
     justify-content: center;
     align-items: center;
+    gap: 5%;
+    padding: .75em 0;
 }
 
-.create-palette > .or-container > span {
+.color-preview {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5%;
+}
+
+.trash-container {
+    --trash-background-color: #000000;
+    --trash-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    margin: 16px 0;
+    gap: 16px;
+}
+
+.trash-container > span {
+    color: var(--trash-color);
     font-weight: bold;
 }
 
-.color-picker {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-end;
-}
-
-/* Selected Colors Container */
-.color-picker > div {
-    display: var(--selected-colors-display);
-    flex-direction: column;
-    width: 100%;
-    margin-top: 5%;
-}
-
-/* Colors Container */
-.color-picker > div > div {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    margin: 8px 0;
-    gap: 8px;
-}
-
-.color-picker > div > div > span {
-    padding: 2%;
-}
-
-.color-picker > div > div > .color-span-editable {
-    border-width: 2px;
-    border-style: solid;
+.trash-container > .color-span-editable {
+    box-shadow: rgba(0, 0, 0, 0.35) 0px -50px 20px -28px inset;
 }
 
 /* Color Trash Button */
-.color-picker > div > div > button {
+.trash-container > button {
     background-color: var(--trash-background-color);
     color: var(--trash-color);
+    box-shadow: rgba(0, 0, 0, 0.35) 0px -50px 20px -28px inset;
 }
