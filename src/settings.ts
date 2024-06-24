@@ -1,5 +1,7 @@
-import ColorPalette from "./main";
+import ColorPalette from "main";
 import { App, PluginSettingTab, Setting } from "obsidian";
+import { PaletteSettings } from "palette";
+import { pluginToPaletteSettings } from "utils/basicUtils";
 
 export enum Direction {
     Row = 'row',
@@ -39,6 +41,7 @@ export const defaultSettings: ColorPaletteSettings = {
 
 export class SettingsTab extends PluginSettingTab {
 	plugin: ColorPalette;
+	settings: PaletteSettings
 
 	constructor(app: App, plugin: ColorPalette) {
 		super(app, plugin);
@@ -48,6 +51,7 @@ export class SettingsTab extends PluginSettingTab {
 	display() {
 		const { containerEl } = this;
 		let { settings } = this.plugin;
+		this.settings = pluginToPaletteSettings(settings);
 
 		containerEl.empty();
 
@@ -177,9 +181,11 @@ export class SettingsTab extends PluginSettingTab {
 
 	// Called when settings are exited
 	hide() {
-		if (this.plugin?.palettes) {
-			for (let palette of this.plugin.palettes) {
-				palette.palette.refresh();
+		const settingsChanged = JSON.stringify(this.settings) !== JSON.stringify(pluginToPaletteSettings(this.plugin.settings));
+		// Update palettes if PaletteSettings have changed
+		if (this.plugin?.palettes && settingsChanged) {
+			for (let paletteMRC of this.plugin.palettes) {
+				paletteMRC.update();
 			}
 		}
 	}

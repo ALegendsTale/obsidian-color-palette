@@ -1,10 +1,10 @@
 import { App, ColorComponent, DropdownComponent, Modal, Notice, Setting, setIcon } from "obsidian";
-import { Palette, PaletteSettings } from "./palette";
-import { urlRegex } from "./main";
+import { Palette, PaletteSettings } from "palette";
+import { urlRegex } from "main";
 import colorsea from "colorsea";
-import { Direction, ColorPaletteSettings } from "./settings";
-import { Combination, generateColors } from "./utils/generateRandom";
-import { convertStringSettings, getModifiedSettingsAsString, parseUrl } from "./utils/basicUtils";
+import { Direction, ColorPaletteSettings } from "settings";
+import { Combination, generateColors } from "utils/generateRandom";
+import { convertStringSettings, getModifiedSettingsAsString, parseUrl, pluginToPaletteSettings } from "utils/basicUtils";
 
 enum SelectedInput {
     URL = "URL",
@@ -25,7 +25,7 @@ export class CreatePaletteModal extends Modal {
         super(app);
         this.onSubmit = onSubmit;
         this.pluginSettings = pluginSettings;
-        this.settings = { height: pluginSettings.height, width: pluginSettings.width, direction: pluginSettings.direction, gradient: pluginSettings.gradient, hover: pluginSettings.hover, override: pluginSettings.override, aliases: [] };
+        this.settings = pluginToPaletteSettings(pluginSettings);
         this.colors = []
         this.selectedInput = SelectedInput.Color_Picker;
         this.combination = Combination.Random;
@@ -115,7 +115,7 @@ export class CreatePaletteModal extends Modal {
                 color.onChange((value) => {
                     this.colors.push(value);
                     this.settings.aliases.push('');
-                    displayPreview();
+                    updatePreview();
                 })
             })
         }
@@ -155,7 +155,7 @@ export class CreatePaletteModal extends Modal {
                     this.colors = generated.colors;
                     if(generated.settings) this.settings = generated.settings;
 
-                    displayPreview();
+                    updatePreview();
                 })
             })
     
@@ -180,7 +180,7 @@ export class CreatePaletteModal extends Modal {
                         if(!urlText.match(urlRegex) && urlText !== '') throw new Error('URL provided is not valid.');
                         this.colors = parseUrl(urlText);
                         this.settings.aliases = [];
-                        displayPreview();
+                        updatePreview();
                     }
                     catch(e) {
                         new Notice(e);
@@ -196,22 +196,23 @@ export class CreatePaletteModal extends Modal {
         colorPreview.addClass('color-preview');
 
         const colorPreviewPalette = colorPreview.appendChild(createDiv());
-        const palette = new Palette({...this.pluginSettings, hover: false}, colorPreviewPalette, this.colors.toNString() || '#000');
+        const palette = new Palette(['#000'], this.settings, colorPreviewPalette, this.pluginSettings);
         colorPreview.appendChild(palette.containerEl);
 
         /**
-         * Displays a preview of the palette
+         * Updates the palette preview
          */
-        const displayPreview = () => {
-            palette.unload();
+        const updatePreview = () => {
             palette.colors = this.colors;
             palette.settings = this.settings;
-            palette.load();
-            console.log(palette.settings);
-            refreshTrash();
+            palette.reload()
+            if(this.settings.direction !== Direction.Row && this.settings.gradient !== true) updateTrash();
         }
 
-        const refreshTrash = () => {
+        /**
+         * Updates trash based on palette children
+         */
+        const updateTrash = () => {
             if(palette.containerEl.children.length === 0 || this.colors.length === 0) return;
             for(const [index, child] of Array.from(palette.containerEl.children).entries()){
                 child.appendChild(createTrash(this.colors[index]));
@@ -229,7 +230,7 @@ export class CreatePaletteModal extends Modal {
             trashContainer.style.setProperty('--trash-color', contrastColor);
             
             let colorSpan = trashContainer.createEl('span');
-            colorSpan.setText(this.settings.aliases[this.colors.findIndex(val => val === color)] || color);
+            colorSpan.setText(this.settings.aliases[this.colors.findIndex(val => val === color)] || color.toUpperCase());
 
             let storedAlias = colorSpan.getText();
 
@@ -273,8 +274,8 @@ export class CreatePaletteModal extends Modal {
                 const deletedIndex = this.colors.indexOf(color);
                 this.colors.splice(deletedIndex, 1);
                 this.settings.aliases.splice(deletedIndex, 1);
-                palette.refresh();
-                refreshTrash();
+                palette.reload();
+                updateTrash();
             })
             return trashContainer;
         }
@@ -286,6 +287,7 @@ export class CreatePaletteModal extends Modal {
                 .setValue(this.settings.height.toString())
                 .onChange((value) => {
                     this.settings.height = Number(value);
+                    updatePreview();
                 })
             })
 
@@ -297,6 +299,7 @@ export class CreatePaletteModal extends Modal {
                 .setValue(this.settings.width.toString())
                 .onChange((value) => {
                     this.settings.width = Number(value);
+                    updatePreview();
                 })
             })
 
@@ -309,6 +312,7 @@ export class CreatePaletteModal extends Modal {
                 .setValue(this.settings.direction.toString())
                 .onChange((value) => {
                     this.settings.direction = value as Direction;
+                    updatePreview();
                 })
             })
 
@@ -319,6 +323,7 @@ export class CreatePaletteModal extends Modal {
                 .setValue(this.settings.gradient)
                 .onChange((value) => {
                     this.settings.gradient = value;
+                    updatePreview();
                 })
             })
 
@@ -330,6 +335,7 @@ export class CreatePaletteModal extends Modal {
                 .setValue(this.settings.hover)
                 .onChange(async (value) => {
                     this.settings.hover = value;
+                    updatePreview();
                 })
             })
 
@@ -341,6 +347,7 @@ export class CreatePaletteModal extends Modal {
                 .setValue(this.settings.override)
                 .onChange(async (value) => {
                     this.settings.override = value;
+                    updatePreview();
                 })
             })
 

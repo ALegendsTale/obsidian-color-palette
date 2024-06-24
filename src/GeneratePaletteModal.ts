@@ -1,11 +1,11 @@
 import { App, Editor, Notice, SuggestModal } from "obsidian";
-import { PaletteSettings } from "./palette";
-import { ColorPaletteSettings } from "./settings";
-import { Combination, generateColors } from "./utils/generateRandom";
+import { PaletteSettings } from "palette";
+import { ColorPaletteSettings } from "settings";
+import { Combination, generateColors } from "utils/generateRandom";
 import validateColor from "validate-color";
 import colorsea from "colorsea";
-import EditorUtils from "./utils/editorUtils";
-import { getModifiedSettingsAsString } from "./utils/basicUtils";
+import EditorUtils from "utils/editorUtils";
+import { getModifiedSettingsAsString, pluginToPaletteSettings } from "utils/basicUtils";
 
 export class GeneratePaletteModal extends SuggestModal<Combination> {
     editor: Editor;
@@ -14,7 +14,7 @@ export class GeneratePaletteModal extends SuggestModal<Combination> {
     constructor(app: App, editor: Editor, pluginSettings: ColorPaletteSettings) {
         super(app);
         this.editor = editor;
-        this.settings = { height: pluginSettings.height, width: pluginSettings.width, direction: pluginSettings.direction, gradient: pluginSettings.gradient, hover: pluginSettings.hover, override: pluginSettings.override, aliases: [] };
+        this.settings = pluginToPaletteSettings(pluginSettings);
     }
 
     // Returns all available suggestions.

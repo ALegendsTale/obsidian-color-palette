@@ -1,5 +1,5 @@
 import colorsea from "colorsea";
-import { PaletteSettings } from "src/palette";
+import { PaletteSettings } from "palette";
 
 export enum Combination {
     Complimentary = "Complimentary",

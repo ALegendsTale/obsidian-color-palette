@@ -1,9 +1,7 @@
 import { Notice, Platform } from "obsidian";
 import colorsea from 'colorsea';
-import validateColor from "validate-color";
-import ColorPalette, { urlRegex } from "./main";
-import { Direction, AliasMode, ColorPaletteSettings } from "./settings";
-import { parseUrl } from "./utils/basicUtils";
+import { Direction, AliasMode, ColorPaletteSettings } from "settings";
+import { pluginToPaletteSettings } from "utils/basicUtils";
 
 export type PaletteSettings = {
     height: number
@@ -26,26 +24,55 @@ export enum Status {
 export class Palette {
     containerEl: HTMLElement;
     pluginSettings: ColorPaletteSettings;
-	input: string;
 	colors: string[];
     settings: PaletteSettings;
     status: Status
+    resizeObserver: ResizeObserver
 
-	constructor(pluginSettings: ColorPaletteSettings, containerEl: HTMLElement, input: string) {
+	constructor(colors: string[] | Status, settings: PaletteSettings | Status, containerEl: HTMLElement, pluginSettings: ColorPaletteSettings) {
         this.containerEl = containerEl;
         this.pluginSettings = pluginSettings;
-        this.input = input;
-        this.colors = [];
-        this.status = Status.VALID;
-        this.setDefaultSettings();
+        this.setDefaults(colors, settings);
         this.load();
+
+        // Refresh gradient palettes when Obsidian resizes
+        this.resizeObserver = new ResizeObserver((palettes) => {
+            for (const palette of palettes) {
+                for (const children of Array.from(palette.target.children)) {
+                    if ( children.nodeName === 'CANVAS') {
+                        this.reload();
+                    }
+                }  
+            }
+        })
+        this.resizeObserver.observe(this.containerEl);
 	}
 
     /**
-     * Set the initial default settings
+     * Sets the initial defaults
      */
-    private setDefaultSettings() {
-        this.settings = { height: this.pluginSettings.height, width: this.pluginSettings.width, direction: this.pluginSettings.direction, gradient: this.pluginSettings.gradient, hover: this.pluginSettings.hover, override: this.pluginSettings.override, aliases: [] };
+    public setDefaults(colors: string[] | Status, settings: PaletteSettings | Status) {
+        this.status = Status.VALID;
+        // Settings are invalid
+        if(typeof settings === 'string') {
+            this.settings = pluginToPaletteSettings(this.pluginSettings);
+            this.status = Status.INVALID_SETTINGS;
+        }
+        // Settings are valid
+        if(typeof settings === 'object') {
+            this.settings = {...pluginToPaletteSettings(this.pluginSettings), ...settings};
+        }
+        // Colors are invalid
+        if(typeof colors === 'string') {
+            this.colors = [];
+            // Set status to Invalid Colors & Settings if colors were also invalid
+            this.status = this.status === Status.INVALID_SETTINGS ? Status.INVALID_COLORS_AND_SETTINGS : Status.INVALID_COLORS;
+        }
+        // Colors are valid
+        if(typeof colors === 'object') {
+            this.colors = colors;
+        }
+        // Set default corner style
         this.containerEl.style.setProperty('--palette-corners', this.pluginSettings.corners ? '5px' : '0px');
     }
 
@@ -53,123 +80,25 @@ export class Palette {
      * Loads the palette
      */
     public load() {
-        // Only update if colors array is empty
-        if(this.colors.length === 0) {
-            this.updateColorsAndSettings();
-            this.status = Status.VALID;
-        }
-
         // Create new palette
         this.createPalette(this.colors, this.settings);
-
-        // Refresh gradient palettes when Obsidian resizes
-        const resizeObserver = new ResizeObserver((palettes) => {
-            for (const palette of palettes) {
-                for (const children of Array.from(palette.target.children)) {
-                    if ( children.nodeName === 'CANVAS') {
-                        this.refresh();
-                    }
-                }  
-            }
-        })
-        resizeObserver.observe(this.containerEl);
 	}
 
     /**
      * Removes palette contents
      */
     public unload(){
-        // Reset settings to default before re-calculating colors & settings
-        this.setDefaultSettings();
         // Remove palette contents
         this.containerEl.empty();
     }
 
     /**
-     * Refreshes the palette contents
+     * Reloads the palette contents
      */
-    public refresh(){
+    public reload(){
         this.unload();
-        // Reload by recalculating colors and settings & creating a new palette
+        this.setDefaults(this.colors, this.settings);
         this.load();
-    }
-
-    /**
-     * Parses input & extracts colors based on color space or URL
-     * @param input colors from codeblock
-     * @returns Array of colors or Status if colors are not valid
-     */
-    private parseColors(input: string[]): string[] | Status {        
-        let colors = input.flatMap((color) => {
-            // Split RGB / HSL delimited by semicolons
-            if(color.includes('(')){
-                return color.split(';').flatMap((postSplitColor) => postSplitColor.trim())
-                // Remove whitespace elements from array
-                .filter((color) => color !== '');
-            }
-            // Split colors delimited by commas
-            return color.split(',').flatMap((postSplitColor) => {
-                return postSplitColor.trim();
-            })
-        // Remove semicolons
-        }).flatMap((color) => color.trim().replace(';', ''));
-
-        // Combine colors array into string
-        const rawColors = colors.join('');
-
-        // If URL parse and return
-        if(rawColors.match(urlRegex)) return parseUrl(rawColors);
-
-        // Return status if colors are invalid
-        if (!this.settings.override) {
-            for(let color of colors) {
-                if(!validateColor(color)) return Status.INVALID_COLORS;
-            }
-        }
-
-        // Return final colors array
-        return colors;
-    }
-
-    /**
-     * Parses input & extracts settings
-     * @param input settings from codeblock
-     * @returns PaletteSettings or Status if settings are not valid
-     */
-    private parseSettings(input: string): PaletteSettings | Status {
-        try {
-            // Extract JSON settings from the palette
-            return JSON.parse(input);
-        }
-        catch(error) {
-            return Status.INVALID_SETTINGS;
-        }
-    }
-
-    /**
-     * Calculates colors and settings based on codeblock contents
-     */
-    private updateColorsAndSettings() {
-        // Empty colors before calculating
-        this.colors = [];
-
-        // Splits input by newline creaitng an array
-        const split = this.input.split('\n')
-        // Returns true if palette settings are defined
-        const hasSettings = split.some((val) => val.includes(('{')));
-
-        // Parse settings if set
-        if(hasSettings) {
-            // Remove and parse the last split index (settings are always defined on the last index)
-            const settings = this.parseSettings(split.pop() || '');
-            if(typeof settings === 'string') this.status = Status.INVALID_SETTINGS;
-            if(typeof settings === 'object') this.settings = {...this.settings, ...settings};
-        }
-        
-        const colors = this.parseColors(split);
-        // Set status to Invalid Colors & Settings if colors were also invalid
-        if(typeof colors === 'string') this.status = this.status === Status.INVALID_SETTINGS ? Status.INVALID_COLORS_AND_SETTINGS : Status.INVALID_COLORS;
-        if(typeof colors === 'object') this.colors = colors;
     }
     
     /**
@@ -194,7 +123,7 @@ export class Palette {
         }
         catch(err){
             if(err instanceof PaletteError)
-            this.createInvalidPalette(err.status, err.message);
+            this.createInvalidPalette(err.status);
             else
             new Notice(err);
         }
@@ -321,33 +250,29 @@ export class Palette {
     /**
      * Create invalid palette based on palette status
      * @param type Palette status type
-     * @param message Custom message
      */
-    private createInvalidPalette(type: Status, message = ''){
+    private createInvalidPalette(type: Status){
         this.containerEl.style.setProperty('--palette-height', '150px');
         const invalidSection = this.containerEl.createEl('section');
         invalidSection.toggleClass('invalid', true);
         const invalidSpan = invalidSection.createEl('span');
-        const colors = this.colors.toString() !== '' ? this.colors.toString() : this.input;
-        const split =  this.input.split('\n');
-        const settings = split[split.length - 1];
 
         switch(type) {
             case Status.INVALID_COLORS:
                 invalidSpan.setText(Status.INVALID_COLORS);
-                new Notice(message ? message : `Palette:\nColors are defined incorrectly\n${colors}`, this.pluginSettings.noticeDuration);
+                new Notice(`Palette:\nColors are defined incorrectly`, this.pluginSettings.noticeDuration);
                 break;
             case Status.INVALID_SETTINGS:
                 invalidSpan.setText(Status.INVALID_SETTINGS);
-                new Notice(message ? message : `Palette:\nIssues parsing settings\n${settings}`, this.pluginSettings.noticeDuration);
+                new Notice(`Palette:\nIssues parsing settings`, this.pluginSettings.noticeDuration);
                 break;
             case Status.INVALID_COLORS_AND_SETTINGS:
                 invalidSpan.setText(Status.INVALID_COLORS_AND_SETTINGS);
-                new Notice(message ? message : `Palette:\nColors and settings are defined incorrectly\n${this.input}`, this.pluginSettings.noticeDuration);
+                new Notice(`Palette:\nColors and settings are defined incorrectly`, this.pluginSettings.noticeDuration);
                 break;
             case Status.INVALID_GRADIENT:
                 invalidSpan.setText(Status.INVALID_GRADIENT);
-                new Notice(message ? message : `Palette:\nGradients require more than 1 color to display\n${colors}`, this.pluginSettings.noticeDuration);
+                new Notice(`Palette:\nGradients require more than 1 color to display`, this.pluginSettings.noticeDuration);
         }
         
         // Pulse the Invalid Palette to show its location

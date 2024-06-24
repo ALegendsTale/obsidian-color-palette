@@ -1,5 +1,5 @@
-import { PaletteSettings } from "src/palette";
-import { ColorPaletteSettings, defaultSettings } from "src/settings";
+import { PaletteSettings } from "palette";
+import { ColorPaletteSettings, defaultSettings } from "settings";
 
 /**
  * Get settings without their default values
@@ -77,4 +77,19 @@ export function parseUrl(url: string) {
     }
     // Add hex between URL path colors (coolors)
     else return url.substring(url.lastIndexOf('/') + 1).match(/.{1,6}/g)?.map(i => '#' + i) || [];
+}
+
+/**
+ * Converts ColorPalette plugin settings to Palette settings
+ */
+export function pluginToPaletteSettings(pluginSettings: ColorPaletteSettings): PaletteSettings {
+    return { 
+        height: pluginSettings.height, 
+        width: pluginSettings.width, 
+        direction: pluginSettings.direction, 
+        gradient: pluginSettings.gradient, 
+        hover: pluginSettings.hover, 
+        override: pluginSettings.override, 
+        aliases: [] 
+    };
 }
