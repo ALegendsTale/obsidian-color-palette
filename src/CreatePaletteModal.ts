@@ -1,4 +1,4 @@
-import { App, ColorComponent, DropdownComponent, Modal, Notice, Setting, setIcon } from "obsidian";
+import { App, ButtonComponent, ColorComponent, DropdownComponent, Modal, Notice, Setting, TextComponent, setIcon } from "obsidian";
 import { Palette, PaletteSettings } from "palette";
 import { urlRegex } from "main";
 import colorsea from "colorsea";
@@ -77,24 +77,26 @@ export class CreatePaletteModal extends Modal {
         })
 
         let addColorsContainer = new Setting(colorsContainer);
+        addColorsContainer.controlEl.addClass('add-colors');
 
         function changeSelectedInput(selectedInput: SelectedInput) {
+            resetStyle();
             switch(selectedInput) {
                 case SelectedInput.Color_Picker:
-                    resetStyle();
                     colorPickerBtn.style.setProperty('background', 'rgb(138, 92, 245)');
                     addColorsContainer.clear();
                     createColorPicker(addColorsContainer);
+                    addColorsContainer.controlEl.toggleClass('select-color-picker', true);
                     break;
                 case SelectedInput.Generate:
-                    resetStyle();
                     generateBtn.style.setProperty('background', 'rgb(138, 92, 245)');
                     addColorsContainer.clear()
                     createGenerate(addColorsContainer);
+                    addColorsContainer.controlEl.toggleClass('select-generate', true);
                     break;
                 case SelectedInput.URL:
-                    resetStyle();
                     urlBtn.style.setProperty('background', 'rgb(138, 92, 245)');
+                    addColorsContainer.controlEl.toggleClass('select-url', true);
                     addColorsContainer.clear();
                     createURL(addColorsContainer);
                     break;
@@ -104,6 +106,9 @@ export class CreatePaletteModal extends Modal {
                 colorPickerBtn.style.setProperty('background', 'rgb(49, 50, 68)');
                 generateBtn.style.setProperty('background', 'rgb(49, 50, 68)');
                 urlBtn.style.setProperty('background', 'rgb(49, 50, 68)');
+                addColorsContainer.controlEl.toggleClass('select-color-picker', false);
+                addColorsContainer.controlEl.toggleClass('select-generate', false);
+                addColorsContainer.controlEl.toggleClass('select-url', false);
             }
         }
 
@@ -118,6 +123,8 @@ export class CreatePaletteModal extends Modal {
                     updatePreview();
                 })
             })
+
+            const [colorPickerInput] = addColors.components as [ColorComponent];
         }
 
         const createGenerate = (addColors: Setting) => {
@@ -133,7 +140,7 @@ export class CreatePaletteModal extends Modal {
                 .onChange((value) => {
                     this.combination = value as Combination;
                     // Disable color picker if selected combination is random
-                    genColorPicker.setDisabled(this.combination === Combination.Random ? true : false);
+                    colorPickerInput.setDisabled(this.combination === Combination.Random ? true : false);
                 })
             })
             .addColorPicker((color) => {
@@ -141,8 +148,8 @@ export class CreatePaletteModal extends Modal {
                     this.baseColor = colorsea(value);
                 })
                 color.setDisabled(this.combination === Combination.Random ? true : false);
-                const colorPicker2 = Array.from(addColors.controlEl.children)[1] as HTMLInputElement
-                colorPicker2.addEventListener('contextmenu', (e) => {
+                const colorPicker = Array.from(addColors.controlEl.children)[1] as HTMLInputElement
+                colorPicker.addEventListener('contextmenu', (e) => {
                     color.setValue(colorsea('#000').hex());
                     this.baseColor = undefined;
                 });
@@ -159,24 +166,25 @@ export class CreatePaletteModal extends Modal {
                 })
             })
     
-            const [genDropdown, genColorPicker] = addColors.components as [DropdownComponent, ColorComponent];
+            const [dropdownInput, colorPickerInput, buttonInput] = addColors.components as [DropdownComponent, ColorComponent, ButtonComponent];
         }
 
         const createURL = (addColors: Setting) => {
-            let urlText = '';
 
             addColors
             .setName("URL")
             .setDesc('Only coolors.co & colorhunt.co are currently supported.')
             .addText((text) => {
                 text.onChange((value) => {
-                    urlText = value;
+                    text.setPlaceholder('Enter URL');
                 })
             })
             .addButton((button) => {
                 button.setIcon('link');
+                button.setTooltip('Right click to clear URL');
                 button.onClick((e) => {
                     try {
+                        const urlText = textInput.getValue();
                         if(!urlText.match(urlRegex) && urlText !== '') throw new Error('URL provided is not valid.');
                         this.colors = parseUrl(urlText);
                         this.settings.aliases = [];
@@ -187,6 +195,12 @@ export class CreatePaletteModal extends Modal {
                     }
                 })
             })
+
+            const [textInput, buttonInput] = addColors.components as [TextComponent, ButtonComponent];
+
+            buttonInput.buttonEl.addEventListener('contextmenu', () => {
+                textInput.setValue('');
+            })
         }
 
         // Set intiial selectedInput
@@ -196,7 +210,9 @@ export class CreatePaletteModal extends Modal {
         colorPreview.addClass('color-preview');
 
         const colorPreviewPalette = colorPreview.appendChild(createDiv());
-        const palette = new Palette(['#000'], this.settings, colorPreviewPalette, this.pluginSettings);
+        // Fill palette initially with random colors
+        this.colors = generateColors(Combination.Random).colors;
+        const palette = new Palette(this.colors, this.settings, colorPreviewPalette, this.pluginSettings);
         colorPreview.appendChild(palette.containerEl);
 
         /**
@@ -206,17 +222,7 @@ export class CreatePaletteModal extends Modal {
             palette.colors = this.colors;
             palette.settings = this.settings;
             palette.reload()
-            if(this.settings.direction !== Direction.Row && this.settings.gradient !== true) updateTrash();
-        }
-
-        /**
-         * Updates trash based on palette children
-         */
-        const updateTrash = () => {
-            if(palette.containerEl.children.length === 0 || this.colors.length === 0) return;
-            for(const [index, child] of Array.from(palette.containerEl.children).entries()){
-                child.appendChild(createTrash(this.colors[index]));
-            }
+            updateTrash();
         }
 
         const createTrash = (color: string) => {
@@ -231,6 +237,7 @@ export class CreatePaletteModal extends Modal {
             
             let colorSpan = trashContainer.createEl('span');
             colorSpan.setText(this.settings.aliases[this.colors.findIndex(val => val === color)] || color.toUpperCase());
+            colorSpan.style.setProperty('--trash-font-size', `${getAdjustedFontSize(this.colors)}px`);
 
             let storedAlias = colorSpan.getText();
 
@@ -268,9 +275,19 @@ export class CreatePaletteModal extends Modal {
                 colorSpan.toggleClass('color-span-editable', editable);
             }
 
+            /**
+             * Calculate font size based on number of colors
+             */
+            function getAdjustedFontSize(colors: string[]) {
+                const minFontSize = 10;
+                const baseFontSize = 16;
+                return Math.max(minFontSize, baseFontSize - (colors.length / 2));
+            }
+
             let trash = trashContainer.createEl('button');
             setIcon(trash, 'trash-2');
             trash.addEventListener('click', (e) => {
+                e.stopPropagation();
                 const deletedIndex = this.colors.indexOf(color);
                 this.colors.splice(deletedIndex, 1);
                 this.settings.aliases.splice(deletedIndex, 1);
@@ -279,6 +296,21 @@ export class CreatePaletteModal extends Modal {
             })
             return trashContainer;
         }
+
+        /**
+         * Updates trash based on palette children
+         */
+        const updateTrash = () => {
+            // Check for invalid settings
+            const incompatibleSettings = this.settings.direction === Direction.Row || this.settings.gradient === true;
+            // Return early if there are no colors, or if incompatible settings are present.
+            if(this.colors.length === 0 || incompatibleSettings) return;
+            for(const [index, child] of Array.from(palette.containerEl.children).entries()){
+                child.appendChild(createTrash(this.colors[index]));
+            }
+        }
+
+        updateTrash();
 
         new Setting(settingsContainer)
             .setName("Height")

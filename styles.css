@@ -126,12 +126,32 @@
     padding: .75em 0;
 }
 
+.add-colors {
+
+}
+
+.select-color-picker {
+
+}
+
+.select-url > button {
+    cursor: pointer;
+}
+
+.select-generate > button {
+    cursor: pointer;
+}
+
 .color-preview {
     display: flex;
     justify-content: flex-start;
     align-items: center;
     flex-wrap: wrap;
     gap: 5%;
+}
+
+.color-preview > .palette > div > span {
+    display: none !important;
 }
 
 .trash-container {
@@ -146,12 +166,15 @@
 }
 
 .trash-container > span {
+    --trash-font-size: 16px;
     color: var(--trash-color);
     font-weight: bold;
+    font-size: var(--trash-font-size);
 }
 
 .trash-container > .color-span-editable {
     box-shadow: rgba(0, 0, 0, 0.35) 0px -50px 20px -28px inset;
+    cursor: pointer;
 }
 
 /* Color Trash Button */
