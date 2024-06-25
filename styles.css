@@ -182,4 +182,5 @@
     background-color: var(--trash-background-color);
     color: var(--trash-color);
     box-shadow: rgba(0, 0, 0, 0.35) 0px -50px 20px -28px inset;
+    cursor: pointer;
 }

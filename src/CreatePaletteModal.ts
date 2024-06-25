@@ -96,9 +96,9 @@ export class CreatePaletteModal extends Modal {
                     break;
                 case SelectedInput.URL:
                     urlBtn.style.setProperty('background', 'rgb(138, 92, 245)');
-                    addColorsContainer.controlEl.toggleClass('select-url', true);
                     addColorsContainer.clear();
                     createURL(addColorsContainer);
+                    addColorsContainer.controlEl.toggleClass('select-url', true);
                     break;
             }
 
@@ -175,9 +175,7 @@ export class CreatePaletteModal extends Modal {
             .setName("URL")
             .setDesc('Only coolors.co & colorhunt.co are currently supported.')
             .addText((text) => {
-                text.onChange((value) => {
-                    text.setPlaceholder('Enter URL');
-                })
+                text.setPlaceholder('Enter URL');
             })
             .addButton((button) => {
                 button.setIcon('link');
@@ -185,7 +183,7 @@ export class CreatePaletteModal extends Modal {
                 button.onClick((e) => {
                     try {
                         const urlText = textInput.getValue();
-                        if(!urlText.match(urlRegex) && urlText !== '') throw new Error('URL provided is not valid.');
+                        if(!urlText.match(urlRegex)) throw new Error('URL provided is not valid.');
                         this.colors = parseUrl(urlText);
                         this.settings.aliases = [];
                         updatePreview();
