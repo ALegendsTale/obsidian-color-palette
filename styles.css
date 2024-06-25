@@ -142,6 +142,21 @@
     cursor: pointer;
 }
 
+.select-image > button {
+    cursor: pointer;
+}
+
+.select-image > input[type="file"] {
+    display: none;
+}
+
+.select-image > img {
+    display: flex;
+    flex-direction: column;
+    width: 100px;
+    height: 100px;
+}
+
 .color-preview {
     display: flex;
     justify-content: flex-start;

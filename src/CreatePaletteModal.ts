@@ -5,11 +5,13 @@ import colorsea from "colorsea";
 import { Direction, ColorPaletteSettings } from "settings";
 import { Combination, generateColors } from "utils/generateRandom";
 import { convertStringSettings, getModifiedSettingsAsString, parseUrl, pluginToPaletteSettings } from "utils/basicUtils";
+import { getImagePalette } from "utils/imageUtils";
 
 enum SelectedInput {
     URL = "URL",
     Color_Picker = "Color Picker",
-    Generate = "Generate"
+    Generate = "Generate",
+    Image = "Image"
 }
 
 export class CreatePaletteModal extends Modal {
@@ -76,6 +78,13 @@ export class CreatePaletteModal extends Modal {
             changeSelectedInput(SelectedInput.Generate);
         })
 
+        const imageBtn = controlContainer.appendChild(createEl('button'));
+        setIcon(imageBtn, 'image');
+        imageBtn.title = 'Image';
+        imageBtn.addEventListener('click', () => {
+            changeSelectedInput(SelectedInput.Image)
+        })
+
         let addColorsContainer = new Setting(colorsContainer);
         addColorsContainer.controlEl.addClass('add-colors');
 
@@ -100,15 +109,23 @@ export class CreatePaletteModal extends Modal {
                     createURL(addColorsContainer);
                     addColorsContainer.controlEl.toggleClass('select-url', true);
                     break;
+                case SelectedInput.Image:
+                    imageBtn.style.setProperty('background', 'rgb(138, 92, 245)');
+                    addColorsContainer.clear();
+                    createImage(addColorsContainer);
+                    addColorsContainer.controlEl.toggleClass('select-image', true);
+                    break;
             }
 
             function resetStyle() {
                 colorPickerBtn.style.setProperty('background', 'rgb(49, 50, 68)');
                 generateBtn.style.setProperty('background', 'rgb(49, 50, 68)');
                 urlBtn.style.setProperty('background', 'rgb(49, 50, 68)');
+                imageBtn.style.setProperty('background', 'rgb(49, 50, 68)');
                 addColorsContainer.controlEl.toggleClass('select-color-picker', false);
                 addColorsContainer.controlEl.toggleClass('select-generate', false);
                 addColorsContainer.controlEl.toggleClass('select-url', false);
+                addColorsContainer.controlEl.toggleClass('select-image', false);
             }
         }
 
@@ -170,7 +187,6 @@ export class CreatePaletteModal extends Modal {
         }
 
         const createURL = (addColors: Setting) => {
-
             addColors
             .setName("URL")
             .setDesc('Only coolors.co & colorhunt.co are currently supported.')
@@ -199,6 +215,67 @@ export class CreatePaletteModal extends Modal {
             buttonInput.buttonEl.addEventListener('contextmenu', () => {
                 textInput.setValue('');
             })
+        }
+
+        const createImage = (addColors: Setting) => {
+            addColors
+            .setName("Image")
+            .setDesc('Convert image into palette')
+            .addText((text) => {
+                text.setPlaceholder('Enter URL or select file');
+            })
+            .addButton((button) => {
+                button.setIcon('file');
+                button.setTooltip('Right click to clear URL');
+                button.onClick((e) => {
+                    // Check if any text is present, otherwise prompt user to select image
+                    if(textInput.getValue() !== '') createPreview(textInput.getValue());
+                    else inputEl.click();
+                })
+            })
+
+            const [textInput, buttonInput] = addColors.components as [TextComponent, ButtonComponent];
+
+            buttonInput.buttonEl.addEventListener('contextmenu', () => {
+                textInput.setValue('');
+            })
+
+            const inputEl = addColors.controlEl.appendChild(createEl('input'));
+            inputEl.type = 'file';
+            inputEl.accept = 'image/*';
+
+            inputEl.addEventListener('change', (e) => {
+                const reader = new FileReader();
+                const file = (e.target as HTMLInputElement).files?.[0];
+
+                if(file) {
+                    reader.readAsDataURL(file);
+                }
+                
+                reader.addEventListener('load', async () => {
+                    if(typeof reader.result === 'string') {
+                        await createPreview(reader.result);
+                        textInput.setValue(reader.result);
+                    }
+                })
+
+                reader.addEventListener('error', () => {
+                    throw new Error('Error processing image');
+                })
+            })
+
+            const imageEl = addColors.controlEl.appendChild(createEl('img'));
+            imageEl.crossOrigin = 'anonymous';
+
+            const createPreview = async (url: string) => {
+                if(!url) return;
+                
+                const colors = await getImagePalette(url, 7, 5);
+                this.colors = colors.map((color) => colorsea(color).hex(0));
+                this.settings.aliases = [];
+                imageEl.src = url;
+                updatePreview();
+            }
         }
 
         // Set intiial selectedInput
