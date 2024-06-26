@@ -134,10 +134,6 @@
 
 }
 
-.select-url > button {
-    cursor: pointer;
-}
-
 .select-generate > button {
     cursor: pointer;
 }
@@ -155,6 +151,11 @@
     flex-direction: column;
     width: 100px;
     height: 100px;
+    border-radius: 5px;
+}
+
+.select-url > button {
+    cursor: pointer;
 }
 
 .color-preview {

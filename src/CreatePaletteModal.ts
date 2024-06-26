@@ -8,10 +8,10 @@ import { convertStringSettings, getModifiedSettingsAsString, parseUrl, pluginToP
 import { getImagePalette } from "utils/imageUtils";
 
 enum SelectedInput {
-    URL = "URL",
     Color_Picker = "Color Picker",
     Generate = "Generate",
-    Image = "Image"
+    Image = "Image",
+    URL = "URL",
 }
 
 export class CreatePaletteModal extends Modal {
@@ -59,12 +59,6 @@ export class CreatePaletteModal extends Modal {
         // Create header for settings section
         settingsContainer.createEl('h3').setText('Settings');
 
-        const urlBtn = controlContainer.appendChild(createEl('button'));
-        setIcon(urlBtn, 'link');
-        urlBtn.title = 'URL';
-        urlBtn.addEventListener('click', () => {
-            changeSelectedInput(SelectedInput.URL);
-        })
         const colorPickerBtn = controlContainer.appendChild(createEl('button'));
         setIcon(colorPickerBtn, 'pipette');
         colorPickerBtn.title = 'Color Picker';
@@ -77,12 +71,17 @@ export class CreatePaletteModal extends Modal {
         generateBtn.addEventListener('click', () => {
             changeSelectedInput(SelectedInput.Generate);
         })
-
         const imageBtn = controlContainer.appendChild(createEl('button'));
         setIcon(imageBtn, 'image');
         imageBtn.title = 'Image';
         imageBtn.addEventListener('click', () => {
             changeSelectedInput(SelectedInput.Image)
+        })
+        const urlBtn = controlContainer.appendChild(createEl('button'));
+        setIcon(urlBtn, 'link');
+        urlBtn.title = 'URL';
+        urlBtn.addEventListener('click', () => {
+            changeSelectedInput(SelectedInput.URL);
         })
 
         let addColorsContainer = new Setting(colorsContainer);
@@ -103,29 +102,29 @@ export class CreatePaletteModal extends Modal {
                     createGenerate(addColorsContainer);
                     addColorsContainer.controlEl.toggleClass('select-generate', true);
                     break;
-                case SelectedInput.URL:
-                    urlBtn.style.setProperty('background', 'rgb(138, 92, 245)');
-                    addColorsContainer.clear();
-                    createURL(addColorsContainer);
-                    addColorsContainer.controlEl.toggleClass('select-url', true);
-                    break;
                 case SelectedInput.Image:
                     imageBtn.style.setProperty('background', 'rgb(138, 92, 245)');
                     addColorsContainer.clear();
                     createImage(addColorsContainer);
                     addColorsContainer.controlEl.toggleClass('select-image', true);
                     break;
+                case SelectedInput.URL:
+                    urlBtn.style.setProperty('background', 'rgb(138, 92, 245)');
+                    addColorsContainer.clear();
+                    createURL(addColorsContainer);
+                    addColorsContainer.controlEl.toggleClass('select-url', true);
+                    break;
             }
 
             function resetStyle() {
                 colorPickerBtn.style.setProperty('background', 'rgb(49, 50, 68)');
                 generateBtn.style.setProperty('background', 'rgb(49, 50, 68)');
-                urlBtn.style.setProperty('background', 'rgb(49, 50, 68)');
                 imageBtn.style.setProperty('background', 'rgb(49, 50, 68)');
+                urlBtn.style.setProperty('background', 'rgb(49, 50, 68)');
                 addColorsContainer.controlEl.toggleClass('select-color-picker', false);
                 addColorsContainer.controlEl.toggleClass('select-generate', false);
-                addColorsContainer.controlEl.toggleClass('select-url', false);
                 addColorsContainer.controlEl.toggleClass('select-image', false);
+                addColorsContainer.controlEl.toggleClass('select-url', false);
             }
         }
 
@@ -186,37 +185,6 @@ export class CreatePaletteModal extends Modal {
             const [dropdownInput, colorPickerInput, buttonInput] = addColors.components as [DropdownComponent, ColorComponent, ButtonComponent];
         }
 
-        const createURL = (addColors: Setting) => {
-            addColors
-            .setName("URL")
-            .setDesc('Only coolors.co & colorhunt.co are currently supported.')
-            .addText((text) => {
-                text.setPlaceholder('Enter URL');
-            })
-            .addButton((button) => {
-                button.setIcon('link');
-                button.setTooltip('Right click to clear URL');
-                button.onClick((e) => {
-                    try {
-                        const urlText = textInput.getValue();
-                        if(!urlText.match(urlRegex)) throw new Error('URL provided is not valid.');
-                        this.colors = parseUrl(urlText);
-                        this.settings.aliases = [];
-                        updatePreview();
-                    }
-                    catch(e) {
-                        new Notice(e);
-                    }
-                })
-            })
-
-            const [textInput, buttonInput] = addColors.components as [TextComponent, ButtonComponent];
-
-            buttonInput.buttonEl.addEventListener('contextmenu', () => {
-                textInput.setValue('');
-            })
-        }
-
         const createImage = (addColors: Setting) => {
             addColors
             .setName("Image")
@@ -266,6 +234,7 @@ export class CreatePaletteModal extends Modal {
 
             const imageEl = addColors.controlEl.appendChild(createEl('img'));
             imageEl.crossOrigin = 'anonymous';
+            imageEl.style.setProperty('border-radius', this.pluginSettings.corners ? '5px' : '0px');
 
             const createPreview = async (url: string) => {
                 if(!url) return;
@@ -276,6 +245,37 @@ export class CreatePaletteModal extends Modal {
                 imageEl.src = url;
                 updatePreview();
             }
+        }
+
+        const createURL = (addColors: Setting) => {
+            addColors
+            .setName("URL")
+            .setDesc('Only coolors.co & colorhunt.co are currently supported.')
+            .addText((text) => {
+                text.setPlaceholder('Enter URL');
+            })
+            .addButton((button) => {
+                button.setIcon('link');
+                button.setTooltip('Right click to clear URL');
+                button.onClick((e) => {
+                    try {
+                        const urlText = textInput.getValue();
+                        if(!urlText.match(urlRegex)) throw new Error('URL provided is not valid.');
+                        this.colors = parseUrl(urlText);
+                        this.settings.aliases = [];
+                        updatePreview();
+                    }
+                    catch(e) {
+                        new Notice(e);
+                    }
+                })
+            })
+
+            const [textInput, buttonInput] = addColors.components as [TextComponent, ButtonComponent];
+
+            buttonInput.buttonEl.addEventListener('contextmenu', () => {
+                textInput.setValue('');
+            })
         }
 
         // Set intiial selectedInput
