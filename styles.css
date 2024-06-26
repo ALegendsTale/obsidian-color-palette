@@ -126,6 +126,10 @@
     padding: .75em 0;
 }
 
+.control-container > button {
+    cursor: pointer;
+}
+
 .add-colors {
 
 }
@@ -138,19 +142,28 @@
     cursor: pointer;
 }
 
-.select-image > button {
+.select-image {
+    display: flex;
+    flex-direction: column;
+}
+
+.select-image > div {
+    display: flex;
+}
+
+.select-image > div > button {
     cursor: pointer;
 }
 
-.select-image > input[type="file"] {
+.select-image > div > input[type="file"] {
     display: none;
 }
 
 .select-image > img {
     display: flex;
     flex-direction: column;
-    width: 100px;
-    height: 100px;
+    width: 200px;
+    height: 200px;
     border-radius: 5px;
 }
 

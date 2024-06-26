@@ -59,28 +59,28 @@ export class CreatePaletteModal extends Modal {
         // Create header for settings section
         settingsContainer.createEl('h3').setText('Settings');
 
-        const colorPickerBtn = controlContainer.appendChild(createEl('button'));
-        setIcon(colorPickerBtn, 'pipette');
-        colorPickerBtn.title = 'Color Picker';
-        colorPickerBtn.addEventListener('click', () => {
+        const colorPickerBtn = new ButtonComponent(controlContainer);
+        colorPickerBtn.setIcon('pipette');
+        colorPickerBtn.setTooltip('Color Picker');
+        colorPickerBtn.onClick((e) => {
             changeSelectedInput(SelectedInput.Color_Picker);
         })
-        const generateBtn = controlContainer.appendChild(createEl('button'));
-        setIcon(generateBtn, 'shuffle');
-        generateBtn.title = 'Generate';
-        generateBtn.addEventListener('click', () => {
+        const generateBtn = new ButtonComponent(controlContainer);
+        generateBtn.setIcon('shuffle');
+        generateBtn.setTooltip('Generate');
+        generateBtn.onClick((e) => {
             changeSelectedInput(SelectedInput.Generate);
         })
-        const imageBtn = controlContainer.appendChild(createEl('button'));
-        setIcon(imageBtn, 'image');
-        imageBtn.title = 'Image';
-        imageBtn.addEventListener('click', () => {
+        const imageBtn = new ButtonComponent(controlContainer);
+        imageBtn.setIcon('image');
+        imageBtn.setTooltip('Image');
+        imageBtn.onClick((e) => {
             changeSelectedInput(SelectedInput.Image)
         })
-        const urlBtn = controlContainer.appendChild(createEl('button'));
-        setIcon(urlBtn, 'link');
-        urlBtn.title = 'URL';
-        urlBtn.addEventListener('click', () => {
+        const urlBtn = new ButtonComponent(controlContainer);
+        urlBtn.setIcon('link');
+        urlBtn.setTooltip('URL');
+        urlBtn.onClick((e) => {
             changeSelectedInput(SelectedInput.URL);
         })
 
@@ -91,25 +91,25 @@ export class CreatePaletteModal extends Modal {
             resetStyle();
             switch(selectedInput) {
                 case SelectedInput.Color_Picker:
-                    colorPickerBtn.style.setProperty('background', 'rgb(138, 92, 245)');
+                    colorPickerBtn.setCta();
                     addColorsContainer.clear();
                     createColorPicker(addColorsContainer);
                     addColorsContainer.controlEl.toggleClass('select-color-picker', true);
                     break;
                 case SelectedInput.Generate:
-                    generateBtn.style.setProperty('background', 'rgb(138, 92, 245)');
+                    generateBtn.setCta();
                     addColorsContainer.clear()
                     createGenerate(addColorsContainer);
                     addColorsContainer.controlEl.toggleClass('select-generate', true);
                     break;
                 case SelectedInput.Image:
-                    imageBtn.style.setProperty('background', 'rgb(138, 92, 245)');
+                    imageBtn.setCta();
                     addColorsContainer.clear();
                     createImage(addColorsContainer);
                     addColorsContainer.controlEl.toggleClass('select-image', true);
                     break;
                 case SelectedInput.URL:
-                    urlBtn.style.setProperty('background', 'rgb(138, 92, 245)');
+                    urlBtn.setCta();
                     addColorsContainer.clear();
                     createURL(addColorsContainer);
                     addColorsContainer.controlEl.toggleClass('select-url', true);
@@ -117,10 +117,10 @@ export class CreatePaletteModal extends Modal {
             }
 
             function resetStyle() {
-                colorPickerBtn.style.setProperty('background', 'rgb(49, 50, 68)');
-                generateBtn.style.setProperty('background', 'rgb(49, 50, 68)');
-                imageBtn.style.setProperty('background', 'rgb(49, 50, 68)');
-                urlBtn.style.setProperty('background', 'rgb(49, 50, 68)');
+                colorPickerBtn.removeCta();
+                generateBtn.removeCta();
+                imageBtn.removeCta();
+                urlBtn.removeCta();
                 addColorsContainer.controlEl.toggleClass('select-color-picker', false);
                 addColorsContainer.controlEl.toggleClass('select-generate', false);
                 addColorsContainer.controlEl.toggleClass('select-image', false);
@@ -132,22 +132,24 @@ export class CreatePaletteModal extends Modal {
             addColors
             .setName("Color Picker")
             .setDesc('Use handpicked colors')
-            .addColorPicker((color) => {
+
+            const colorPickerInput = new ColorComponent(addColors.controlEl);
+            colorPickerInput.then((color) => {
                 color.onChange((value) => {
                     this.colors.push(value);
                     this.settings.aliases.push('');
                     updatePreview();
                 })
             })
-
-            const [colorPickerInput] = addColors.components as [ColorComponent];
         }
 
         const createGenerate = (addColors: Setting) => {
             addColors
             .setName("Generate")
             .setDesc('Generate colors based on color theory')
-            .addDropdown((dropdown) => {
+
+            const dropdownInput = new DropdownComponent(addColors.controlEl);
+            dropdownInput.then((dropdown) => {
                 Object.keys(Combination).forEach((combination) => {
                     dropdown.addOption(combination, combination);
                 })
@@ -159,7 +161,9 @@ export class CreatePaletteModal extends Modal {
                     colorPickerInput.setDisabled(this.combination === Combination.Random ? true : false);
                 })
             })
-            .addColorPicker((color) => {
+
+            const colorPickerInput = new ColorComponent(addColors.controlEl);
+            colorPickerInput.then((color) => {
                 color.onChange((value) => {
                     this.baseColor = colorsea(value);
                 })
@@ -170,49 +174,58 @@ export class CreatePaletteModal extends Modal {
                     this.baseColor = undefined;
                 });
             })
-            .addButton((button) => {
+
+            const buttonInput = new ButtonComponent(addColors.controlEl);
+            buttonInput.then((button) => {
                 button.setIcon('shuffle')
+                button.setTooltip('Loads the generated colors');
                 button.onClick((e) => {
                     // Generate colors & settings
                     const generated = generateColors(this.combination, { baseColor: this.baseColor, settings: this.settings });
                     this.colors = generated.colors;
                     if(generated.settings) this.settings = generated.settings;
-
                     updatePreview();
                 })
             })
-    
-            const [dropdownInput, colorPickerInput, buttonInput] = addColors.components as [DropdownComponent, ColorComponent, ButtonComponent];
+
         }
 
         const createImage = (addColors: Setting) => {
             addColors
             .setName("Image")
             .setDesc('Convert image into palette')
-            .addText((text) => {
+
+            const imageEl = addColors.controlEl.appendChild(createEl('img'));
+            imageEl.crossOrigin = 'anonymous';
+            imageEl.style.setProperty('border-radius', this.pluginSettings.corners ? '5px' : '0px');
+
+            // Contains urlInput, loadButton, & fileInput
+            const containerEl = addColors.controlEl.appendChild(createEl('div'));
+            
+            const urlInput = new TextComponent(containerEl);
+            urlInput.then((text) => {
                 text.setPlaceholder('Enter URL or select file');
             })
-            .addButton((button) => {
-                button.setIcon('file');
+
+            const loadButton = new ButtonComponent(containerEl);
+            loadButton.then((button) => {
+                button.setIcon('arrow-up-to-line');
                 button.setTooltip('Right click to clear URL');
                 button.onClick((e) => {
                     // Check if any text is present, otherwise prompt user to select image
-                    if(textInput.getValue() !== '') createPreview(textInput.getValue());
-                    else inputEl.click();
+                    if(urlInput.getValue() !== '') createPreview(urlInput.getValue());
+                    else fileInput.click();
                 })
             })
-
-            const [textInput, buttonInput] = addColors.components as [TextComponent, ButtonComponent];
-
-            buttonInput.buttonEl.addEventListener('contextmenu', () => {
-                textInput.setValue('');
+            loadButton.buttonEl.addEventListener('contextmenu', () => {
+                urlInput.setValue('');
             })
 
-            const inputEl = addColors.controlEl.appendChild(createEl('input'));
-            inputEl.type = 'file';
-            inputEl.accept = 'image/*';
-
-            inputEl.addEventListener('change', (e) => {
+            const fileSelector = new TextComponent(containerEl);
+            const fileInput = fileSelector.inputEl;
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.addEventListener('change', (e) => {
                 const reader = new FileReader();
                 const file = (e.target as HTMLInputElement).files?.[0];
 
@@ -223,7 +236,7 @@ export class CreatePaletteModal extends Modal {
                 reader.addEventListener('load', async () => {
                     if(typeof reader.result === 'string') {
                         await createPreview(reader.result);
-                        textInput.setValue(reader.result);
+                        urlInput.setValue(reader.result);
                     }
                 })
 
@@ -231,10 +244,6 @@ export class CreatePaletteModal extends Modal {
                     throw new Error('Error processing image');
                 })
             })
-
-            const imageEl = addColors.controlEl.appendChild(createEl('img'));
-            imageEl.crossOrigin = 'anonymous';
-            imageEl.style.setProperty('border-radius', this.pluginSettings.corners ? '5px' : '0px');
 
             const createPreview = async (url: string) => {
                 if(!url) return;
@@ -251,10 +260,14 @@ export class CreatePaletteModal extends Modal {
             addColors
             .setName("URL")
             .setDesc('Only coolors.co & colorhunt.co are currently supported.')
-            .addText((text) => {
+
+            const textInput = new TextComponent(addColors.controlEl);
+            textInput.then((text) => {
                 text.setPlaceholder('Enter URL');
             })
-            .addButton((button) => {
+
+            const buttonInput = new ButtonComponent(addColors.controlEl);
+            buttonInput.then((button) => {
                 button.setIcon('link');
                 button.setTooltip('Right click to clear URL');
                 button.onClick((e) => {
@@ -270,9 +283,6 @@ export class CreatePaletteModal extends Modal {
                     }
                 })
             })
-
-            const [textInput, buttonInput] = addColors.components as [TextComponent, ButtonComponent];
-
             buttonInput.buttonEl.addEventListener('contextmenu', () => {
                 textInput.setValue('');
             })
@@ -301,12 +311,11 @@ export class CreatePaletteModal extends Modal {
         }
 
         const createTrash = (color: string) => {
-            let trashContainer = createEl('div');
-            trashContainer.addClass('trash-container');
-
             const csColor = colorsea(color);
             const contrastColor = (csColor.rgb()[0]*0.299 + csColor.rgb()[1]*0.587 + csColor.rgb()[2]*0.114) > 186 ? '#000000' : '#ffffff';
 
+            let trashContainer = createEl('div');
+            trashContainer.addClass('trash-container');
             trashContainer.style.setProperty('--trash-background-color', color);
             trashContainer.style.setProperty('--trash-color', contrastColor);
             
@@ -359,9 +368,10 @@ export class CreatePaletteModal extends Modal {
                 return Math.max(minFontSize, baseFontSize - (colors.length / 2));
             }
 
-            let trash = trashContainer.createEl('button');
-            setIcon(trash, 'trash-2');
-            trash.addEventListener('click', (e) => {
+            let trash = new ButtonComponent(trashContainer);
+            trash.setIcon('trash-2');
+            trash.setTooltip('Remove');
+            trash.onClick((e) => {
                 e.stopPropagation();
                 const deletedIndex = this.colors.indexOf(color);
                 this.colors.splice(deletedIndex, 1);
@@ -369,6 +379,7 @@ export class CreatePaletteModal extends Modal {
                 palette.reload();
                 updateTrash();
             })
+
             return trashContainer;
         }
 
