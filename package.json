@@ -1,6 +1,6 @@
 {
 	"name": "color-palette",
-	"version": "2.9.2",
+	"version": "2.10.0",
 	"description": "Create and insert color palettes into your notes.",
 	"main": "src/main.js",
 	"scripts": {
