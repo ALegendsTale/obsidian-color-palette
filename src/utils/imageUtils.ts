@@ -1,87 +1,116 @@
+import { Notice } from "obsidian";
 import quantize, { RgbPixel } from "quantize";
 
-let loading = false;
+export default class CanvasImage {
+    image: HTMLImageElement;
+    canvas: HTMLCanvasElement;
+    context: CanvasRenderingContext2D;
+    width: number;
+    height: number;
+    loading: boolean;
 
-/**
- * Waits for loading variable to equal true
- */
-const waitForLoading = () => new Promise(resolve => {
-    const checkLoading = setInterval(() => {
-        if (!loading) {
-            clearInterval(checkLoading);
-            resolve(true);
-        }
-    }, 100);
-})
+    constructor(imageURL: string, smoothing = false) {
+        this.loading = true;
+        this.image = new Image();
+        // Allows CORS requests for images from different domains
+        this.image.crossOrigin = 'anonymous';
+        this.image.src = imageURL;
+        this.image.addEventListener('load', (e) => this.loading = false);
+        this.canvas  = document.createElement('canvas');
+        // Non-null asserted context
+        this.context = this.canvas.getContext('2d')!;
+        this.context.imageSmoothingEnabled = smoothing;
 
-/**
- * Gets the most frequent colors in an image
- * @param imageURL The URL of the image
- * @param numColors Number of colors to return
- * @param quality Artificially reduce number of pixels (higher = less accurate but faster)
- * @param smoothing Smooths image before processing
- * @returns Most frequent colors
- */
-export async function getImagePalette(imageURL: string, numColors: number = 5, quality = 10, smoothing = false) {
-    loading = true;
-    let context = document.createElement('canvas').getContext('2d');
-    // Return early if no context
-    if(!context) return [];
-    let image = new Image();
-    image.src = imageURL;
-    // Allows CORS requests for images from different domains
-    image.crossOrigin = 'anonymous';
+        this.load();
+    }
 
-    let palette: RgbPixel[] = [];
+    load() {
+        this.waitForLoading().then(() => {
+            this.width  = this.canvas.width  = this.image.naturalWidth;
+            this.height = this.canvas.height = this.image.naturalHeight;
+            this.context.drawImage(this.image, 0, 0, this.width, this.height);
+        })
+    }
 
-    // Waits for image to fully load
-    image.addEventListener('load', async (e) => {
-        if(!context) return [];
-        context.imageSmoothingEnabled = smoothing;
-        context.drawImage(image, 0, 0, image.width, image.height);
-        const imageData = context.getImageData(0, 0, image.width, image.height).data;
+    /**
+     * Gets the most frequent colors in an image
+     * @param numColors Number of colors to return
+     * @param quality Artificially reduce number of pixels (higher = less accurate but faster)
+     * @returns Most frequent colors
+     */
+    public async getPalette(numColors = 7, quality = 10) {
+        /*
+        Quanitze has an issue with number of colors which has been addressed here https://github.com/olivierlesnicki/quantize/issues/9
+        `nColors` is a simple fix for this.
+        */
+        const nColors = numColors <= 7 ? numColors : numColors + 1;
 
-        // Get number of pixels in image
-        const pixelCount = image.height * image.width;
+        // Wait for image to load
+        await this.waitForLoading();
 
         // Get an array of pixels
-        const pixels = createPixelArray(imageData, pixelCount, quality) as RgbPixel[]
+        const pixels = await this.createPixelArray(quality);
+        if(!pixels) return null;
 
         // Reduce pixels array to a small number of the most common colors
-        const colorMap = quantize(pixels, numColors);
-
-        // Set the palette
-        if(colorMap) palette = colorMap.palette();
+        const colorMap = quantize(pixels, nColors);
     
-        loading = false;
-    })
+        // Return palette
+        return colorMap ? colorMap.palette() : [];
+    }
 
-    await waitForLoading();
-    return palette;
-}
+    /**
+     * Creates an array of pixels from the image
+     * Inspired by colorthief
+     * @param quality Artificially reduce number of pixels (higher = less accurate but faster)
+     * @returns 
+     */
+    public async createPixelArray(quality: number) {
+        await this.waitForLoading();
+        const pixelArray: number[][] = [];
+        const imageData =  (await this.getImageData())?.data;
+        if(!imageData) return null;
+        // Get number of pixels in image
+        const pixelCount = this.height * this.width;
 
-/**
- * Creates an array of pixels from an image
- * Inspired by colorthief
- * @param imageData The image data context from canvas
- * @param pixelCount Number of pixels in the image
- * @param quality Artificially reduce number of pixels (higher = less accurate but faster)
- * @returns 
- */
-function createPixelArray(imageData: Uint8ClampedArray, pixelCount: number, quality: number) {
-    const pixelArray: number[][] = [];
+        for (let i = 0; i < pixelCount; i += quality) {
+            // Offset to correct starting position of each pixel
+            const offset = i * 4;
+            const [r, g, b, a] = [imageData[offset + 0], imageData[offset + 1], imageData[offset + 2], imageData[offset + 3]];
 
-    for (let i = 0; i < pixelCount; i += quality) {
-        // Offset to correct starting position of each pixel
-        const offset = i * 4;
-        const [r, g, b, a] = [imageData[offset + 0], imageData[offset + 1], imageData[offset + 2], imageData[offset + 3]];
-
-        // If pixel is mostly opaque and not white
-        if (typeof a === 'undefined' || a >= 125) {
-            if (!(r > 250 && g > 250 && b > 250)) {
-                pixelArray.push([r, g, b]);
+            // If pixel is mostly opaque and not white
+            if (typeof a === 'undefined' || a >= 125) {
+                if (!(r > 250 && g > 250 && b > 250)) {
+                    pixelArray.push([r, g, b]);
+                }
             }
         }
+        return pixelArray as RgbPixel[];
     }
-    return pixelArray;
+
+    /**
+     * Gets the image data from the canvas
+     */
+    public async getImageData() {
+        try {
+            await this.waitForLoading();
+            return this.context.getImageData(0, 0, this.width, this.height);
+        }
+        catch(e) {
+            new Notice('Failed to get image data.');
+            return null;
+        }
+    }
+
+    /**
+     * Waits for loading variable to equal true
+     */
+    private waitForLoading = () => new Promise(resolve => {
+        const checkLoading = setInterval(() => {
+            if (!this.loading) {
+                clearInterval(checkLoading);
+                resolve(true);
+            }
+        }, 100);
+    })
 }

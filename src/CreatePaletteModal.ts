@@ -5,7 +5,7 @@ import colorsea from "colorsea";
 import { Direction, ColorPaletteSettings } from "settings";
 import { Combination, generateColors } from "utils/generateRandom";
 import { convertStringSettings, getModifiedSettingsAsString, parseUrl, pluginToPaletteSettings } from "utils/basicUtils";
-import { getImagePalette } from "utils/imageUtils";
+import CanvasImage from "utils/imageUtils";
 
 enum SelectedInput {
     Color_Picker = "Color Picker",
@@ -138,7 +138,7 @@ export class CreatePaletteModal extends Modal {
                 color.onChange((value) => {
                     this.colors.push(value);
                     this.settings.aliases.push('');
-                    updatePreview();
+                    updatePalettePreview();
                 })
             })
         }
@@ -184,7 +184,7 @@ export class CreatePaletteModal extends Modal {
                     const generated = generateColors(this.combination, { baseColor: this.baseColor, settings: this.settings });
                     this.colors = generated.colors;
                     if(generated.settings) this.settings = generated.settings;
-                    updatePreview();
+                    updatePalettePreview();
                 })
             })
 
@@ -213,7 +213,7 @@ export class CreatePaletteModal extends Modal {
                 button.setTooltip('Right click to clear URL');
                 button.onClick((e) => {
                     // Check if any text is present, otherwise prompt user to select image
-                    if(urlInput.getValue() !== '') createPreview(urlInput.getValue());
+                    if(urlInput.getValue() !== '') updateImagePreview(urlInput.getValue());
                     else fileInput.click();
                 })
             })
@@ -228,31 +228,32 @@ export class CreatePaletteModal extends Modal {
             fileInput.addEventListener('change', (e) => {
                 const reader = new FileReader();
                 const file = (e.target as HTMLInputElement).files?.[0];
-
-                if(file) {
-                    reader.readAsDataURL(file);
-                }
+                if(file) reader.readAsDataURL(file);
                 
                 reader.addEventListener('load', async () => {
                     if(typeof reader.result === 'string') {
-                        await createPreview(reader.result);
-                        urlInput.setValue(reader.result);
+                        await updateImagePreview(reader.result);
                     }
                 })
-
                 reader.addEventListener('error', () => {
-                    throw new Error('Error processing image');
+                    throw new Error('Error processing image.');
                 })
             })
 
-            const createPreview = async (url: string) => {
+            /**
+             * Updates the image mode preview
+             */
+            const updateImagePreview = async (url: string) => {
                 if(!url) return;
-                
-                const colors = await getImagePalette(url, 7, 5);
-                this.colors = colors.map((color) => colorsea(color).hex(0));
-                this.settings.aliases = [];
+
                 imageEl.src = url;
-                updatePreview();
+                const canvasImage = new CanvasImage(url);
+                const colors = await canvasImage.getPalette(7);
+                if(colors) {
+                    this.colors = colors.map((color) => colorsea(color).hex(0));
+                    this.settings.aliases = [];
+                    updatePalettePreview();
+                }
             }
         }
 
@@ -276,7 +277,7 @@ export class CreatePaletteModal extends Modal {
                         if(!urlText.match(urlRegex)) throw new Error('URL provided is not valid.');
                         this.colors = parseUrl(urlText);
                         this.settings.aliases = [];
-                        updatePreview();
+                        updatePalettePreview();
                     }
                     catch(e) {
                         new Notice(e);
@@ -303,7 +304,7 @@ export class CreatePaletteModal extends Modal {
         /**
          * Updates the palette preview
          */
-        const updatePreview = () => {
+        const updatePalettePreview = () => {
             palette.colors = this.colors;
             palette.settings = this.settings;
             palette.reload()
@@ -405,7 +406,7 @@ export class CreatePaletteModal extends Modal {
                 .setValue(this.settings.height.toString())
                 .onChange((value) => {
                     this.settings.height = Number(value);
-                    updatePreview();
+                    updatePalettePreview();
                 })
             })
 
@@ -417,7 +418,7 @@ export class CreatePaletteModal extends Modal {
                 .setValue(this.settings.width.toString())
                 .onChange((value) => {
                     this.settings.width = Number(value);
-                    updatePreview();
+                    updatePalettePreview();
                 })
             })
 
@@ -430,7 +431,7 @@ export class CreatePaletteModal extends Modal {
                 .setValue(this.settings.direction.toString())
                 .onChange((value) => {
                     this.settings.direction = value as Direction;
-                    updatePreview();
+                    updatePalettePreview();
                 })
             })
 
@@ -441,7 +442,7 @@ export class CreatePaletteModal extends Modal {
                 .setValue(this.settings.gradient)
                 .onChange((value) => {
                     this.settings.gradient = value;
-                    updatePreview();
+                    updatePalettePreview();
                 })
             })
 
@@ -453,7 +454,7 @@ export class CreatePaletteModal extends Modal {
                 .setValue(this.settings.hover)
                 .onChange(async (value) => {
                     this.settings.hover = value;
-                    updatePreview();
+                    updatePalettePreview();
                 })
             })
 
@@ -465,7 +466,7 @@ export class CreatePaletteModal extends Modal {
                 .setValue(this.settings.override)
                 .onChange(async (value) => {
                     this.settings.override = value;
-                    updatePreview();
+                    updatePalettePreview();
                 })
             })
 
