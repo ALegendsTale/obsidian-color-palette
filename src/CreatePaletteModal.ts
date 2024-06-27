@@ -1,4 +1,4 @@
-import { App, ButtonComponent, ColorComponent, DropdownComponent, Modal, Notice, Setting, SliderComponent, TextComponent, setIcon } from "obsidian";
+import { App, ButtonComponent, ColorComponent, DropdownComponent, Modal, Notice, Setting, SliderComponent, TextComponent } from "obsidian";
 import { Palette, PaletteSettings } from "palette";
 import { urlRegex } from "main";
 import colorsea from "colorsea";
@@ -59,30 +59,30 @@ export class CreatePaletteModal extends Modal {
         // Create header for settings section
         settingsContainer.createEl('h3').setText('Settings');
 
-        const colorPickerBtn = new ButtonComponent(controlContainer);
-        colorPickerBtn.setIcon('pipette');
-        colorPickerBtn.setTooltip('Color Picker');
-        colorPickerBtn.onClick((e) => {
-            changeSelectedInput(SelectedInput.Color_Picker);
-        })
-        const generateBtn = new ButtonComponent(controlContainer);
-        generateBtn.setIcon('shuffle');
-        generateBtn.setTooltip('Generate');
-        generateBtn.onClick((e) => {
-            changeSelectedInput(SelectedInput.Generate);
-        })
-        const imageBtn = new ButtonComponent(controlContainer);
-        imageBtn.setIcon('image');
-        imageBtn.setTooltip('Image');
-        imageBtn.onClick((e) => {
-            changeSelectedInput(SelectedInput.Image)
-        })
-        const urlBtn = new ButtonComponent(controlContainer);
-        urlBtn.setIcon('link');
-        urlBtn.setTooltip('URL');
-        urlBtn.onClick((e) => {
-            changeSelectedInput(SelectedInput.URL);
-        })
+        const colorPickerBtn = new ButtonComponent(controlContainer)
+            .setIcon('pipette')
+            .setTooltip('Color Picker')
+            .onClick((e) => {
+                changeSelectedInput(SelectedInput.Color_Picker);
+            })
+        const generateBtn = new ButtonComponent(controlContainer)
+            .setIcon('shuffle')
+            .setTooltip('Generate')
+            .onClick((e) => {
+                changeSelectedInput(SelectedInput.Generate);
+            })
+        const imageBtn = new ButtonComponent(controlContainer)
+            .setIcon('image')
+            .setTooltip('Image')
+            .onClick((e) => {
+                changeSelectedInput(SelectedInput.Image)
+            })
+        const urlBtn = new ButtonComponent(controlContainer)
+            .setIcon('link')
+            .setTooltip('URL')
+            .onClick((e) => {
+                changeSelectedInput(SelectedInput.URL);
+            })
 
         let addColorsContainer = colorsContainer.appendChild(createEl('div'));
         addColorsContainer.addClass('add-colors-container');
@@ -129,75 +129,62 @@ export class CreatePaletteModal extends Modal {
         }
 
         const createColorPicker = (addColorsContainer: HTMLDivElement) => {
-            let addColors = new Setting(addColorsContainer);
-            addColors
+            let addColors = new Setting(addColorsContainer)
             .setName("Color Picker")
             .setDesc('Use handpicked colors')
 
-            const colorPickerInput = new ColorComponent(addColors.controlEl);
-            colorPickerInput.then((color) => {
-                color.onChange((value) => {
+            const colorPickerInput = new ColorComponent(addColors.controlEl)
+                .onChange((value) => {
                     this.colors.push(value);
                     this.settings.aliases.push('');
                     updatePalettePreview();
                 })
-            })
         }
 
         const createGenerate = (addColorsContainer: HTMLDivElement) => {
-            let addColors = new Setting(addColorsContainer);
-            addColors
+            let addColors = new Setting(addColorsContainer)
             .setName("Generate")
             .setDesc('Generate colors based on color theory')
 
-            const dropdownInput = new DropdownComponent(addColors.controlEl);
-            dropdownInput.then((dropdown) => {
-                Object.keys(Combination).forEach((combination) => {
-                    dropdown.addOption(combination, combination);
-                })
-                dropdown
+            const dropdownInput = new DropdownComponent(addColors.controlEl)
                 .setValue(this.combination)
                 .onChange((value) => {
                     this.combination = value as Combination;
                     // Disable color picker if selected combination is random
                     colorPickerInput.setDisabled(this.combination === Combination.Random ? true : false);
                 })
+            Object.keys(Combination).forEach((combination) => {
+                dropdownInput.addOption(combination, combination);
             })
 
-            const colorPickerInput = new ColorComponent(addColors.controlEl);
-            colorPickerInput.then((color) => {
-                color.onChange((value) => {
+            const colorPickerInput = new ColorComponent(addColors.controlEl)
+                .onChange((value) => {
                     this.baseColor = colorsea(value);
                 })
-                color.setDisabled(this.combination === Combination.Random ? true : false);
-                const colorPicker = Array.from(addColors.controlEl.children)[1] as HTMLInputElement
-                colorPicker.addEventListener('contextmenu', (e) => {
-                    color.setValue(colorsea('#000').hex());
-                    this.baseColor = undefined;
-                });
-            })
+                .setDisabled(this.combination === Combination.Random ? true : false);
+            const colorPicker = Array.from(addColors.controlEl.children)[1] as HTMLInputElement
+            colorPicker.addEventListener('contextmenu', (e) => {
+                colorPickerInput.setValue(colorsea('#000').hex());
+                this.baseColor = undefined;
+            });
 
-            const buttonInput = new ButtonComponent(addColors.controlEl);
-            buttonInput.then((button) => {
-                button.setIcon('shuffle')
-                button.setTooltip('Loads the generated colors');
-                button.onClick((e) => {
+            const buttonInput = new ButtonComponent(addColors.controlEl)
+                .setIcon('shuffle')
+                .setTooltip('Loads the generated colors')
+                .onClick((e) => {
                     // Generate colors & settings
                     const generated = generateColors(this.combination, { baseColor: this.baseColor, settings: this.settings });
                     this.colors = generated.colors;
                     if(generated.settings) this.settings = generated.settings;
                     updatePalettePreview();
                 })
-            })
-
         }
 
         const createImage = (addColorsContainer: HTMLDivElement) => {
             // Represents both external & internal image URLs
             let fileURL = '';
 
-            let addColors = new Setting(addColorsContainer);
-            addColors
+            let addColors = new Setting(addColorsContainer)
             .setClass('add-colors')
             .setName("Image")
             .setDesc('Convert image into palette')
@@ -207,22 +194,18 @@ export class CreatePaletteModal extends Modal {
             // Contains urlInput, loadButton, & fileInput
             const selectContainer = inputContainer.appendChild(createEl('div'));
             
-            const urlInput = new TextComponent(selectContainer);
-            urlInput.then((text) => {
-                text.setPlaceholder('Enter URL or select file');
-                urlInput.onChange((value) => fileURL = value);
-            })
+            const urlInput = new TextComponent(selectContainer)
+                .setPlaceholder('Enter URL or select file')
+                .onChange((value) => fileURL = value)
 
-            const loadButton = new ButtonComponent(selectContainer);
-            loadButton.then((button) => {
-                button.setIcon('arrow-up-to-line');
-                button.setTooltip('Right click to clear URL');
-                button.onClick(async (e) => {
+            const loadButton = new ButtonComponent(selectContainer)
+                .setIcon('arrow-up-to-line')
+                .setTooltip('Right click to clear URL')
+                .onClick(async (e) => {
                     // Check if any text is present, otherwise prompt user to select image
                     if(urlInput.getValue() !== '') await updateImagePreview(urlInput.getValue());
                     else fileInput.click();
                 })
-            })
             loadButton.buttonEl.addEventListener('contextmenu', () => urlInput.setValue(''));
 
             const fileSelector = new TextComponent(selectContainer);
@@ -245,18 +228,15 @@ export class CreatePaletteModal extends Modal {
                 })
             })
 
-            const sliderContainer = new Setting(addColorsContainer);
-            sliderContainer
+            const sliderContainer = new Setting(addColorsContainer)
             .setName('Count')
             .setDesc('Set the number of colors to generate from the image.')
 
-            const countInput = new SliderComponent(sliderContainer.controlEl);
-            countInput.then((slider) => {
-                slider.setLimits(4, 12, 1);
-                slider.setDynamicTooltip();
-                slider.setValue(8);
-                slider.onChange(async (value) => await updateImagePreview(fileURL));
-            })
+            const countInput = new SliderComponent(sliderContainer.controlEl)
+                .setLimits(4, 12, 1)
+                .setDynamicTooltip()
+                .setValue(8)
+                .onChange(async (value) => await updateImagePreview(fileURL))
 
             const imageContainer = new Setting(addColorsContainer);
             imageContainer.setClass('image-preview');
@@ -287,21 +267,17 @@ export class CreatePaletteModal extends Modal {
         }
 
         const createURL = (addColorsContainer: HTMLDivElement) => {
-            let addColors = new Setting(addColorsContainer);
-            addColors
+            let addColors = new Setting(addColorsContainer)
             .setName("URL")
             .setDesc('Only coolors.co & colorhunt.co are currently supported.')
 
-            const textInput = new TextComponent(addColors.controlEl);
-            textInput.then((text) => {
-                text.setPlaceholder('Enter URL');
-            })
+            const textInput = new TextComponent(addColors.controlEl)
+                .setPlaceholder('Enter URL');
 
-            const buttonInput = new ButtonComponent(addColors.controlEl);
-            buttonInput.then((button) => {
-                button.setIcon('link');
-                button.setTooltip('Right click to clear URL');
-                button.onClick((e) => {
+            const buttonInput = new ButtonComponent(addColors.controlEl)
+                .setIcon('link')
+                .setTooltip('Right click to clear URL')
+                .onClick((e) => {
                     try {
                         const urlText = textInput.getValue();
                         if(!urlText.match(urlRegex)) throw new Error('URL provided is not valid.');
@@ -313,7 +289,6 @@ export class CreatePaletteModal extends Modal {
                         new Notice(e);
                     }
                 })
-            })
             buttonInput.buttonEl.addEventListener('contextmenu', () => {
                 textInput.setValue('');
             })
@@ -399,17 +374,17 @@ export class CreatePaletteModal extends Modal {
                 return Math.max(minFontSize, baseFontSize - (colors.length / 2));
             }
 
-            let trash = new ButtonComponent(trashContainer);
-            trash.setIcon('trash-2');
-            trash.setTooltip('Remove');
-            trash.onClick((e) => {
-                e.stopPropagation();
-                const deletedIndex = this.colors.indexOf(color);
-                this.colors.splice(deletedIndex, 1);
-                this.settings.aliases.splice(deletedIndex, 1);
-                palette.reload();
-                updateTrash();
-            })
+            let trash = new ButtonComponent(trashContainer)
+                .setIcon('trash-2')
+                .setTooltip('Remove')
+                .onClick((e) => {
+                    e.stopPropagation();
+                    const deletedIndex = this.colors.indexOf(color);
+                    this.colors.splice(deletedIndex, 1);
+                    this.settings.aliases.splice(deletedIndex, 1);
+                    palette.reload();
+                    updateTrash();
+                })
 
             return trashContainer;
         }
