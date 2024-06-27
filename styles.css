@@ -130,58 +130,82 @@
     cursor: pointer;
 }
 
-.add-colors {
-
+.add-colors-container {
+    padding: .75em 0 0 0;
 }
+
+/* Color Picker Mode */
 
 .select-color-picker {
 
 }
 
+/* Generate Mode */
+
 .select-generate > button {
     cursor: pointer;
 }
 
-.select-image {
+/* Image Mode Add Colors */
+
+.select-image > .add-colors > .setting-item-control > div {
     display: flex;
     flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
 }
 
-.select-image > div {
+.select-image > .add-colors > .setting-item-control > div > div {
     display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
 }
 
-.select-image > div > button {
+.select-image > .add-colors > .setting-item-control > div > div > button {
     cursor: pointer;
 }
 
-.select-image > div > input[type="file"] {
+.select-image > .add-colors > .setting-item-control > div > div > input[type="file"] {
     display: none;
 }
 
-.select-image > img {
-    display: flex;
-    flex-direction: column;
-    width: 200px;
-    height: 200px;
-    border-radius: 5px;
+.select-image > .image-preview > .setting-item-info {
+    display: none;
 }
+
+/* Image Mode Preview */
+
+.select-image > .image-preview > div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.select-image > .image-preview > div > img {
+    width: 100%;
+    height: 100%;
+    border-radius: 5px;
+    object-fit: contain;
+}
+
+.select-image > .hide-image-preview {
+    display: none;
+}
+
+/* URL Mode */
 
 .select-url > button {
     cursor: pointer;
 }
 
-.color-preview {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 5%;
-}
+/* Palette Preview */
 
-.color-preview > .palette > div > span {
+.palette-preview > .palette > div > span {
     display: none !important;
 }
+
+/* Trash */
 
 .trash-container {
     --trash-background-color: #000000;

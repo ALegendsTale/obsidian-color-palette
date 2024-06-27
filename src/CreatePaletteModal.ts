@@ -1,4 +1,4 @@
-import { App, ButtonComponent, ColorComponent, DropdownComponent, Modal, Notice, Setting, TextComponent, setIcon } from "obsidian";
+import { App, ButtonComponent, ColorComponent, DropdownComponent, Modal, Notice, Setting, SliderComponent, TextComponent, setIcon } from "obsidian";
 import { Palette, PaletteSettings } from "palette";
 import { urlRegex } from "main";
 import colorsea from "colorsea";
@@ -52,7 +52,7 @@ export class CreatePaletteModal extends Modal {
 
         // Preview
         const previewContainer = contentEl.createEl('section');
-        previewContainer.createEl('h3').setText('Preview');
+        previewContainer.createEl('h3');
 
         // Settings
         const settingsContainer = contentEl.createEl('section');
@@ -84,35 +84,35 @@ export class CreatePaletteModal extends Modal {
             changeSelectedInput(SelectedInput.URL);
         })
 
-        let addColorsContainer = new Setting(colorsContainer);
-        addColorsContainer.controlEl.addClass('add-colors');
+        let addColorsContainer = colorsContainer.appendChild(createEl('div'));
+        addColorsContainer.addClass('add-colors-container');
 
         function changeSelectedInput(selectedInput: SelectedInput) {
             resetStyle();
             switch(selectedInput) {
                 case SelectedInput.Color_Picker:
                     colorPickerBtn.setCta();
-                    addColorsContainer.clear();
+                    addColorsContainer.empty();
                     createColorPicker(addColorsContainer);
-                    addColorsContainer.controlEl.toggleClass('select-color-picker', true);
+                    addColorsContainer.toggleClass('select-color-picker', true);
                     break;
                 case SelectedInput.Generate:
                     generateBtn.setCta();
-                    addColorsContainer.clear()
+                    addColorsContainer.empty();
                     createGenerate(addColorsContainer);
-                    addColorsContainer.controlEl.toggleClass('select-generate', true);
+                    addColorsContainer.toggleClass('select-generate', true);
                     break;
                 case SelectedInput.Image:
                     imageBtn.setCta();
-                    addColorsContainer.clear();
+                    addColorsContainer.empty();
                     createImage(addColorsContainer);
-                    addColorsContainer.controlEl.toggleClass('select-image', true);
+                    addColorsContainer.toggleClass('select-image', true);
                     break;
                 case SelectedInput.URL:
                     urlBtn.setCta();
-                    addColorsContainer.clear();
+                    addColorsContainer.empty();
                     createURL(addColorsContainer);
-                    addColorsContainer.controlEl.toggleClass('select-url', true);
+                    addColorsContainer.toggleClass('select-url', true);
                     break;
             }
 
@@ -121,14 +121,15 @@ export class CreatePaletteModal extends Modal {
                 generateBtn.removeCta();
                 imageBtn.removeCta();
                 urlBtn.removeCta();
-                addColorsContainer.controlEl.toggleClass('select-color-picker', false);
-                addColorsContainer.controlEl.toggleClass('select-generate', false);
-                addColorsContainer.controlEl.toggleClass('select-image', false);
-                addColorsContainer.controlEl.toggleClass('select-url', false);
+                addColorsContainer.toggleClass('select-color-picker', false);
+                addColorsContainer.toggleClass('select-generate', false);
+                addColorsContainer.toggleClass('select-image', false);
+                addColorsContainer.toggleClass('select-url', false);
             }
         }
 
-        const createColorPicker = (addColors: Setting) => {
+        const createColorPicker = (addColorsContainer: HTMLDivElement) => {
+            let addColors = new Setting(addColorsContainer);
             addColors
             .setName("Color Picker")
             .setDesc('Use handpicked colors')
@@ -143,7 +144,8 @@ export class CreatePaletteModal extends Modal {
             })
         }
 
-        const createGenerate = (addColors: Setting) => {
+        const createGenerate = (addColorsContainer: HTMLDivElement) => {
+            let addColors = new Setting(addColorsContainer);
             addColors
             .setName("Generate")
             .setDesc('Generate colors based on color theory')
@@ -190,38 +192,40 @@ export class CreatePaletteModal extends Modal {
 
         }
 
-        const createImage = (addColors: Setting) => {
+        const createImage = (addColorsContainer: HTMLDivElement) => {
+            // Represents both external & internal image URLs
+            let fileURL = '';
+
+            let addColors = new Setting(addColorsContainer);
             addColors
+            .setClass('add-colors')
             .setName("Image")
             .setDesc('Convert image into palette')
 
-            const imageEl = addColors.controlEl.appendChild(createEl('img'));
-            imageEl.crossOrigin = 'anonymous';
-            imageEl.style.setProperty('border-radius', this.pluginSettings.corners ? '5px' : '0px');
+            const inputContainer = addColors.controlEl.appendChild(createEl('div'));
 
             // Contains urlInput, loadButton, & fileInput
-            const containerEl = addColors.controlEl.appendChild(createEl('div'));
+            const selectContainer = inputContainer.appendChild(createEl('div'));
             
-            const urlInput = new TextComponent(containerEl);
+            const urlInput = new TextComponent(selectContainer);
             urlInput.then((text) => {
                 text.setPlaceholder('Enter URL or select file');
+                urlInput.onChange((value) => fileURL = value);
             })
 
-            const loadButton = new ButtonComponent(containerEl);
+            const loadButton = new ButtonComponent(selectContainer);
             loadButton.then((button) => {
                 button.setIcon('arrow-up-to-line');
                 button.setTooltip('Right click to clear URL');
-                button.onClick((e) => {
+                button.onClick(async (e) => {
                     // Check if any text is present, otherwise prompt user to select image
-                    if(urlInput.getValue() !== '') updateImagePreview(urlInput.getValue());
+                    if(urlInput.getValue() !== '') await updateImagePreview(urlInput.getValue());
                     else fileInput.click();
                 })
             })
-            loadButton.buttonEl.addEventListener('contextmenu', () => {
-                urlInput.setValue('');
-            })
+            loadButton.buttonEl.addEventListener('contextmenu', () => urlInput.setValue(''));
 
-            const fileSelector = new TextComponent(containerEl);
+            const fileSelector = new TextComponent(selectContainer);
             const fileInput = fileSelector.inputEl;
             fileInput.type = 'file';
             fileInput.accept = 'image/*';
@@ -232,12 +236,37 @@ export class CreatePaletteModal extends Modal {
                 
                 reader.addEventListener('load', async () => {
                     if(typeof reader.result === 'string') {
-                        await updateImagePreview(reader.result);
+                        fileURL = reader.result;
+                        await updateImagePreview(fileURL);
                     }
                 })
                 reader.addEventListener('error', () => {
                     throw new Error('Error processing image.');
                 })
+            })
+
+            const sliderContainer = new Setting(addColorsContainer);
+            sliderContainer
+            .setName('Count')
+            .setDesc('Set the number of colors to generate from the image.')
+
+            const countInput = new SliderComponent(sliderContainer.controlEl);
+            countInput.then((slider) => {
+                slider.setLimits(4, 12, 1);
+                slider.setDynamicTooltip();
+                slider.setValue(8);
+                slider.onChange(async (value) => await updateImagePreview(fileURL));
+            })
+
+            const imageContainer = new Setting(addColorsContainer);
+            imageContainer.setClass('image-preview');
+            imageContainer.setClass('hide-image-preview');
+
+            const imageEl = imageContainer.controlEl.appendChild(createEl('img'));
+            imageEl.crossOrigin = 'anonymous';
+            imageEl.style.setProperty('border-radius', this.pluginSettings.corners ? '5px' : '0px');
+            imageEl.addEventListener('load', () => {
+                imageContainer.settingEl.toggleClass('hide-image-preview', false);
             })
 
             /**
@@ -248,7 +277,7 @@ export class CreatePaletteModal extends Modal {
 
                 imageEl.src = url;
                 const canvasImage = new CanvasImage(url);
-                const colors = await canvasImage.getPalette(7);
+                const colors = await canvasImage.getPalette(countInput.getValue());
                 if(colors) {
                     this.colors = colors.map((color) => colorsea(color).hex(0));
                     this.settings.aliases = [];
@@ -257,7 +286,8 @@ export class CreatePaletteModal extends Modal {
             }
         }
 
-        const createURL = (addColors: Setting) => {
+        const createURL = (addColorsContainer: HTMLDivElement) => {
+            let addColors = new Setting(addColorsContainer);
             addColors
             .setName("URL")
             .setDesc('Only coolors.co & colorhunt.co are currently supported.')
@@ -292,14 +322,14 @@ export class CreatePaletteModal extends Modal {
         // Set intiial selectedInput
         changeSelectedInput(this.selectedInput);
 
-        let colorPreview = previewContainer.appendChild(createDiv());
-        colorPreview.addClass('color-preview');
+        let palettePreview = previewContainer.appendChild(createDiv());
+        palettePreview.addClass('palette-preview');
 
-        const colorPreviewPalette = colorPreview.appendChild(createDiv());
+        const paletteContainer = palettePreview.appendChild(createDiv());
         // Fill palette initially with random colors
         this.colors = generateColors(Combination.Random).colors;
-        const palette = new Palette(this.colors, this.settings, colorPreviewPalette, this.pluginSettings);
-        colorPreview.appendChild(palette.containerEl);
+        const palette = new Palette(this.colors, this.settings, paletteContainer, this.pluginSettings);
+        palettePreview.appendChild(palette.containerEl);
 
         /**
          * Updates the palette preview
