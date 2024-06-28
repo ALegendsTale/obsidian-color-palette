@@ -147,15 +147,15 @@ export class CreatePaletteModal extends Modal {
             .setDesc('Generate colors based on color theory')
 
             const dropdownInput = new DropdownComponent(addColors.controlEl)
+            // Add dropdown options
+            Object.keys(Combination).forEach((combination) => dropdownInput.addOption(combination, combination))
+            dropdownInput
                 .setValue(this.combination)
                 .onChange((value) => {
                     this.combination = value as Combination;
                     // Disable color picker if selected combination is random
                     colorPickerInput.setDisabled(this.combination === Combination.Random ? true : false);
                 })
-            Object.keys(Combination).forEach((combination) => {
-                dropdownInput.addOption(combination, combination);
-            })
 
             const colorPickerInput = new ColorComponent(addColors.controlEl)
                 .onChange((value) => {
