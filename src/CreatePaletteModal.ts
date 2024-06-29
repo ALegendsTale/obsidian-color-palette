@@ -4,7 +4,7 @@ import { urlRegex } from "main";
 import colorsea from "colorsea";
 import { Direction, ColorPaletteSettings } from "settings";
 import { Combination, generateColors } from "utils/generateRandom";
-import { convertStringSettings, getModifiedSettingsAsString, parseUrl, pluginToPaletteSettings } from "utils/basicUtils";
+import { convertStringSettings, createPaletteBlock, getModifiedSettings, parseUrl, pluginToPaletteSettings } from "utils/basicUtils";
 import CanvasImage from "utils/imageUtils";
 
 enum SelectedInput {
@@ -484,9 +484,9 @@ export class CreatePaletteModal extends Modal {
                 try{
                     // Generate random colors if none are provided
                     if(this.colors.length === 0) this.colors = generateColors(Combination.Random).colors;
-                    const moddedSettings = getModifiedSettingsAsString(convertStringSettings(this.settings));
+                    const moddedSettings = getModifiedSettings(convertStringSettings(this.settings));
+                    this.onSubmit(createPaletteBlock({colors: this.colors, settings: moddedSettings}));
                     this.close();
-                    this.onSubmit(`${this.colors.toNString()}${moddedSettings ? `\n${moddedSettings}` : ''.trim()}`);
                 }
                 catch(e){
                     new Notice(e);

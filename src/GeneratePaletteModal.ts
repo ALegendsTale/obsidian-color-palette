@@ -5,7 +5,7 @@ import { Combination, generateColors } from "utils/generateRandom";
 import validateColor from "validate-color";
 import colorsea from "colorsea";
 import EditorUtils from "utils/editorUtils";
-import { getModifiedSettingsAsString, pluginToPaletteSettings } from "utils/basicUtils";
+import { createPaletteBlock, getModifiedSettings, pluginToPaletteSettings } from "utils/basicUtils";
 
 export class GeneratePaletteModal extends SuggestModal<Combination> {
     editor: Editor;
@@ -36,8 +36,7 @@ export class GeneratePaletteModal extends SuggestModal<Combination> {
             const isLineEmpty = this.editor.getLine(this.editor.getCursor().line).length === 0;
             const isColor = validateColor(selTextOrLine);
             const { colors, settings } = isColor ? generateColors(combination, { baseColor: colorsea(selTextOrLine), settings: this.settings }) : generateColors(combination, { settings: this.settings });
-            const moddedSettings = settings ? getModifiedSettingsAsString(settings) : undefined;
-            const newBlock = `\`\`\`palette\n${colors.toNString()}${moddedSettings ? `\n${moddedSettings}` : ''.trim()}\n\`\`\`\n`;
+            const newBlock = createPaletteBlock({ colors, settings: settings ? getModifiedSettings(settings) : undefined });
             const editorUtils = new EditorUtils(this.editor);
             editorUtils.insertContent(newBlock, !isColor && !isLineEmpty);
         }

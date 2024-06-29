@@ -215,7 +215,7 @@ export class Palette {
             tooltipText.setText(hex.toUpperCase());
         }
 
-        child.onClickEvent((e) => {
+        child.addEventListener('click', (e) => {
             // Canvas bounds
             const rect = child.getBoundingClientRect();
             const hex = getCanvasHex(e.clientX, e.clientY, rect);
@@ -265,7 +265,7 @@ export class Palette {
             let childAlias = child.createEl('span', { text: settings.aliases[i] });
             childAlias.style.setProperty('--palette-color', (csColor.rgb()[0]*0.299 + csColor.rgb()[1]*0.587 + csColor.rgb()[2]*0.114) > 186 ? '#000000' : '#ffffff');
 
-            child.onClickEvent((e) => {
+            child.addEventListener('click', (e) => {
                 this.createNotice(`Copied ${color}`);
                 navigator.clipboard.writeText(color)
             });

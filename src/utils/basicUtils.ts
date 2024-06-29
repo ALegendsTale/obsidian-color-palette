@@ -25,7 +25,7 @@ export function getModifiedSettings (settings: PaletteSettings) {
     }
 
     // Return null if newSettings is empty
-    return Object.keys(newSettings).length !== 0 ? newSettings : null;
+    return Object.keys(newSettings).length !== 0 ? newSettings : undefined;
 }
 
 /**
@@ -92,4 +92,14 @@ export function pluginToPaletteSettings(pluginSettings: ColorPaletteSettings): P
         override: pluginSettings.override, 
         aliases: [] 
     };
+}
+
+/**
+ * Creates a codeblock palette
+ * @param input Either palette input or colors & settings object
+ * @returns palette block string
+ */
+export function createPaletteBlock(input: { colors: string[],settings?: Partial<PaletteSettings> } | string): string {
+    if(typeof input === 'string') return `\`\`\`palette\n${input}\n\`\`\`\n`;
+    else return input.settings ? `\`\`\`palette\n${input.colors.toNString()}\n${JSON.stringify(input.settings)}\n\`\`\`\n` : `\`\`\`palette\n${input.colors.toNString()}\n\`\`\`\n`;
 }

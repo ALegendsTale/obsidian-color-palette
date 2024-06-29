@@ -4,6 +4,7 @@ import { GeneratePaletteModal } from 'GeneratePaletteModal';
 import { ColorPaletteSettings, defaultSettings, SettingsTab } from 'settings';
 import 'utils/prototypeUtils'
 import { PaletteMRC } from 'paletteMRC';
+import { createPaletteBlock } from 'utils/basicUtils';
 
 export const urlRegex = /(?:https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(?:\.[a-zA-Z0-9]{2,})(?:\.[a-zA-Z0-9]{2,})?\/(?:palette\/)?([a-zA-Z0-9-]{2,})/
 
@@ -18,7 +19,7 @@ export default class ColorPalette extends Plugin {
 		this.registerMarkdownCodeBlockProcessor(
 			'palette',
 			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
-				ctx.addChild(new PaletteMRC(this, el, source.trim()));
+				ctx.addChild(new PaletteMRC(this, el, source.trim(), ctx));
 			}
 		)
 
@@ -28,13 +29,12 @@ export default class ColorPalette extends Plugin {
 			editorCallback: (editor: Editor) => {
 				new CreatePaletteModal(this.app, this.settings, (result) => {
 					try {
-						const codeBlock = `\`\`\`palette\n${result}\n\`\`\`\n`;
 						const cursor = editor.getCursor();
 						editor.transaction({
-							changes: [{ from: cursor, text: codeBlock }]
+							changes: [{ from: cursor, text: result }]
 						})
 						editor.setCursor({
-							line: cursor.line + codeBlock.split('\n').length,
+							line: cursor.line + result.split('\n').length,
 							ch: 0
 						})
 						new Notice(`Added ${result}`);
@@ -63,7 +63,7 @@ export default class ColorPalette extends Plugin {
 					// Throw error if selection & clipboard don't match URL regex
 					else throw new Error('Failed to convert link. Please select or copy a link, then try again.');
 
-					const codeBlock = `\`\`\`palette\n${link}\n\`\`\`\n`;
+					const codeBlock = createPaletteBlock(link);
 					const cursor = editor.getCursor();
 					editor.replaceSelection(codeBlock);
 					editor.setCursor({
@@ -101,7 +101,7 @@ export default class ColorPalette extends Plugin {
 	
 					if(colors[0] === 'Invalid Palette') throw new Error('Selected codeblock can not be converted to hex.');
 	
-					const newBlock = `\`\`\`palette\n${colors.toNString()}${content?.[1] ? '\n' + content[1] : ''}\n\`\`\``;
+					const newBlock = createPaletteBlock({ colors: colors, settings: JSON.parse(content?.[1])});
 					editor.replaceSelection(newBlock)
 					new Notice(`Converted codeblock link to hex`)
 				} 

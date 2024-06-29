@@ -1,27 +1,35 @@
-import { MarkdownRenderChild } from "obsidian";
+import { MarkdownPostProcessorContext, MarkdownRenderChild } from "obsidian";
 import ColorPalette, { urlRegex } from "main";
 import { ColorPaletteSettings } from "settings";
 import { Palette, PaletteSettings, Status } from "palette";
 import { parseUrl, pluginToPaletteSettings } from "utils/basicUtils";
 import validateColor from "validate-color";
+import { PaletteMenu } from "PaletteMenu";
 
 export class PaletteMRC extends MarkdownRenderChild {
     plugin: ColorPalette;
     pluginSettings: ColorPaletteSettings;
 	input: string;
     palette: Palette
+    context: MarkdownPostProcessorContext;
 
-	constructor(plugin: ColorPalette, containerEl: HTMLElement, input: string) {
+	constructor(plugin: ColorPalette, containerEl: HTMLElement, input: string, ctx: MarkdownPostProcessorContext) {
         super(containerEl);
         this.plugin = plugin;
         this.pluginSettings = plugin.settings;
         this.input = input;
+        this.context = ctx;
 	}
 
     onload(): void {
         this.update();
         // Add new palette to state
         this.plugin.palettes?.push(this);
+
+        this.containerEl.addEventListener('contextmenu', (e) => {
+            const paletteMenu = new PaletteMenu(this.plugin.app, this.context, this.palette);
+            paletteMenu.showAtMouseEvent(e);
+        })
     }
 
     unload(): void {
