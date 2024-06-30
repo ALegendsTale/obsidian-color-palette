@@ -259,6 +259,7 @@ export class Palette {
 
             // Create trash only if edit mode is active
             if(this.editMode) {
+                this.containerEl.toggleClass('palette-hover', this.pluginSettings.hoverWhileEditing ? settings.hover : false);
                 new EditMode(this, child, color);
             }
             else {

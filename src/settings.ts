@@ -18,6 +18,7 @@ export interface ColorPaletteSettings {
 	errorPulse: boolean;
 	aliasMode: AliasMode;
 	corners: boolean;
+	hoverWhileEditing: boolean;
 	height: number;
 	width: number;
 	direction: Direction,
@@ -31,6 +32,7 @@ export const defaultSettings: ColorPaletteSettings = {
 	errorPulse: true,
 	aliasMode: AliasMode.Both,
 	corners: true,
+	hoverWhileEditing: false,
 	height: 150,
 	width: 700,
 	direction: Direction.Column,
@@ -101,6 +103,18 @@ export class SettingsTab extends PluginSettingTab {
 				.setValue(settings.corners)
 				.onChange(async (value) => {
 					settings.corners = value;
+					await this.plugin.saveSettings();
+				})
+			})
+
+		new Setting(containerEl)
+			.setName("Hover while editing")
+			.setDesc("Whether hover mode is active while editing.")
+			.addToggle((toggle) => {
+				toggle
+				.setValue(settings.hoverWhileEditing)
+				.onChange(async (value) => {
+					settings.hoverWhileEditing = value;
 					await this.plugin.saveSettings();
 				})
 			})
