@@ -1,3 +1,4 @@
+import colorsea from "colorsea";
 import { PaletteSettings } from "palette";
 import { ColorPaletteSettings, defaultSettings } from "settings";
 
@@ -102,4 +103,11 @@ export function pluginToPaletteSettings(pluginSettings: ColorPaletteSettings): P
 export function createPaletteBlock(input: { colors: string[],settings?: Partial<PaletteSettings> } | string): string {
     if(typeof input === 'string') return `\`\`\`palette\n${input}\n\`\`\`\n`;
     else return input.settings ? `\`\`\`palette\n${input.colors.toNString()}\n${JSON.stringify(input.settings)}\n\`\`\`\n` : `\`\`\`palette\n${input.colors.toNString()}\n\`\`\`\n`;
+}
+
+/**
+ * Gets the appropriate foreground contrast color
+ */
+export function getForegroundColor(color: ReturnType<typeof colorsea>): string {
+    return (color.rgb()[0]*0.299 + color.rgb()[1]*0.587 + color.rgb()[2]*0.114) > 186 ? '#000000' : '#ffffff';
 }

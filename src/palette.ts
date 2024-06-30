@@ -1,7 +1,7 @@
-import { Notice, Platform } from "obsidian";
+import { ButtonComponent, Notice, Platform } from "obsidian";
 import colorsea from 'colorsea';
 import { Direction, AliasMode, ColorPaletteSettings } from "settings";
-import { pluginToPaletteSettings } from "utils/basicUtils";
+import { getForegroundColor, pluginToPaletteSettings } from "utils/basicUtils";
 import validateColor from "validate-color";
 
 export type PaletteSettings = {
@@ -30,11 +30,13 @@ export class Palette {
     status: Status
     resizeObserver: ResizeObserver
     showNotice: boolean
+    editMode: boolean;
 
-	constructor(colors: string[] | Status, settings: PaletteSettings | Status, containerEl: HTMLElement, pluginSettings: ColorPaletteSettings) {
+	constructor(colors: string[] | Status, settings: PaletteSettings | Status, containerEl: HTMLElement, pluginSettings: ColorPaletteSettings, editMode = false) {
         this.containerEl = containerEl;
         this.pluginSettings = pluginSettings;
         this.showNotice = true;
+        this.editMode = editMode;
         this.setDefaults(colors, settings);
         this.load();
 
@@ -127,7 +129,7 @@ export class Palette {
         this.containerEl.style.setProperty('--palette-direction', settings.direction === Direction.Row ? Direction.Column : Direction.Row);
         this.containerEl.style.setProperty('--not-palette-direction', settings.direction);
         this.containerEl.style.setProperty('--palette-height', `${settings.height}px`);
-        this.containerEl.toggleClass('paletteHover', settings.hover);
+        this.containerEl.toggleClass('palette-hover', settings.hover);
 
         try{
             // Throw error & create Invalid Palette
@@ -138,10 +140,8 @@ export class Palette {
             this.createColorPalette(this.containerEl, colors, settings, this.pluginSettings.aliasMode);
         }
         catch(err){
-            if(err instanceof PaletteError)
-            this.createInvalidPalette(err.status, err.message);
-            else
-            this.createNotice(err);
+            if(err instanceof PaletteError) this.createInvalidPalette(err.status, err.message);
+            else this.createNotice(err);
         }
     }
 
@@ -256,14 +256,21 @@ export class Palette {
             child.style.setProperty('--palette-background-color', color);
             // set --palette-column-flex-basis css variable
             child.style.setProperty('--palette-column-flex-basis', (settings.height / colors.length / 2).toString() + 'px');
-            
-            // Display hex if alias mode is set to both OR if alias is not set
-            if(aliasMode === AliasMode.Both || settings.aliases[i] == null || settings.aliases[i].trim() === ''){
-                let childText = child.createEl('span', { text: color.toUpperCase() });
-                childText.style.setProperty('--palette-color', (csColor.rgb()[0]*0.299 + csColor.rgb()[1]*0.587 + csColor.rgb()[2]*0.114) > 186 ? '#000000' : '#ffffff');
+
+            // Create trash only if edit mode is active
+            if(this.editMode) {
+                new EditMode(this, child, color);
             }
-            let childAlias = child.createEl('span', { text: settings.aliases[i] });
-            childAlias.style.setProperty('--palette-color', (csColor.rgb()[0]*0.299 + csColor.rgb()[1]*0.587 + csColor.rgb()[2]*0.114) > 186 ? '#000000' : '#ffffff');
+            else {
+                // Display hex if alias mode is set to both OR if alias is not set
+                if(aliasMode === AliasMode.Both || settings.aliases[i] == null || settings.aliases[i].trim() === ''){
+                    let childText = child.createEl('span', { text: color.toUpperCase() });
+                    childText.style.setProperty('--palette-color', getForegroundColor(csColor));
+                }
+
+                let childAlias = child.createEl('span', { text: settings.aliases[i] });
+                childAlias.style.setProperty('--palette-color', getForegroundColor(csColor));
+            }
 
             child.addEventListener('click', (e) => {
                 this.createNotice(`Copied ${color}`);
@@ -277,6 +284,7 @@ export class Palette {
      * @param type Palette status type
      */
     private createInvalidPalette(type: Status, message = ''){
+        this.status = type;
         this.containerEl.style.setProperty('--palette-height', '150px');
         const invalidSection = this.containerEl.createEl('section');
         invalidSection.toggleClass('invalid', true);
@@ -322,5 +330,93 @@ class PaletteError extends Error {
     constructor(status: Status, message = '') {
         super(message);
         this.status = status;
+    }
+}
+
+class EditMode {
+    container: HTMLDivElement;
+    span: HTMLSpanElement;
+    trash: ButtonComponent;
+    palette: Palette;
+    storedAlias: string;
+    color: string;
+
+    constructor(palette: Palette, colorContainer: HTMLDivElement, color: string) {
+        this.color = color;
+        this.palette = palette;
+
+        const csColor = colorsea(color);
+        const contrastColor = getForegroundColor(csColor);
+
+        this.container = colorContainer.appendChild(createEl('div'));
+        this.container.addClass('edit-container');
+        this.container.style.setProperty('--edit-background-color', color);
+        this.container.style.setProperty('--edit-color', contrastColor);
+
+        this.span = this.container.createEl('span');
+        this.span.setText(this.palette.settings.aliases[this.palette.colors.findIndex(val => val === color)] || color.toUpperCase());
+        this.span.style.setProperty('--edit-font-size', `${this.getAdjustedFontSize(this.palette.colors)}px`);
+
+        this.trash = new ButtonComponent(this.container)
+            .setIcon('trash-2')
+            .setTooltip('Remove')
+            .onClick((e) => {
+                e.stopPropagation();
+                const deletedIndex = this.palette.colors.indexOf(color);
+                this.palette.colors.splice(deletedIndex, 1);
+                this.palette.settings.aliases.splice(deletedIndex, 1);
+                this.palette.reload();
+            })
+        this.trash.buttonEl.addEventListener('mouseover', (e) => {
+            this.trash.setCta();
+        })
+        this.trash.buttonEl.addEventListener('mouseout', (e) => {
+            this.trash.removeCta();
+        })
+
+        // Focus color & allow for editing alias
+        this.span.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.setEditable(true);
+            this.span.focus();
+        })
+        this.span.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') {
+                this.setAlias();
+                this.setEditable(false);
+            }
+        })
+        // Set alias if changed & de-focus
+        this.span.addEventListener('focusout', (e) => {
+            this.setAlias();
+            this.setEditable(false);
+        })
+        
+        this.storedAlias = this.span.getText();
+    }
+
+    setAlias() {
+        // Reset span text to original if user left it empty
+        if(this.span.getText().trim() === '') this.span.setText(this.storedAlias);
+        // Set alias color if user modified text
+        else if(this.span.getText() !== this.color) this.palette.settings.aliases[this.palette.colors.findIndex(val => val === this.color)] = this.span.getText();
+    }
+
+    setEditable(editable: boolean) {
+        if(editable === true) {
+            this.storedAlias = this.span.getText();
+            this.span.setText('');
+        }
+        this.span.contentEditable = `${editable}`;
+        this.span.toggleClass('color-span-editable', editable);
+    }
+
+    /**
+     * Calculate font size based on number of colors
+     */
+    getAdjustedFontSize(colors: string[]) {
+        const minFontSize = 10;
+        const baseFontSize = 16;
+        return Math.max(minFontSize, baseFontSize - (colors.length / 2));
     }
 }

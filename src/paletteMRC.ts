@@ -27,8 +27,11 @@ export class PaletteMRC extends MarkdownRenderChild {
         this.plugin.palettes?.push(this);
 
         this.containerEl.addEventListener('contextmenu', (e) => {
-            const paletteMenu = new PaletteMenu(this.plugin.app, this.context, this.palette);
-            paletteMenu.showAtMouseEvent(e);
+            // Ensure palette is valid before creating a new menu
+            if(this.palette.status === Status.VALID) {
+                const paletteMenu = new PaletteMenu(this.plugin.app, this.context, this.palette);
+                if(this.palette.status === Status.VALID) paletteMenu.showAtMouseEvent(e);
+            }
         })
     }
 

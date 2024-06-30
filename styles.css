@@ -56,15 +56,15 @@
     background: linear-gradient(to right, var(--palette-background-color));
 }
 
-.palette.paletteColumn.paletteHover > div:hover {
+.palette.paletteColumn.palette-hover > div:hover {
     flex-basis: var(--palette-column-flex-basis);
 }
 
-.palette:not(.paletteColumn).paletteHover > div:hover {
+.palette:not(.paletteColumn).palette-hover > div:hover {
     flex-basis: 80px;
 }
 
-.palette.paletteHover > div:hover > span {
+.palette.palette-hover > div:hover > span {
     display: block;
 }
 
@@ -89,7 +89,7 @@
     font-size: 100%;
 }
 
-.palette.paletteHover > canvas:hover ~ .palette-tooltip {
+.palette.palette-hover > canvas:hover ~ .palette-tooltip {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -201,15 +201,15 @@
 
 /* Palette Preview */
 
-.palette-preview > .palette > div > span {
-    display: none !important;
+.palette-preview {
+
 }
 
-/* Trash */
+/* Edit Mode */
 
-.trash-container {
-    --trash-background-color: #000000;
-    --trash-color: #ffffff;
+.edit-container {
+    --edit-background-color: #000000;
+    --edit-color: #ffffff;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -218,22 +218,22 @@
     gap: 16px;
 }
 
-.trash-container > span {
-    --trash-font-size: 16px;
-    color: var(--trash-color);
+.edit-container > span {
+    --edit-font-size: 16px;
+    color: var(--edit-color);
     font-weight: bold;
-    font-size: var(--trash-font-size);
+    font-size: var(--edit-font-size);
 }
 
-.trash-container > .color-span-editable {
+.edit-container > .color-span-editable {
     box-shadow: rgba(0, 0, 0, 0.35) 0px -50px 20px -28px inset;
     cursor: pointer;
 }
 
 /* Color Trash Button */
-.trash-container > button {
-    background-color: var(--trash-background-color);
-    color: var(--trash-color);
+.edit-container > button {
+    background-color: var(--edit-background-color);
+    color: var(--edit-color);
     box-shadow: rgba(0, 0, 0, 0.35) 0px -50px 20px -28px inset;
     cursor: pointer;
 }

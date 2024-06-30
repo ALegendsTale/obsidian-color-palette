@@ -303,7 +303,7 @@ export class CreatePaletteModal extends Modal {
         const paletteContainer = palettePreview.appendChild(createDiv());
         // Fill palette initially with random colors
         this.colors = generateColors(Combination.Random).colors;
-        const palette = new Palette(this.colors, this.settings, paletteContainer, this.pluginSettings);
+        const palette = new Palette(this.colors, this.settings, paletteContainer, this.pluginSettings, true);
         palettePreview.appendChild(palette.containerEl);
 
         /**
@@ -313,96 +313,7 @@ export class CreatePaletteModal extends Modal {
             palette.colors = this.colors;
             palette.settings = this.settings;
             palette.reload()
-            updateTrash();
         }
-
-        const createTrash = (color: string) => {
-            const csColor = colorsea(color);
-            const contrastColor = (csColor.rgb()[0]*0.299 + csColor.rgb()[1]*0.587 + csColor.rgb()[2]*0.114) > 186 ? '#000000' : '#ffffff';
-
-            let trashContainer = createEl('div');
-            trashContainer.addClass('trash-container');
-            trashContainer.style.setProperty('--trash-background-color', color);
-            trashContainer.style.setProperty('--trash-color', contrastColor);
-            
-            let colorSpan = trashContainer.createEl('span');
-            colorSpan.setText(this.settings.aliases[this.colors.findIndex(val => val === color)] || color.toUpperCase());
-            colorSpan.style.setProperty('--trash-font-size', `${getAdjustedFontSize(this.colors)}px`);
-
-            let storedAlias = colorSpan.getText();
-
-            // Focus color & allow for editing alias
-            colorSpan.addEventListener('click', (e) => {
-                e.stopPropagation();
-                setEditable(true);
-                colorSpan.focus();
-            })
-            colorSpan.addEventListener('keypress', (e) => {
-                if(e.key === 'Enter') {
-                    setAlias();
-                    setEditable(false);
-                }
-            })
-            // Set alias if changed & de-focus
-            colorSpan.addEventListener('focusout', (e) => {
-                setAlias();
-                setEditable(false);
-            })
-
-            const setAlias = () => {
-                // Reset span text to original if user left it empty
-                if(colorSpan.getText().trim() === '') colorSpan.setText(storedAlias);
-                // Set alias color if user modified text
-                else if(colorSpan.getText() !== color) this.settings.aliases[this.colors.findIndex(val => val === color)] = colorSpan.getText();
-            }
-
-            const setEditable = (editable: boolean) => {
-                if(editable === true) {
-                    storedAlias = colorSpan.getText();
-                    colorSpan.setText('');
-                }
-                colorSpan.contentEditable = `${editable}`;
-                colorSpan.toggleClass('color-span-editable', editable);
-            }
-
-            /**
-             * Calculate font size based on number of colors
-             */
-            function getAdjustedFontSize(colors: string[]) {
-                const minFontSize = 10;
-                const baseFontSize = 16;
-                return Math.max(minFontSize, baseFontSize - (colors.length / 2));
-            }
-
-            let trash = new ButtonComponent(trashContainer)
-                .setIcon('trash-2')
-                .setTooltip('Remove')
-                .onClick((e) => {
-                    e.stopPropagation();
-                    const deletedIndex = this.colors.indexOf(color);
-                    this.colors.splice(deletedIndex, 1);
-                    this.settings.aliases.splice(deletedIndex, 1);
-                    palette.reload();
-                    updateTrash();
-                })
-
-            return trashContainer;
-        }
-
-        /**
-         * Updates trash based on palette children
-         */
-        const updateTrash = () => {
-            // Check for invalid settings
-            const incompatibleSettings = this.settings.direction === Direction.Row || this.settings.gradient === true;
-            // Return early if there are no colors, or if incompatible settings are present.
-            if(this.colors.length === 0 || incompatibleSettings) return;
-            for(const [index, child] of Array.from(palette.containerEl.children).entries()){
-                child.appendChild(createTrash(this.colors[index]));
-            }
-        }
-
-        updateTrash();
 
         new Setting(settingsContainer)
             .setName("Height")

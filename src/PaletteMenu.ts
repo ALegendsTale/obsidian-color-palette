@@ -2,6 +2,7 @@ import { ReorderModal } from "ReorderModal";
 import colorsea from "colorsea";
 import { App, Editor, MarkdownPostProcessorContext, MarkdownView, Menu } from "obsidian";
 import { Palette } from "palette";
+import { Direction } from "settings";
 import { createPaletteBlock, getModifiedSettings } from "utils/basicUtils";
 
 export class PaletteMenu extends Menu {
@@ -40,7 +41,7 @@ export class PaletteMenu extends Menu {
     private createMenu() {
         const input = this.getInput();
 
-        this.addItem((item) =>
+        this.addItem((item) => {
             item
                 .setTitle("Reorder")
                 .setIcon("documents")
@@ -54,14 +55,29 @@ export class PaletteMenu extends Menu {
                     ]);
                     modal.setPlaceholder('Choose a space to reorder palette');
                 })
-        )
+        })
+
+        // Only show toggle edit mode option when palette is not a gradient or columns
+        if(!this.palette.settings.gradient && this.palette.settings.direction !== Direction.Row) {
+            this.addItem((item) => {
+                item
+                    .setTitle("Edit Mode")
+                    .setIcon('pencil')
+                    .setChecked(this.palette.editMode)
+                    .onClick(async () => {
+                        // Toggle palette edit mode
+                        this.palette.editMode = !this.palette.editMode;
+                        this.palette.reload();
+                    })
+            });
+        }
 
         this.addSeparator();
 
-        this.addItem((item) =>
+        this.addItem((item) => {
             item
                 .setTitle("Convert to RGB")
-                .setIcon("documents")
+                .setIcon("droplets")
                 .onClick(() => {
                     const colors = this.palette.colors.map((color) => {
                         const rgbColor = colorsea(color).rgb();
@@ -69,12 +85,12 @@ export class PaletteMenu extends Menu {
                     })
                     this.replacePalette(createPaletteBlock({colors: colors, settings: getModifiedSettings(this.palette.settings)}));
                 })
-        )
+        });
 
-        this.addItem((item) =>
+        this.addItem((item) => {
             item
                 .setTitle("Convert to HSL")
-                .setIcon("documents")
+                .setIcon("droplets")
                 .onClick(() => {
                     const colors = this.palette.colors.map((color) => {
                         const hslColor = colorsea(color).hsl();
@@ -82,23 +98,23 @@ export class PaletteMenu extends Menu {
                     })
                     this.replacePalette(createPaletteBlock({colors: colors, settings: getModifiedSettings(this.palette.settings)}));
                 })
-        );
+        });
 
-        this.addItem((item) =>
+        this.addItem((item) => {
             item
                 .setTitle("Convert to HEX")
-                .setIcon("documents")
+                .setIcon("droplets")
                 .onClick(() => {
                     const colors = this.palette.colors.map((color) => {
                         return colorsea(color).hex(2);
                     })
                     this.replacePalette(createPaletteBlock({colors: colors, settings: getModifiedSettings(this.palette.settings)}));
                 })
-        );
+        });
 
         this.addSeparator();
 
-        this.addItem((item) =>
+        this.addItem((item) => {
             item
                 .setTitle("Cut")
                 .setIcon("scissors")
@@ -107,16 +123,16 @@ export class PaletteMenu extends Menu {
                     if(input) await navigator.clipboard.writeText(input);
                     this.replacePalette('');
                 })
-        );
+        });
       
-        this.addItem((item) =>
-          item
+        this.addItem((item) => {
+            item
                 .setTitle("Copy")
-                .setIcon("documents")
+                .setIcon("copy")
                 .onClick(async () => {
                     // Copy palette to clipboard
                     if(input) await navigator.clipboard.writeText(input);
                 })
-        );
+        });
     }
 }
