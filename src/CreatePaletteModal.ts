@@ -20,10 +20,11 @@ export class CreatePaletteModal extends Modal {
     colors: string[]
     selectedInput: SelectedInput
     combination: Combination
-    baseColor: ReturnType<typeof colorsea> | undefined
     onSubmit: (result: string) => void
+    baseColor?: ReturnType<typeof colorsea>
+    palette?: Palette;
 
-    constructor(app: App, pluginSettings: ColorPaletteSettings, onSubmit: (result: string) => void) {
+    constructor(app: App, pluginSettings: ColorPaletteSettings, onSubmit: (result: string) => void, palette?: Palette) {
         super(app);
         this.onSubmit = onSubmit;
         this.pluginSettings = pluginSettings;
@@ -32,6 +33,7 @@ export class CreatePaletteModal extends Modal {
         this.selectedInput = SelectedInput.Color_Picker;
         this.combination = Combination.Random;
         this.baseColor = undefined;
+        this.palette = palette;
     }
 
     onOpen(): void {
@@ -302,7 +304,8 @@ export class CreatePaletteModal extends Modal {
 
         const paletteContainer = palettePreview.appendChild(createDiv());
         // Fill palette initially with random colors
-        this.colors = generateColors(Combination.Random).colors;
+        this.colors = this.palette ? this.palette.colors : generateColors(Combination.Random).colors;
+        this.settings = this.palette ? this.palette.settings : this.settings;
         const palette = new Palette(this.colors, this.settings, paletteContainer, this.pluginSettings, true);
         palettePreview.appendChild(palette.containerEl);
 

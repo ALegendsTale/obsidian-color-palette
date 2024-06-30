@@ -1,6 +1,7 @@
+import { CreatePaletteModal } from "CreatePaletteModal";
 import { ReorderModal } from "ReorderModal";
 import colorsea from "colorsea";
-import { App, Editor, MarkdownPostProcessorContext, MarkdownView, Menu } from "obsidian";
+import { App, Editor, MarkdownPostProcessorContext, MarkdownView, Menu, Notice } from "obsidian";
 import { Palette } from "palette";
 import { Direction } from "settings";
 import { createPaletteBlock, getModifiedSettings } from "utils/basicUtils";
@@ -44,7 +45,7 @@ export class PaletteMenu extends Menu {
         this.addItem((item) => {
             item
                 .setTitle("Reorder")
-                .setIcon("documents")
+                .setIcon("arrow-left-right")
                 .onClick(() => {
                     const modal = new ReorderModal(this.app, this.editor, this.palette, this.context);
                     modal.open();
@@ -57,12 +58,33 @@ export class PaletteMenu extends Menu {
                 })
         })
 
+        this.addItem((item) => {
+            item
+                .setTitle("Edit Mode")
+                .setIcon('palette')
+                .onClick(async () => {
+                    new CreatePaletteModal(this.app, this.palette.pluginSettings, (result) => {
+                        try {
+                            const paletteSection = this.getLines();
+                            if(this.editor && paletteSection) {
+                                this.editor.replaceRange(result, {line: paletteSection.lineStart, ch: 0}, {line: paletteSection.lineEnd + 1, ch: 0});
+                                new Notice(`Updated ${result}`);
+                            }
+                        } 
+                        catch (error) {
+                            new Notice(error);
+                        }
+                    }, this.palette)
+                    .open();
+                })
+        });
+
         // Only show toggle edit mode option when palette is not a gradient or columns
         if(!this.palette.settings.gradient && this.palette.settings.direction !== Direction.Row) {
             this.addItem((item) => {
                 item
-                    .setTitle("Edit Mode")
-                    .setIcon('pencil')
+                    .setTitle("Quick Edit")
+                    .setIcon('brush')
                     .setChecked(this.palette.editMode)
                     .onClick(async () => {
                         // Toggle palette edit mode
