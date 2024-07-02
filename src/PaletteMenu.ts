@@ -47,7 +47,9 @@ export class PaletteMenu extends Menu {
                 .setTitle("Reorder")
                 .setIcon("arrow-left-right")
                 .onClick(() => {
-                    const modal = new ReorderModal(this.app, this.editor, this.palette, this.context);
+                    const modal = new ReorderModal(this.app, this.editor, this.palette, this.context, (result) => {
+                        this.replacePalette(result);
+                    });
                     modal.open();
                     modal.setInstructions([
                         { command: '↑↓', purpose: 'to navigate' },

@@ -17,17 +17,14 @@ export class ReorderModal extends SuggestModal<Reorder>{
     editor: Editor | undefined;
     palette: Palette;
     context: MarkdownPostProcessorContext;
+    onSubmit: (result: string) => void;
 
-    constructor(app: App, editor: Editor | undefined, palette: Palette, context: MarkdownPostProcessorContext) {
+    constructor(app: App, editor: Editor | undefined, palette: Palette, context: MarkdownPostProcessorContext, onSubmit: (result: string) => void) {
         super(app);
         this.editor = editor;
         this.palette = palette;
         this.context = context;
-    }
-
-    replacePalette(replacement: string) {
-        const paletteSection = this.context.getSectionInfo(this.palette.containerEl);
-        if(paletteSection) this.editor?.replaceRange(replacement, {line: paletteSection.lineStart, ch: 0}, {line: paletteSection.lineEnd + 1, ch: 0});
+        this.onSubmit = onSubmit;
     }
 
     // Returns all available suggestions.
@@ -70,7 +67,8 @@ export class ReorderModal extends SuggestModal<Reorder>{
                 colors = csColors.sort((a, b) => a.alpha() - b.alpha()).map((color) => color.hex());
                 break;
         }
-        // Replace the palette with the new ordered palette
-        this.replacePalette(createPaletteBlock({colors: colors, settings: getModifiedSettings(this.palette.settings)}));
+        
+        // Submit
+        this.onSubmit(createPaletteBlock({colors: colors, settings: getModifiedSettings(this.palette.settings)}));
     }
 }
