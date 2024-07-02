@@ -1,8 +1,9 @@
-import { ButtonComponent, Notice, Platform } from "obsidian";
+import { Notice, Platform } from "obsidian";
 import colorsea from 'colorsea';
 import { Direction, AliasMode, ColorPaletteSettings } from "settings";
-import { getForegroundColor, pluginToPaletteSettings } from "utils/basicUtils";
+import { pluginToPaletteSettings } from "utils/basicUtils";
 import validateColor from "validate-color";
+import { PaletteItem } from "palette/PaletteItem";
 
 export type PaletteSettings = {
     height: number
@@ -88,6 +89,10 @@ export class Palette {
     public load() {
         // Create new palette
         this.createPalette(this.colors, this.settings);
+
+        if(this.editMode) {
+            this.containerEl.toggleClass('palette-hover', this.pluginSettings.hoverWhileEditing ? this.settings.hover : false);
+        }
 	}
 
     /**
@@ -249,34 +254,36 @@ export class Palette {
 
     private createColorPalette(containerEl: HTMLElement, colors: string[], settings: PaletteSettings, aliasMode: AliasMode){
         for(const [i, color] of colors.entries()){
-            const csColor = colorsea(color.trim());
-
-            let child = containerEl.createEl('div');
-            // set --palette-background-color css variable
-            child.style.setProperty('--palette-background-color', color);
-            // set --palette-column-flex-basis css variable
-            child.style.setProperty('--palette-column-flex-basis', (settings.height / colors.length / 2).toString() + 'px');
-
-            // Create trash only if edit mode is active
-            if(this.editMode) {
-                this.containerEl.toggleClass('palette-hover', this.pluginSettings.hoverWhileEditing ? settings.hover : false);
-                new EditMode(this, child, color);
-            }
-            else {
-                // Display hex if alias mode is set to both OR if alias is not set
-                if(aliasMode === AliasMode.Both || settings.aliases[i] == null || settings.aliases[i].trim() === ''){
-                    let childText = child.createEl('span', { text: color.toUpperCase() });
-                    childText.style.setProperty('--palette-color', getForegroundColor(csColor));
+            const paletteColor = new PaletteItem(containerEl, color, 
+                { 
+                    aliasMode: aliasMode, 
+                    editMode: this.editMode, 
+                    hoverWhileEditing: this.pluginSettings.hoverWhileEditing, 
+                    height: settings.height, 
+                    direction: settings.direction,
+                    hover: settings.hover, 
+                    alias: settings.aliases?.[i],
+                    colorCount: colors.length,
+                },
+                // onClick
+                (e: MouseEvent) => {
+                    this.createNotice(`Copied ${color}`);
+                    navigator.clipboard.writeText(color);
+                },
+                // onTrash
+                (e: MouseEvent) => {
+                    e.stopPropagation();
+                    const deletedIndex = this.colors.indexOf(color);
+                    this.colors.splice(deletedIndex, 1);
+                    this.settings.aliases.splice(deletedIndex, 1);
+                    this.reload();
+                    console.log('Remove:', color);
+                },
+                // onAlias
+                (alias) => {
+                    this.settings.aliases[this.colors.findIndex(val => val === color)] = alias;
                 }
-
-                let childAlias = child.createEl('span', { text: settings.aliases[i] });
-                childAlias.style.setProperty('--palette-color', getForegroundColor(csColor));
-            }
-
-            child.addEventListener('click', (e) => {
-                this.createNotice(`Copied ${color}`);
-                navigator.clipboard.writeText(color)
-            });
+            );
         }
     }
 
@@ -331,93 +338,5 @@ class PaletteError extends Error {
     constructor(status: Status, message = '') {
         super(message);
         this.status = status;
-    }
-}
-
-class EditMode {
-    container: HTMLDivElement;
-    span: HTMLSpanElement;
-    trash: ButtonComponent;
-    palette: Palette;
-    storedAlias: string;
-    color: string;
-
-    constructor(palette: Palette, colorContainer: HTMLDivElement, color: string) {
-        this.color = color;
-        this.palette = palette;
-
-        const csColor = colorsea(color);
-        const contrastColor = getForegroundColor(csColor);
-
-        this.container = colorContainer.appendChild(createEl('div'));
-        this.container.addClass('edit-container');
-        this.container.style.setProperty('--edit-background-color', color);
-        this.container.style.setProperty('--edit-color', contrastColor);
-
-        this.span = this.container.createEl('span');
-        this.span.setText(this.palette.settings.aliases[this.palette.colors.findIndex(val => val === color)] || color.toUpperCase());
-        this.span.style.setProperty('--edit-font-size', `${this.getAdjustedFontSize(this.palette.colors)}px`);
-
-        this.trash = new ButtonComponent(this.container)
-            .setIcon('trash-2')
-            .setTooltip('Remove')
-            .onClick((e) => {
-                e.stopPropagation();
-                const deletedIndex = this.palette.colors.indexOf(color);
-                this.palette.colors.splice(deletedIndex, 1);
-                this.palette.settings.aliases.splice(deletedIndex, 1);
-                this.palette.reload();
-            })
-        this.trash.buttonEl.addEventListener('mouseover', (e) => {
-            this.trash.setCta();
-        })
-        this.trash.buttonEl.addEventListener('mouseout', (e) => {
-            this.trash.removeCta();
-        })
-
-        // Focus color & allow for editing alias
-        this.span.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.setEditable(true);
-            this.span.focus();
-        })
-        this.span.addEventListener('keypress', (e) => {
-            if(e.key === 'Enter') {
-                this.setAlias();
-                this.setEditable(false);
-            }
-        })
-        // Set alias if changed & de-focus
-        this.span.addEventListener('focusout', (e) => {
-            this.setAlias();
-            this.setEditable(false);
-        })
-        
-        this.storedAlias = this.span.getText();
-    }
-
-    setAlias() {
-        // Reset span text to original if user left it empty
-        if(this.span.getText().trim() === '') this.span.setText(this.storedAlias);
-        // Set alias color if user modified text
-        else if(this.span.getText() !== this.color) this.palette.settings.aliases[this.palette.colors.findIndex(val => val === this.color)] = this.span.getText();
-    }
-
-    setEditable(editable: boolean) {
-        if(editable === true) {
-            this.storedAlias = this.span.getText();
-            this.span.setText('');
-        }
-        this.span.contentEditable = `${editable}`;
-        this.span.toggleClass('color-span-editable', editable);
-    }
-
-    /**
-     * Calculate font size based on number of colors
-     */
-    getAdjustedFontSize(colors: string[]) {
-        const minFontSize = 10;
-        const baseFontSize = 16;
-        return Math.max(minFontSize, baseFontSize - (colors.length / 2));
     }
 }
