@@ -1,4 +1,4 @@
-import { Editor, MarkdownPostProcessorContext, MarkdownRenderChild, MarkdownView, Notice } from "obsidian";
+import { MarkdownPostProcessorContext, MarkdownRenderChild, MarkdownView, Notice } from "obsidian";
 import ColorPalette, { urlRegex } from "main";
 import { ColorPaletteSettings } from "settings";
 import { Palette, PaletteSettings, Status } from "palette";
@@ -12,7 +12,6 @@ export class PaletteMRC extends MarkdownRenderChild {
 	input: string;
     palette: Palette
     context: MarkdownPostProcessorContext;
-    editor: Editor | undefined;
     editModeChanges: { colors: string[], settings: Partial<PaletteSettings> | undefined };
 
 	constructor(plugin: ColorPalette, containerEl: HTMLElement, input: string, context: MarkdownPostProcessorContext) {
@@ -37,10 +36,6 @@ export class PaletteMRC extends MarkdownRenderChild {
                 });
                 paletteMenu.showAtMouseEvent(e);
             }
-        })
-
-        this.plugin.app.workspace.on('editor-change', (editor, info) => {
-            this.editor = editor;
         })
     }
 
@@ -150,14 +145,15 @@ export class PaletteMRC extends MarkdownRenderChild {
      * Gets the palette codeblock input
      */
     public getPaletteInput() {
+        let editor = this.plugin.app.workspace.getActiveViewOfType(MarkdownView)?.editor;
         // Palette line start & line end
         const paletteSection = this.context.getSectionInfo(this.palette.containerEl);
-        if(paletteSection && this.editor) return {
+        if(paletteSection && editor) return {
             lines: {
                 lineStart: paletteSection.lineStart, 
                 lineEnd: paletteSection.lineEnd
             }, 
-            input: this.editor.getRange(
+            input: editor.getRange(
                 {line: paletteSection.lineStart, ch: 0}, 
                 {line: paletteSection.lineEnd + 1, ch: 0}
             )
@@ -171,10 +167,11 @@ export class PaletteMRC extends MarkdownRenderChild {
      * Sets the palette codeblock input with `replacement`
      */
     public setPaletteInput(replacement: string) {
+        let editor = this.plugin.app.workspace.getActiveViewOfType(MarkdownView)?.editor;
         // Palette line start & line end
         const paletteSection = this.context.getSectionInfo(this.palette.containerEl);
-        if(paletteSection && this.editor) {
-            this.editor.replaceRange(replacement, {line: paletteSection.lineStart, ch: 0}, {line: paletteSection.lineEnd + 1, ch: 0});
+        if(paletteSection && editor) {
+            editor.replaceRange(replacement, {line: paletteSection.lineStart, ch: 0}, {line: paletteSection.lineEnd + 1, ch: 0});
             return {
                 lineStart: paletteSection.lineStart, 
                 lineEnd: paletteSection.lineEnd
