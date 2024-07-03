@@ -1,4 +1,4 @@
-import { Editor, MarkdownPostProcessorContext, MarkdownRenderChild, MarkdownView } from "obsidian";
+import { Editor, MarkdownPostProcessorContext, MarkdownRenderChild, MarkdownView, Notice } from "obsidian";
 import ColorPalette, { urlRegex } from "main";
 import { ColorPaletteSettings } from "settings";
 import { Palette, PaletteSettings, Status } from "palette";
@@ -21,7 +21,6 @@ export class PaletteMRC extends MarkdownRenderChild {
         this.pluginSettings = plugin.settings;
         this.input = input;
         this.context = context;
-        this.editor = this.plugin.app.workspace.getActiveViewOfType(MarkdownView)?.editor;
 	}
 
     onload(): void {
@@ -38,6 +37,10 @@ export class PaletteMRC extends MarkdownRenderChild {
                 });
                 paletteMenu.showAtMouseEvent(e);
             }
+        })
+
+        this.plugin.app.workspace.on('editor-change', (editor, info) => {
+            this.editor = editor;
         })
     }
 
@@ -158,7 +161,10 @@ export class PaletteMRC extends MarkdownRenderChild {
                 {line: paletteSection.lineStart, ch: 0}, 
                 {line: paletteSection.lineEnd + 1, ch: 0}
             )
-        };
+        }
+        else {
+            this.createNotice('The editor has not fully loaded yet.');
+        }
     }
 
     /**
@@ -174,5 +180,16 @@ export class PaletteMRC extends MarkdownRenderChild {
                 lineEnd: paletteSection.lineEnd
             };
         }
+        else {
+            this.createNotice('The editor has not fully loaded yet.');
+        }
+    }
+
+    /**
+     * Creates a new notice using pre-set settings
+     * @param message Message to display
+     */
+    public createNotice(message: string) {
+        new Notice(message, this.pluginSettings.noticeDuration);
     }
 }
