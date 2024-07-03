@@ -4,6 +4,7 @@ import { Direction, AliasMode, ColorPaletteSettings } from "settings";
 import { pluginToPaletteSettings } from "utils/basicUtils";
 import validateColor from "validate-color";
 import { PaletteItem } from "palette/PaletteItem";
+import { DragDrop } from "utils/dragDropUtils";
 
 export type PaletteSettings = {
     height: number
@@ -31,13 +32,22 @@ export class Palette {
     status: Status
     resizeObserver: ResizeObserver
     showNotice: boolean
-    editMode: boolean;
+    private editMode: boolean;
+    dragDrop: DragDrop | null;
+    dropzone: HTMLDivElement;
+    paletteItems: PaletteItem[];
+    onChange: (colors: string[], settings: PaletteSettings) => void;
+    onEditMode: (editMode: boolean) => void;
 
-	constructor(colors: string[] | Status, settings: PaletteSettings | Status, containerEl: HTMLElement, pluginSettings: ColorPaletteSettings, editMode = false) {
+	constructor(colors: string[] | Status, settings: PaletteSettings | Status, containerEl: HTMLElement, pluginSettings: ColorPaletteSettings, onChange: (colors: string[], settings: PaletteSettings) => void, onEditMode: (editMode: boolean) => void, editMode = false) {
         this.containerEl = containerEl;
         this.pluginSettings = pluginSettings;
         this.showNotice = true;
         this.editMode = editMode;
+        this.paletteItems = [];
+        this.onChange = onChange;
+        this.onEditMode = onEditMode;
+
         this.setDefaults(colors, settings);
         this.load();
 
@@ -90,17 +100,29 @@ export class Palette {
         // Create new palette
         this.createPalette(this.colors, this.settings);
 
-        if(this.editMode) {
-            this.containerEl.toggleClass('palette-hover', this.pluginSettings.hoverWhileEditing ? this.settings.hover : false);
+        if(this.editMode){
+            this.dropzone.toggleClass('palette-hover', this.pluginSettings.hoverWhileEditing ? this.settings.hover : false);
+
+            this.dragDrop = new DragDrop([this.dropzone], Array.from(this.dropzone.children), (e, res) => {
+                // Sort palette items according to drop order
+                this.paletteItems.sort((a, b) => {
+                    return res.order.indexOf(a.container) - res.order.indexOf(b.container);
+                });
+                this.colors = this.paletteItems.map((item) => item.color);
+                this.settings.aliases = this.paletteItems.map((item) => item.settings.alias);
+                this.onChange(this.colors, this.settings);
+                this.reload();
+            });
         }
 	}
 
     /**
      * Removes palette contents
      */
-    public unload(){
+    public unload(){        
         // Remove palette contents
         this.containerEl.empty();
+        this.paletteItems = [];
     }
 
     /**
@@ -123,6 +145,15 @@ export class Palette {
     public createNotice(message: string) {
         this.showNotice && new Notice(message, this.pluginSettings.noticeDuration);
     }
+
+    public setEditMode(editMode: boolean) {
+        this.editMode = editMode;
+        this.onEditMode(editMode);
+    }
+
+    public getEditMode(): boolean {
+        return this.editMode;
+    }
     
     /**
      * Create new palette contents based on colors & settings
@@ -130,19 +161,20 @@ export class Palette {
      * @param settings 
      */
     private createPalette(colors: string[], settings: PaletteSettings){
-        this.containerEl.addClass('palette')
-        this.containerEl.style.setProperty('--palette-direction', settings.direction === Direction.Row ? Direction.Column : Direction.Row);
-        this.containerEl.style.setProperty('--not-palette-direction', settings.direction);
-        this.containerEl.style.setProperty('--palette-height', `${settings.height}px`);
-        this.containerEl.toggleClass('palette-hover', settings.hover);
+        this.dropzone = this.containerEl.createEl('div');
+        this.dropzone.addClass('palette')
+        this.dropzone.style.setProperty('--palette-direction', settings.direction === Direction.Row ? Direction.Column : Direction.Row);
+        this.dropzone.style.setProperty('--not-palette-direction', settings.direction);
+        this.dropzone.style.setProperty('--palette-height', `${settings.height}px`);
+        this.dropzone.toggleClass('palette-hover', settings.hover);
 
         try{
             // Throw error & create Invalid Palette
             if(this.status !== Status.VALID) throw new PaletteError(this.status);
             this.settings.gradient ?
-            this.createGradientPalette(this.containerEl, colors, settings, this.pluginSettings.width)
+            this.createGradientPalette(this.dropzone, colors, settings, this.pluginSettings.width)
             :
-            this.createColorPalette(this.containerEl, colors, settings, this.pluginSettings.aliasMode);
+            this.createColorPalette(this.dropzone, colors, settings, this.pluginSettings.aliasMode);
         }
         catch(err){
             if(err instanceof PaletteError) this.createInvalidPalette(err.status, err.message);
@@ -274,16 +306,19 @@ export class Palette {
                 (e: MouseEvent) => {
                     e.stopPropagation();
                     const deletedIndex = this.colors.indexOf(color);
-                    this.colors.splice(deletedIndex, 1);
-                    this.settings.aliases.splice(deletedIndex, 1);
+                    let colors = this.colors;
+                    let settings = this.settings;
+                    colors.splice(deletedIndex, 1);
+                    settings.aliases.splice(deletedIndex, 1);
+                    this.onChange(colors, settings);
                     this.reload();
-                    console.log('Remove:', color);
                 },
                 // onAlias
                 (alias) => {
                     this.settings.aliases[this.colors.findIndex(val => val === color)] = alias;
                 }
             );
+            this.paletteItems.push(paletteColor);
         }
     }
 
@@ -293,8 +328,8 @@ export class Palette {
      */
     private createInvalidPalette(type: Status, message = ''){
         this.status = type;
-        this.containerEl.style.setProperty('--palette-height', '150px');
-        const invalidSection = this.containerEl.createEl('section');
+        this.dropzone.style.setProperty('--palette-height', '150px');
+        const invalidSection = this.dropzone.createEl('section');
         invalidSection.toggleClass('invalid', true);
         const invalidSpan = invalidSection.createEl('span');
 

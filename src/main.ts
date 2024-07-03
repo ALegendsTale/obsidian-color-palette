@@ -16,6 +16,11 @@ export default class ColorPalette extends Plugin {
 		this.palettes = [];
 		await this.loadSettings();
 
+		/**
+		 * Changes when text length is extended or shortened.
+		 * DOES NOT change when text length remains the same.
+		 * This means simply swapping characters, but having the same length won't update this function.
+		 */
 		this.registerMarkdownCodeBlockProcessor(
 			'palette',
 			async (source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
@@ -27,8 +32,9 @@ export default class ColorPalette extends Plugin {
 			id: 'create',
 			name: 'Create',
 			editorCallback: (editor: Editor) => {
-				new CreatePaletteModal(this.app, this.settings, (result) => {
+				new CreatePaletteModal(this.app, this.settings, (colors, settings) => {
 					try {
+						const result = createPaletteBlock({colors, settings});
 						const cursor = editor.getCursor();
 						editor.transaction({
 							changes: [{ from: cursor, text: result }]

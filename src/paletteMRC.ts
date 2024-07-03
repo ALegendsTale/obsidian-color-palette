@@ -1,8 +1,8 @@
-import { MarkdownPostProcessorContext, MarkdownRenderChild } from "obsidian";
+import { Editor, MarkdownPostProcessorContext, MarkdownRenderChild, MarkdownView } from "obsidian";
 import ColorPalette, { urlRegex } from "main";
 import { ColorPaletteSettings } from "settings";
 import { Palette, PaletteSettings, Status } from "palette";
-import { parseUrl, pluginToPaletteSettings } from "utils/basicUtils";
+import { createPaletteBlock, getModifiedSettings, parseUrl, pluginToPaletteSettings } from "utils/basicUtils";
 import validateColor from "validate-color";
 import { PaletteMenu } from "PaletteMenu";
 
@@ -12,13 +12,16 @@ export class PaletteMRC extends MarkdownRenderChild {
 	input: string;
     palette: Palette
     context: MarkdownPostProcessorContext;
+    editor: Editor | undefined;
+    editModeChanges: { colors: string[], settings: Partial<PaletteSettings> | undefined };
 
-	constructor(plugin: ColorPalette, containerEl: HTMLElement, input: string, ctx: MarkdownPostProcessorContext) {
+	constructor(plugin: ColorPalette, containerEl: HTMLElement, input: string, context: MarkdownPostProcessorContext) {
         super(containerEl);
         this.plugin = plugin;
         this.pluginSettings = plugin.settings;
         this.input = input;
-        this.context = ctx;
+        this.context = context;
+        this.editor = this.plugin.app.workspace.getActiveViewOfType(MarkdownView)?.editor;
 	}
 
     onload(): void {
@@ -29,8 +32,11 @@ export class PaletteMRC extends MarkdownRenderChild {
         this.containerEl.addEventListener('contextmenu', (e) => {
             // Ensure palette is valid before creating a new menu
             if(this.palette.status === Status.VALID) {
-                const paletteMenu = new PaletteMenu(this.plugin.app, this.context, this.palette);
-                if(this.palette.status === Status.VALID) paletteMenu.showAtMouseEvent(e);
+                const paletteMenu = new PaletteMenu(this.plugin.app, this.context, this.palette, (colors, settings) => {
+                    if(colors == undefined) this.setPaletteInput('');
+                    else this.setPaletteInput(createPaletteBlock({ colors, settings }));
+                });
+                paletteMenu.showAtMouseEvent(e);
             }
         })
     }
@@ -50,8 +56,21 @@ export class PaletteMRC extends MarkdownRenderChild {
         // Calculate colors & settings
         const { colors, settings } = this.calcColorsAndSettings(this.input);
 
+        // Set editModeChanges initial values if valid
+        if(typeof colors !== 'string' && typeof settings !== 'string') this.editModeChanges = {colors, settings};
+
         // Create new palette
-        this.palette = new Palette(colors, settings, this.containerEl, this.pluginSettings);
+        this.palette = new Palette(colors, settings, this.containerEl, this.pluginSettings, (colors, settings) => {
+            const modifiedSettings = getModifiedSettings(settings);
+            // Save stored changes
+            this.editModeChanges = { colors, settings: modifiedSettings };
+        }, 
+        (editMode) => {
+            if(!editMode) {
+                // Set palette input to stored changes
+                this.setPaletteInput(createPaletteBlock({ colors: this.editModeChanges.colors, settings: this.editModeChanges.settings }));
+            }
+        });
     }
 
     /**
@@ -122,5 +141,38 @@ export class PaletteMRC extends MarkdownRenderChild {
         let settingsObj = typeof settings === 'object' ? settings : pluginToPaletteSettings(this.pluginSettings);
 
         return { colors: this.parseColors(split, settingsObj.override), settings: settings || pluginToPaletteSettings(this.pluginSettings) };
+    }
+
+    /**
+     * Gets the palette codeblock input
+     */
+    public getPaletteInput() {
+        // Palette line start & line end
+        const paletteSection = this.context.getSectionInfo(this.palette.containerEl);
+        if(paletteSection && this.editor) return {
+            lines: {
+                lineStart: paletteSection.lineStart, 
+                lineEnd: paletteSection.lineEnd
+            }, 
+            input: this.editor.getRange(
+                {line: paletteSection.lineStart, ch: 0}, 
+                {line: paletteSection.lineEnd + 1, ch: 0}
+            )
+        };
+    }
+
+    /**
+     * Sets the palette codeblock input with `replacement`
+     */
+    public setPaletteInput(replacement: string) {
+        // Palette line start & line end
+        const paletteSection = this.context.getSectionInfo(this.palette.containerEl);
+        if(paletteSection && this.editor) {
+            this.editor.replaceRange(replacement, {line: paletteSection.lineStart, ch: 0}, {line: paletteSection.lineEnd + 1, ch: 0});
+            return {
+                lineStart: paletteSection.lineStart, 
+                lineEnd: paletteSection.lineEnd
+            };
+        }
     }
 }

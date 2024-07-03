@@ -1,7 +1,7 @@
 import colorsea from "colorsea";
-import { App, Editor, MarkdownPostProcessorContext, SuggestModal } from "obsidian";
-import { Palette } from "palette";
-import { createPaletteBlock, getModifiedSettings } from "utils/basicUtils";
+import { App, SuggestModal } from "obsidian";
+import { Palette, PaletteSettings } from "palette";
+import { getModifiedSettings } from "utils/basicUtils";
 
 enum Reorder {
     Hue = 'Hue',
@@ -14,16 +14,12 @@ enum Reorder {
 }
 
 export class ReorderModal extends SuggestModal<Reorder>{
-    editor: Editor | undefined;
     palette: Palette;
-    context: MarkdownPostProcessorContext;
-    onSubmit: (result: string) => void;
+    onSubmit: (colors: string[], settings: Partial<PaletteSettings> | undefined) => void;
 
-    constructor(app: App, editor: Editor | undefined, palette: Palette, context: MarkdownPostProcessorContext, onSubmit: (result: string) => void) {
+    constructor(app: App, palette: Palette, onSubmit: (colors: string[], settings: Partial<PaletteSettings> | undefined) => void) {
         super(app);
-        this.editor = editor;
         this.palette = palette;
-        this.context = context;
         this.onSubmit = onSubmit;
     }
 
@@ -69,6 +65,6 @@ export class ReorderModal extends SuggestModal<Reorder>{
         }
         
         // Submit
-        this.onSubmit(createPaletteBlock({colors: colors, settings: getModifiedSettings(this.palette.settings)}));
+        this.onSubmit( colors, getModifiedSettings(this.palette.settings));
     }
 }

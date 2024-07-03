@@ -1,4 +1,5 @@
-/* Container */
+/* Palette */
+
 .palette {
     /* fallback vars */
     --palette-height: 150px;
@@ -32,7 +33,8 @@
     }
 }
 
-/* Child */
+/* Palette Item */
+
 .palette > div {
     display: flex;
     flex: 1;
@@ -68,14 +70,24 @@
     display: block;
 }
 
-/* Child Text */
+/* Palette Item Text */
+
 .palette > div > span {
     display: none;
     text-align: center;
     font-size: 100%;
     font-weight: bold;
     color: var(--palette-color);
+    user-select: none;
 }
+
+/* Drag & Drop */
+
+.is-dragging {
+    opacity: 0;
+}
+
+/* Gradient Tooltip */
 
 .palette-tooltip {
     position: absolute;
@@ -94,6 +106,8 @@
     align-items: center;
     justify-content: center;
 }
+
+/* Invalid Palette */
 
 .palette > .invalid {
     position: absolute;
@@ -115,6 +129,7 @@
     width: 100%;
     height: 30%;
     text-align: center;
+    user-select: none;
 }
 
 /* Tabs */
@@ -223,6 +238,7 @@
     color: var(--edit-color);
     font-weight: bold;
     font-size: var(--edit-font-size);
+    user-select: none;
 }
 
 .edit-container > .color-span-editable {

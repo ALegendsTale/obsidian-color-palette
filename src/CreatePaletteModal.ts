@@ -4,7 +4,7 @@ import { urlRegex } from "main";
 import colorsea from "colorsea";
 import { Direction, ColorPaletteSettings } from "settings";
 import { Combination, generateColors } from "utils/generateRandom";
-import { convertStringSettings, createPaletteBlock, getModifiedSettings, parseUrl, pluginToPaletteSettings } from "utils/basicUtils";
+import { getModifiedSettings, parseUrl, pluginToPaletteSettings } from "utils/basicUtils";
 import CanvasImage from "utils/imageUtils";
 
 enum SelectedInput {
@@ -20,11 +20,11 @@ export class CreatePaletteModal extends Modal {
     colors: string[]
     selectedInput: SelectedInput
     combination: Combination
-    onSubmit: (result: string) => void
+    onSubmit: (colors: string[], settings: Partial<PaletteSettings> | undefined) => void
     baseColor?: ReturnType<typeof colorsea>
     palette?: Palette;
 
-    constructor(app: App, pluginSettings: ColorPaletteSettings, onSubmit: (result: string) => void, palette?: Palette) {
+    constructor(app: App, pluginSettings: ColorPaletteSettings, onSubmit: (colors: string[], settings: Partial<PaletteSettings> | undefined) => void, palette?: Palette) {
         super(app);
         this.onSubmit = onSubmit;
         this.pluginSettings = pluginSettings;
@@ -306,7 +306,15 @@ export class CreatePaletteModal extends Modal {
         // Fill palette initially with random colors
         this.colors = this.palette ? this.palette.colors : generateColors(Combination.Random).colors;
         this.settings = this.palette ? this.palette.settings : this.settings;
-        const palette = new Palette(this.colors, this.settings, paletteContainer, this.pluginSettings, true);
+        const palette = new Palette(this.colors, this.settings, paletteContainer, this.pluginSettings, (colors, settings) => {
+            let moddedSettings = getModifiedSettings(settings);
+            this.colors = colors;
+            if(moddedSettings) this.settings = {...this.settings, ...moddedSettings};
+        },
+        (editMode) => {
+            // Should never be called
+        },
+        true);
         palettePreview.appendChild(palette.containerEl);
 
         /**
@@ -398,8 +406,7 @@ export class CreatePaletteModal extends Modal {
                 try{
                     // Generate random colors if none are provided
                     if(this.colors.length === 0) this.colors = generateColors(Combination.Random).colors;
-                    const moddedSettings = getModifiedSettings(convertStringSettings(this.settings));
-                    this.onSubmit(createPaletteBlock({colors: this.colors, settings: moddedSettings}));
+                    this.onSubmit(this.colors, getModifiedSettings(this.settings));
                     this.close();
                 }
                 catch(e){
