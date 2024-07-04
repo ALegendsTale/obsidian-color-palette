@@ -1,34 +1,55 @@
-import { Notice } from "obsidian";
 import quantize, { RgbPixel } from "quantize";
+import { Canvas } from "./canvasUtils";
 
-export default class CanvasImage {
+export default class CanvasImage extends Canvas {
     image: HTMLImageElement;
-    canvas: HTMLCanvasElement;
-    context: CanvasRenderingContext2D;
+    private loading: boolean;
     width: number;
     height: number;
-    loading: boolean;
 
-    constructor(imageURL: string, smoothing = false) {
+    constructor(container: HTMLElement, imageURL?: string, smoothing = false) {
+        super(container);
+        this.canvas.addClass('image');
         this.loading = true;
         this.image = new Image();
         // Allows CORS requests for images from different domains
         this.image.crossOrigin = 'anonymous';
-        this.image.src = imageURL;
+        if(imageURL) this.image.src = imageURL;
         this.image.addEventListener('load', (e) => this.loading = false);
-        this.canvas  = document.createElement('canvas');
-        // Non-null asserted context
-        this.context = this.canvas.getContext('2d')!;
+        this.image.addEventListener('error', (e) => {
+            throw new Error('The URL provided could not be loaded.');
+        })
         this.context.imageSmoothingEnabled = smoothing;
-
-        this.load();
     }
 
-    load() {
+    /**
+     * Updates & loads the canvas image.
+     * Attempts to preserve aspect ratio based on width.
+     * @param width The canvas width
+     * @param height The canvas height
+     */
+    public update(imageURL: string, width: number, height: number) {
+        // Set URL
+        this.image.src = imageURL;
+
+        // Wait for image to load before calculating dimensions & drawing image to canvas
         this.waitForLoading().then(() => {
-            this.width  = this.canvas.width  = this.image.naturalWidth;
-            this.height = this.canvas.height = this.image.naturalHeight;
-            this.context.drawImage(this.image, 0, 0, this.width, this.height);
+            // Calculate the new height based on the aspect ratio
+            const aspectRatio = this.image.naturalHeight / this.image.naturalWidth;
+
+            let newWidth = width;
+            let newHeight = newWidth * aspectRatio;
+
+            // Ensure the new height fits within the canvas height
+            if (newHeight > height) {
+                // Adjust width if height exceeds canvas height
+                newWidth = height / aspectRatio;
+                newHeight = height;
+            }
+
+            this.width = this.canvas.width = newWidth;
+            this.height = this.canvas.height = newHeight;
+            this.context.drawImage(this.image, 0, 0, newWidth, newHeight);
         })
     }
 
@@ -91,14 +112,13 @@ export default class CanvasImage {
     /**
      * Gets the image data from the canvas
      */
-    public async getImageData() {
+    public async getImageData(x = 0, y = 0) {
         try {
             await this.waitForLoading();
-            return this.context.getImageData(0, 0, this.width, this.height);
+            return this.context.getImageData(x, y, this.width, this.height);
         }
         catch(e) {
-            new Notice('Failed to get image data.');
-            return null;
+            throw new Error('Failed to get image data.');
         }
     }
 

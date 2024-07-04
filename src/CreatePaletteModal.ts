@@ -23,6 +23,7 @@ export class CreatePaletteModal extends Modal {
     onSubmit: (colors: string[], settings: Partial<PaletteSettings> | undefined) => void
     baseColor?: ReturnType<typeof colorsea>
     palette?: Palette;
+    modalRect: DOMRect;
 
     constructor(app: App, pluginSettings: ColorPaletteSettings, onSubmit: (colors: string[], settings: Partial<PaletteSettings> | undefined) => void, palette?: Palette) {
         super(app);
@@ -34,6 +35,22 @@ export class CreatePaletteModal extends Modal {
         this.combination = Combination.Random;
         this.baseColor = undefined;
         this.palette = palette;
+
+        const resizeObserver = new ResizeObserver((modals) => {
+            for (const modal of modals) {
+                for (const child of Array.from(modal.target.children)) {
+                    if(child.hasClass('modal')) {
+                        for(const modalChild of Array.from(child.children)) {
+                            if(modalChild.hasClass('create-palette')) {
+                                // Get modal bounding rect
+                                this.modalRect = modalChild.getBoundingClientRect();
+                            }
+                        }
+                    }
+                }  
+            }
+        })
+        resizeObserver.observe(this.containerEl);
     }
 
     onOpen(): void {
@@ -244,11 +261,24 @@ export class CreatePaletteModal extends Modal {
             imageContainer.setClass('image-preview');
             imageContainer.setClass('hide-image-preview');
 
-            const imageEl = imageContainer.controlEl.appendChild(createEl('img'));
-            imageEl.crossOrigin = 'anonymous';
-            imageEl.style.setProperty('border-radius', this.pluginSettings.corners ? '5px' : '0px');
-            imageEl.addEventListener('load', () => {
+            let hex: string;
+
+            const canvasImage = new CanvasImage(imageContainer.controlEl);
+            canvasImage.canvas.style.setProperty('border-radius', this.pluginSettings.corners ? '5px' : '0px');
+            canvasImage.canvas.addEventListener('mousemove', async (e) => {
+                hex = canvasImage.getCanvasHex(e.clientX, e.clientY);
+            })
+            canvasImage.canvas.addEventListener('click', (e) => {
+                if(!hex) return;
+                this.colors.push(hex);
+                this.settings.aliases.push('');
+                updatePalettePreview();
+            })
+            canvasImage.image.addEventListener('load', () => {
                 imageContainer.settingEl.toggleClass('hide-image-preview', false);
+            })
+            canvasImage.image.addEventListener('error', (e) => {
+                new Notice('The URL provided could not be loaded.');
             })
 
             /**
@@ -256,9 +286,9 @@ export class CreatePaletteModal extends Modal {
              */
             const updateImagePreview = async (url: string) => {
                 if(!url) return;
+                
+                canvasImage.update(url, this.modalRect.width, this.modalRect.height);
 
-                imageEl.src = url;
-                const canvasImage = new CanvasImage(url);
                 const colors = await canvasImage.getPalette(countInput.getValue());
                 if(colors) {
                     this.colors = colors.map((color) => colorsea(color).hex(0));
@@ -307,9 +337,9 @@ export class CreatePaletteModal extends Modal {
         this.colors = this.palette ? this.palette.colors : generateColors(Combination.Random).colors;
         this.settings = this.palette ? this.palette.settings : this.settings;
         const palette = new Palette(this.colors, this.settings, paletteContainer, this.pluginSettings, (colors, settings) => {
-            let moddedSettings = getModifiedSettings(settings);
+            let modifiedSettings = getModifiedSettings(settings);
             this.colors = colors;
-            if(moddedSettings) this.settings = {...this.settings, ...moddedSettings};
+            if(modifiedSettings) this.settings = {...this.settings, ...modifiedSettings};
         },
         (editMode) => {
             // Should never be called

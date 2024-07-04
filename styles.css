@@ -48,15 +48,54 @@
     gap: 3%;
 }
 
-.palette > canvas {
+/* Canvas */
+
+.canvas-utils {
     position: relative;
+}
+
+.canvas-utils > canvas {
     transition: all 0.1s ease-in-out;
     object-fit: contain;
 }
 
-.palette > canvas.gradient {
+.canvas-utils > canvas.gradient {
     background: linear-gradient(to right, var(--palette-background-color));
 }
+
+.canvas-utils > image {
+    width: 100%;
+    height: 100%;
+    border-radius: 5px;
+}
+
+.canvas-utils > canvas.image:hover ~ .palette-tooltip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Canvas Tooltip */
+
+.palette-tooltip {
+    position: absolute;
+    display: none;
+    background: #000000C0;
+    width: max-content;
+    min-width: 100px;
+    height: 40px;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 100%;
+}
+
+.palette.palette-hover > canvas:hover ~ .palette-tooltip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Palette Direction & Hover*/
 
 .palette.paletteColumn.palette-hover > div:hover {
     flex-basis: var(--palette-column-flex-basis);
@@ -85,26 +124,6 @@
 
 .is-dragging {
     opacity: 0;
-}
-
-/* Gradient Tooltip */
-
-.palette-tooltip {
-    position: absolute;
-    display: none;
-    background: #000000C0;
-    width: max-content;
-    min-width: 100px;
-    height: 40px;
-    text-align: center;
-    vertical-align: middle;
-    font-size: 100%;
-}
-
-.palette.palette-hover > canvas:hover ~ .palette-tooltip {
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 /* Invalid Palette */
@@ -197,13 +216,6 @@
     align-items: center;
 }
 
-.select-image > .image-preview > div > img {
-    width: 100%;
-    height: 100%;
-    border-radius: 5px;
-    object-fit: contain;
-}
-
 .select-image > .hide-image-preview {
     display: none;
 }
@@ -217,10 +229,14 @@
 /* Palette Preview */
 
 .palette-preview {
-
+    
 }
 
 /* Edit Mode */
+
+.edit-mode {
+    overflow-x: auto;
+}
 
 .edit-container {
     --edit-background-color: #000000;
