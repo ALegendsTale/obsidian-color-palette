@@ -41,7 +41,7 @@ export class CreatePaletteModal extends Modal {
                 for (const child of Array.from(modal.target.children)) {
                     if(child.hasClass('modal')) {
                         for(const modalChild of Array.from(child.children)) {
-                            if(modalChild.hasClass('create-palette')) {
+                            if(modalChild.hasClass('palette-create')) {
                                 // Get modal bounding rect
                                 this.modalRect = modalChild.getBoundingClientRect();
                             }
@@ -58,7 +58,7 @@ export class CreatePaletteModal extends Modal {
         
         // Header
         contentEl.createEl('h1', { text: 'Create Palette' })
-        contentEl.addClass('create-palette');
+        contentEl.addClass('palette-create');
 
         // Add Colors
         const colorsContainer = contentEl.createEl('section');

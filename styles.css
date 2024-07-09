@@ -48,28 +48,31 @@
     gap: 3%;
 }
 
-/* Canvas */
+/*
+Canvas
+(HTML Canvas, NOT Obsidian.md canvas) 
+*/
 
-.canvas-utils {
+.palette-canvas {
     position: relative;
 }
 
-.canvas-utils > canvas {
+.palette-canvas > canvas {
     transition: all 0.1s ease-in-out;
     object-fit: contain;
 }
 
-.canvas-utils > canvas.gradient {
+.palette-canvas > canvas.gradient {
     background: linear-gradient(to right, var(--palette-background-color));
 }
 
-.canvas-utils > image {
+.palette-canvas > image {
     width: 100%;
     height: 100%;
     border-radius: 5px;
 }
 
-.canvas-utils > canvas.image:hover ~ .palette-tooltip {
+.palette-canvas > canvas.image:hover ~ .palette-tooltip {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -122,7 +125,7 @@
 
 /* Drag & Drop */
 
-.is-dragging {
+.palette > .is-dragging {
     opacity: 0;
 }
 
@@ -152,7 +155,7 @@
 }
 
 /* Tabs */
-.create-palette > section > .control-container {
+.palette-create > section > .control-container {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -160,85 +163,85 @@
     padding: .75em 0;
 }
 
-.control-container > button {
+.palette-create > section > .control-container > button {
     cursor: pointer;
 }
 
-.add-colors-container {
+.palette-create > section > .add-colors-container {
     padding: .75em 0 0 0;
 }
 
 /* Color Picker Mode */
 
-.select-color-picker {
+.palette-create > section > .select-color-picker > div > div {
 
 }
 
 /* Generate Mode */
 
-.select-generate > button {
+.palette-create > section > .select-generate > div > div > button {
     cursor: pointer;
 }
 
 /* Image Mode Add Colors */
 
-.select-image > .add-colors > .setting-item-control > div {
+.palette-create > section > .select-image > .add-colors > .setting-item-control > div {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     justify-content: center;
 }
 
-.select-image > .add-colors > .setting-item-control > div > div {
+.palette-create > section > .select-image > .add-colors > .setting-item-control > div > div {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 5px;
 }
 
-.select-image > .add-colors > .setting-item-control > div > div > button {
+.palette-create > section > .select-image > .add-colors > .setting-item-control > div > div > button {
     cursor: pointer;
 }
 
-.select-image > .add-colors > .setting-item-control > div > div > input[type="file"] {
+.palette-create > section > .select-image > .add-colors > .setting-item-control > div > div > input[type="file"] {
     display: none;
 }
 
-.select-image > .image-preview > .setting-item-info {
+.palette-create > section > .select-image > .image-preview > .setting-item-info {
     display: none;
 }
 
 /* Image Mode Preview */
 
-.select-image > .image-preview > div {
+.palette-create > section > .select-image > .image-preview > div {
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-.select-image > .hide-image-preview {
+.palette-create > section > .select-image > .hide-image-preview {
     display: none;
 }
 
 /* URL Mode */
 
-.select-url > button {
+.palette-create > section > .select-url > div > div > button {
     cursor: pointer;
 }
 
 /* Palette Preview */
 
-.palette-preview {
+.palette-create > section > .palette-preview {
     
 }
 
 /* Edit Mode */
 
-.edit-mode {
+.palette.edit-mode {
     overflow-x: auto;
 }
 
-.edit-container {
+.palette > div > .edit-container {
     --edit-background-color: #000000;
     --edit-color: #ffffff;
     display: flex;
@@ -249,7 +252,7 @@
     gap: 16px;
 }
 
-.edit-container > span {
+.palette > div > .edit-container > span {
     --edit-font-size: 16px;
     color: var(--edit-color);
     font-weight: bold;
@@ -257,13 +260,13 @@
     user-select: none;
 }
 
-.edit-container > .color-span-editable {
+.palette > div > .edit-container > .color-span-editable {
     box-shadow: rgba(0, 0, 0, 0.35) 0px -50px 20px -28px inset;
     cursor: pointer;
 }
 
 /* Color Trash Button */
-.edit-container > button {
+.palette > div > .edit-container > button {
     background-color: var(--edit-background-color);
     color: var(--edit-color);
     box-shadow: rgba(0, 0, 0, 0.35) 0px -50px 20px -28px inset;

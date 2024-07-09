@@ -11,7 +11,7 @@ export class Canvas {
 
     constructor(container: HTMLElement) {
         this.container = container;
-        this.container.addClass('canvas-utils');
+        this.container.addClass('palette-canvas');
         this.canvas = container.appendChild(document.createElement('canvas'));
         this.tooltip = container.appendChild(document.createElement('section'));
         // tooltip is an Obsidian class
