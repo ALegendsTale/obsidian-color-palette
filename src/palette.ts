@@ -168,13 +168,18 @@ export class Palette {
         this.dropzone.style.setProperty('--palette-direction', settings.direction === Direction.Row ? Direction.Column : Direction.Row);
         this.dropzone.style.setProperty('--not-palette-direction', settings.direction);
         this.dropzone.style.setProperty('--palette-height', `${settings.height}px`);
+        // Ensure parent width is never 0
+        const parentWidth = this.dropzone.offsetWidth !== 0 ? this.dropzone.offsetWidth : settings.width;
+        // Set width to parent width, unless set by user
+        let paletteWidth = settings.width === this.pluginSettings.width ? parentWidth : settings.width;
+        this.dropzone.style.setProperty('--palette-width', `${paletteWidth}px`);
         this.dropzone.toggleClass('palette-hover', settings.hover);
 
         try{
             // Throw error & create Invalid Palette
             if(this.status !== Status.VALID) throw new PaletteError(this.status);
             this.settings.gradient ?
-            this.createGradientPalette(this.dropzone, colors, settings, this.pluginSettings.width)
+            this.createGradientPalette(this.dropzone, colors, settings, paletteWidth)
             :
             this.createColorPalette(this.dropzone, colors, settings, this.pluginSettings.aliasMode);
         }
@@ -184,17 +189,13 @@ export class Palette {
         }
     }
 
-    private createGradientPalette(containerEl: HTMLElement, colors: string[], settings: PaletteSettings, defaultWidth: number){
+    private createGradientPalette(containerEl: HTMLElement, colors: string[], settings: PaletteSettings, paletteWidth: number){
         if(colors.length <= 1) throw new PaletteError(Status.INVALID_GRADIENT);
-        // Ensure parent width is never 0
-        const parentWidth = containerEl.offsetWidth !== 0 ? containerEl.offsetWidth : settings.width;
-        // Set Canvas width to parent width, unless width is set by user
-        let gradientWidth = settings.width === defaultWidth ? parentWidth : settings.width;
 
         const canvas = new Canvas(containerEl);
 
         try {
-            canvas.createGradient(colors, gradientWidth, settings.height, settings.direction, (hex, e) => {
+            canvas.createGradient(colors, paletteWidth, settings.height, settings.direction, (hex, e) => {
                 new Notice(`Copied ${hex.toUpperCase()}`);
                 navigator.clipboard.writeText(hex.toUpperCase())
             });
@@ -249,6 +250,7 @@ export class Palette {
     private createInvalidPalette(type: Status, message = ''){
         this.status = type;
         this.dropzone.style.setProperty('--palette-height', '150px');
+        this.dropzone.style.setProperty('--palette-width', `100%`);
         const invalidSection = this.dropzone.createEl('section');
         invalidSection.toggleClass('invalid', true);
         const invalidSpan = invalidSection.createEl('span');

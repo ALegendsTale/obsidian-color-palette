@@ -3,6 +3,7 @@
 .palette {
     /* fallback vars */
     --palette-height: 150px;
+    --palette-width: 100%;
     --palette-direction: row;
     --not-palette-direction: row;
     --palette-background-color: transparent;
@@ -13,11 +14,11 @@
     
     display: flex;
     flex-direction: var(--palette-direction);
-    width: 100%;
     border-radius: var(--palette-corners);
     overflow: hidden;
     cursor: pointer;
     height: var(--palette-height);
+    width: var(--palette-width);
     position: relative;
 }
 
@@ -137,7 +138,7 @@ Canvas
     justify-content: center;
     align-items: center;
     height: var(--palette-height);
-    width: 100%;
+    width: var(--palette-width);
     background-color: #000000C0;
     border-radius: var(--palette-corners);;
 }
