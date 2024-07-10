@@ -51,15 +51,15 @@ export class Palette {
 
         // Refresh gradient palettes when Obsidian resizes
         const resizeObserver = new ResizeObserver((palettes) => {
-            for (const palette of palettes) {
-                for (const child of Array.from(palette.target.children)) {
+                const dropzone = palettes[0].target.children[0];
+                for (const child of Array.from(dropzone.children)) {
                     // Check if child is a canvas element
                     if ( child.nodeName === 'CANVAS') {
                         this.reload(true);
                     }
                 }  
             }
-        })
+        )
         resizeObserver.observe(this.containerEl);
 	}
 

@@ -233,7 +233,7 @@ Canvas
 /* Palette Preview */
 
 .palette-create > section > .palette-preview {
-    
+    overflow: auto;
 }
 
 /* Edit Mode */
