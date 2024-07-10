@@ -39,6 +39,7 @@ export class Palette {
 
 	constructor(colors: string[] | Status, settings: PaletteSettings | Status, containerEl: HTMLElement, pluginSettings: ColorPaletteSettings, onChange: (colors: string[], settings: PaletteSettings) => void, onEditMode: (editMode: boolean) => void, editMode = false) {
         this.containerEl = containerEl;
+        this.containerEl.addClass('palette-container');
         this.pluginSettings = pluginSettings;
         this.showNotice = true;
         this.editMode = editMode;
@@ -87,8 +88,6 @@ export class Palette {
         if(typeof colors === 'object') {
             this.colors = colors;
         }
-        // Set default corner style
-        this.containerEl.style.setProperty('--palette-corners', this.pluginSettings.corners ? '5px' : '0px');
     }
 
     /**
@@ -165,6 +164,8 @@ export class Palette {
     private createPalette(colors: string[], settings: PaletteSettings){
         this.dropzone = this.containerEl.createEl('div');
         this.dropzone.addClass('palette')
+        // Set default corner style
+        this.dropzone.style.setProperty('--palette-corners', this.pluginSettings.corners ? '5px' : '0px');
         this.dropzone.style.setProperty('--palette-direction', settings.direction === Direction.Row ? Direction.Column : Direction.Row);
         this.dropzone.style.setProperty('--not-palette-direction', settings.direction);
         this.dropzone.style.setProperty('--palette-height', `${settings.height}px`);

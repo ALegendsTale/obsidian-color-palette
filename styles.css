@@ -1,3 +1,10 @@
+/* Palette Container */
+
+.palette-container {
+    overflow-x: auto;
+    cursor: pointer;
+}
+
 /* Palette */
 
 .palette {
@@ -233,7 +240,7 @@ Canvas
 /* Palette Preview */
 
 .palette-create > section > .palette-preview {
-    overflow: auto;
+    
 }
 
 /* Edit Mode */
