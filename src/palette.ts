@@ -1,5 +1,5 @@
 import { Notice } from "obsidian";
-import { Direction, AliasMode, ColorPaletteSettings } from "settings";
+import { Direction, AliasMode, ColorPaletteSettings, defaultSettings } from "settings";
 import { pluginToPaletteSettings } from "utils/basicUtils";
 import { PaletteItem } from "palette/PaletteItem";
 import { DragDrop } from "utils/dragDropUtils";
@@ -52,15 +52,17 @@ export class Palette {
 
         // Refresh gradient palettes when Obsidian resizes
         const resizeObserver = new ResizeObserver((palettes) => {
-                const dropzone = palettes[0].target.children[0];
-                for (const child of Array.from(dropzone.children)) {
-                    // Check if child is a canvas element
-                    if ( child.nodeName === 'CANVAS') {
-                        this.reload(true);
-                    }
-                }  
-            }
-        )
+            const palette = palettes[0];
+            const dropzone = palette.target.children[0];
+            // Check if palette size is zero
+            const isZero = palette.contentRect.width === 0 && palette.contentRect.height === 0;
+            for (const child of Array.from(dropzone.children)) {
+                // Reize if child is a canvas element & if its size is not zero
+                if ( child.nodeName === 'CANVAS' && !isZero) {
+                    this.reload(true);
+                }
+            }  
+        })
         // Tracking containerEl (instead of dropzone) ensures resizeObserver persists through reloads
         resizeObserver.observe(this.containerEl);
 	}
@@ -161,7 +163,12 @@ export class Palette {
         return this.editMode;
     }
     
+    /**
+     * @returns `user` OR `auto` width based on which is more approperiate
+     */
     public getPaletteWidth() {
+        // Set user-set width if it is greater than the default width
+        if(this.settings.width > defaultSettings.width) return this.settings.width;
         // Automatically set width if offset is less than settings width
         if(this.dropzone.offsetWidth < this.settings.width && this.dropzone.offsetWidth > 0) return this.dropzone.offsetWidth;
         // Set user-set width
