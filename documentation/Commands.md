@@ -45,7 +45,27 @@ It will create a palette from that URL.
 
 ## Convert codeblock link to hex
 
+> This command is mostly deprecated. Please use the right click menu instead.
+
 This command takes a selected codeblock with a link inside and converts the link within into hex.
+
+Converts
+<pre>
+```palette
+https://colorhunt.co/palette/3ec1d3f6f7d7ff9a00ff165d
+```
+</pre>
+
+into
+
+<pre>
+```palette
+#3ec1d3
+#f6f7d7
+#ff9a00
+#ff165d
+```
+</pre>
 
 ## Generate random palette
 

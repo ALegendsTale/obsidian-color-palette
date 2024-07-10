@@ -93,7 +93,7 @@ export default class ColorPalette extends Plugin {
 					const multiReg = RegExp(/(?:\`{3}palette)\n(?<url>.*)(?:\n(?<settings>.+))?\n\`{3}/, 'g');
 					const content = [...codeBlock.matchAll(multiReg)]?.[0]?.slice(1);
 					const url = content?.[0];
-					if(url == null) throw new Error('Selected text is not a codeblock with a link.');
+					if(!url) throw new Error('Selected text is not a codeblock with a link.');
 					let colors: string[] = [];
 					// Check if link & contains dashes (coolor url)
 					url.match(urlRegex) && url.includes('-') ? 
@@ -106,10 +106,25 @@ export default class ColorPalette extends Plugin {
 					colors = ['Invalid Palette']
 	
 					if(colors[0] === 'Invalid Palette') throw new Error('Selected codeblock can not be converted to hex.');
-	
-					const newBlock = createPaletteBlock({ colors: colors, settings: JSON.parse(content?.[1])});
-					editor.replaceSelection(newBlock)
-					new Notice(`Converted codeblock link to hex`)
+
+					let newBlock;
+
+					// Check if settings were specified
+					if(!content?.[1]) {
+						// Create palette without settings
+						newBlock = createPaletteBlock({ colors });
+					}
+					else {
+						const settings = JSON.parse(content[1]);
+						// Create palette with settings
+						createPaletteBlock({ colors, settings });
+					}
+
+					if(newBlock) {
+						editor.replaceSelection(newBlock);
+						new Notice(`Converted codeblock link to hex`);
+					}
+					else throw new Error('Selected codeblock can not be converted to hex.');
 				} 
 				catch (error) {
 					new Notice(error);
