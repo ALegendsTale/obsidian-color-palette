@@ -138,7 +138,7 @@ export class PaletteMRC extends MarkdownRenderChild {
         // Get PaletteSettings if valid or plugin defaults if invalid
         let settingsObj = typeof settings === 'object' ? settings : pluginToPaletteSettings(this.pluginSettings);
 
-        return { colors: this.parseColors(split, settingsObj.override), settings: settings || pluginToPaletteSettings(this.pluginSettings) };
+        return { colors: this.parseColors(split, settingsObj.override), settings: settings };
     }
 
     /**

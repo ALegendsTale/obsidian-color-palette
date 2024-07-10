@@ -37,7 +37,7 @@ export class Palette {
     onChange: (colors: string[], settings: PaletteSettings) => void;
     onEditMode: (editMode: boolean) => void;
 
-	constructor(colors: string[] | Status, settings: PaletteSettings | Status, containerEl: HTMLElement, pluginSettings: ColorPaletteSettings, onChange: (colors: string[], settings: PaletteSettings) => void, onEditMode: (editMode: boolean) => void, editMode = false) {
+	constructor(colors: string[] | Status, settings: PaletteSettings | Status | undefined, containerEl: HTMLElement, pluginSettings: ColorPaletteSettings, onChange: (colors: string[], settings: PaletteSettings) => void, onEditMode: (editMode: boolean) => void, editMode = false) {
         this.containerEl = containerEl;
         this.containerEl.addClass('palette-container');
         this.pluginSettings = pluginSettings;
@@ -61,13 +61,14 @@ export class Palette {
                 }  
             }
         )
+        // Tracking containerEl (instead of dropzone) ensures resizeObserver persists through reloads
         resizeObserver.observe(this.containerEl);
 	}
 
     /**
      * Sets the initial defaults
      */
-    public setDefaults(colors: string[] | Status, settings: PaletteSettings | Status) {
+    public setDefaults(colors: string[] | Status, settings: PaletteSettings | Status | undefined) {
         this.status = Status.VALID;
         // Settings are invalid
         if(typeof settings === 'string') {
@@ -77,6 +78,10 @@ export class Palette {
         // Settings are valid
         if(typeof settings === 'object') {
             this.settings = {...pluginToPaletteSettings(this.pluginSettings), ...settings};
+        }
+        // Settings were not set by user
+        if(typeof settings === 'undefined') {
+            this.settings = pluginToPaletteSettings(this.pluginSettings);
         }
         // Colors are invalid
         if(typeof colors === 'string') {
@@ -156,6 +161,13 @@ export class Palette {
         return this.editMode;
     }
     
+    public getPaletteWidth() {
+        // Automatically set width if offset is less than settings width
+        if(this.dropzone.offsetWidth < this.settings.width && this.dropzone.offsetWidth > 0) return this.dropzone.offsetWidth;
+        // Set user-set width
+        else return this.settings.width;
+    }
+    
     /**
      * Create new palette contents based on colors & settings
      * @param colors 
@@ -169,10 +181,7 @@ export class Palette {
         this.dropzone.style.setProperty('--palette-direction', settings.direction === Direction.Row ? Direction.Column : Direction.Row);
         this.dropzone.style.setProperty('--not-palette-direction', settings.direction);
         this.dropzone.style.setProperty('--palette-height', `${settings.height}px`);
-        // Ensure parent width is never 0
-        const parentWidth = this.dropzone.offsetWidth !== 0 ? this.dropzone.offsetWidth : settings.width;
-        // Set width to parent width, unless set by user
-        let paletteWidth = settings.width === this.pluginSettings.width ? parentWidth : settings.width;
+        const paletteWidth = this.getPaletteWidth();
         this.dropzone.style.setProperty('--palette-width', `${paletteWidth}px`);
         this.dropzone.toggleClass('palette-hover', settings.hover);
 
@@ -190,10 +199,10 @@ export class Palette {
         }
     }
 
-    private createGradientPalette(containerEl: HTMLElement, colors: string[], settings: PaletteSettings, paletteWidth: number){
+    private createGradientPalette(container: HTMLElement, colors: string[], settings: PaletteSettings, paletteWidth: number){
         if(colors.length <= 1) throw new PaletteError(Status.INVALID_GRADIENT);
 
-        const canvas = new Canvas(containerEl);
+        const canvas = new Canvas(container);
 
         try {
             canvas.createGradient(colors, paletteWidth, settings.height, settings.direction, (hex, e) => {
@@ -206,9 +215,9 @@ export class Palette {
         }
     }
 
-    private createColorPalette(containerEl: HTMLElement, colors: string[], settings: PaletteSettings, aliasMode: AliasMode){
+    private createColorPalette(container: HTMLElement, colors: string[], settings: PaletteSettings, aliasMode: AliasMode){
         for(const [i, color] of colors.entries()){
-            const paletteItem = new PaletteItem(containerEl, color, 
+            const paletteItem = new PaletteItem(container, color, 
                 { 
                     aliasMode: aliasMode, 
                     editMode: this.editMode, 
