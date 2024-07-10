@@ -106,7 +106,7 @@ Canvas
     justify-content: center;
 }
 
-/* Palette Direction & Hover*/
+/* Palette Direction & Hover */
 
 .palette.paletteColumn.palette-hover > div:hover {
     flex-basis: var(--palette-column-flex-basis);
@@ -129,118 +129,6 @@ Canvas
     font-weight: bold;
     color: var(--palette-color);
     user-select: none;
-}
-
-/* Drag & Drop */
-
-.palette > .is-dragging {
-    opacity: 0;
-}
-
-/* Invalid Palette */
-
-.palette > .invalid {
-    position: absolute;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: var(--palette-height);
-    width: var(--palette-width);
-    background-color: #000000C0;
-    border-radius: var(--palette-corners);;
-}
-
-.palette > .invalid > span {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    background-color: #000;
-    width: 100%;
-    height: 30%;
-    text-align: center;
-    user-select: none;
-}
-
-/* Tabs */
-.palette-create > section > .control-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 5%;
-    padding: .75em 0;
-}
-
-.palette-create > section > .control-container > button {
-    cursor: pointer;
-}
-
-.palette-create > section > .add-colors-container {
-    padding: .75em 0 0 0;
-}
-
-/* Color Picker Mode */
-
-.palette-create > section > .select-color-picker > div > div {
-
-}
-
-/* Generate Mode */
-
-.palette-create > section > .select-generate > div > div > button {
-    cursor: pointer;
-}
-
-/* Image Mode Add Colors */
-
-.palette-create > section > .select-image > .add-colors > .setting-item-control > div {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    justify-content: center;
-}
-
-.palette-create > section > .select-image > .add-colors > .setting-item-control > div > div {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-}
-
-.palette-create > section > .select-image > .add-colors > .setting-item-control > div > div > button {
-    cursor: pointer;
-}
-
-.palette-create > section > .select-image > .add-colors > .setting-item-control > div > div > input[type="file"] {
-    display: none;
-}
-
-.palette-create > section > .select-image > .image-preview > .setting-item-info {
-    display: none;
-}
-
-/* Image Mode Preview */
-
-.palette-create > section > .select-image > .image-preview > div {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.palette-create > section > .select-image > .hide-image-preview {
-    display: none;
-}
-
-/* URL Mode */
-
-.palette-create > section > .select-url > div > div > button {
-    cursor: pointer;
-}
-
-/* Palette Preview */
-
-.palette-create > section > .palette-preview {
-    
 }
 
 /* Edit Mode */
@@ -279,4 +167,117 @@ Canvas
     color: var(--edit-color);
     box-shadow: rgba(0, 0, 0, 0.35) 0px -50px 20px -28px inset;
     cursor: pointer;
+}
+
+/* Drag & Drop */
+
+.palette > .is-dragging {
+    opacity: 0;
+}
+
+/* Invalid Palette */
+
+.palette > .invalid {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: var(--palette-height);
+    width: var(--palette-width);
+    background-color: #000000C0;
+    border-radius: var(--palette-corners);;
+}
+
+.palette > .invalid > span {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    background-color: #000;
+    width: 100%;
+    height: 30%;
+    text-align: center;
+    user-select: none;
+}
+
+/* Tabs */
+
+.palette-editor > section > .control-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5%;
+    padding: .75em 0;
+}
+
+.palette-editor > section > .control-container > button {
+    cursor: pointer;
+}
+
+.palette-editor > section > .colors-container {
+    padding: .75em 0 0 0;
+}
+
+/* Color Picker Mode */
+
+.palette-editor > section > .select-color-picker > div > div {
+
+}
+
+/* Generate Mode */
+
+.palette-editor > section > .select-generate > div > div > button {
+    cursor: pointer;
+}
+
+/* Image Mode Add Colors */
+
+.palette-editor > section > .select-image > .add-colors > .setting-item-control > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.palette-editor > section > .select-image > .add-colors > .setting-item-control > div > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.palette-editor > section > .select-image > .add-colors > .setting-item-control > div > div > button {
+    cursor: pointer;
+}
+
+.palette-editor > section > .select-image > .add-colors > .setting-item-control > div > div > input[type="file"] {
+    display: none;
+}
+
+.palette-editor> section > .select-image > .image-preview > .setting-item-info {
+    display: none;
+}
+
+/* Image Mode Preview */
+
+.palette-editor > section > .select-image > .image-preview > div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.palette-editor > section > .select-image > .hide-image-preview {
+    display: none;
+}
+
+/* URL Mode */
+
+.palette-editor > section > .select-url > div > div > button {
+    cursor: pointer;
+}
+
+/* Palette Preview */
+
+.palette-editor > section > .palette-preview {
+    
 }

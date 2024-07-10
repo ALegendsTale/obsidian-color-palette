@@ -1,8 +1,8 @@
-import { CreatePaletteModal } from "CreatePaletteModal";
-import { ReorderModal } from "ReorderModal";
+import { EditorModal } from "./EditorModal";
+import { ReorderModal } from "./ReorderModal";
 import colorsea from "colorsea";
 import { App, MarkdownPostProcessorContext, Menu, Notice } from "obsidian";
-import { Palette, PaletteSettings } from "palette";
+import { Palette, PaletteSettings } from "./Palette";
 import { Direction } from "settings";
 import { createPaletteBlock, getModifiedSettings } from "utils/basicUtils";
 
@@ -44,7 +44,7 @@ export class PaletteMenu extends Menu {
                 .setTitle("Edit Mode")
                 .setIcon('palette')
                 .onClick(async () => {
-                    new CreatePaletteModal(this.app, this.palette.pluginSettings, (colors, settings) => {
+                    new EditorModal(this.app, this.palette.pluginSettings, (colors, settings) => {
                         try {
                             const paletteSection = this.context.getSectionInfo(this.palette.containerEl);
                             if(paletteSection) {

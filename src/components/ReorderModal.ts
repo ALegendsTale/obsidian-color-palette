@@ -1,6 +1,6 @@
 import colorsea from "colorsea";
 import { App, SuggestModal } from "obsidian";
-import { Palette, PaletteSettings } from "palette";
+import { Palette, PaletteSettings } from "./Palette";
 import { getModifiedSettings } from "utils/basicUtils";
 
 enum Reorder {

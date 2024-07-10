@@ -1,7 +1,7 @@
 import { Notice } from "obsidian";
 import { Direction, AliasMode, ColorPaletteSettings, defaultSettings } from "settings";
 import { pluginToPaletteSettings } from "utils/basicUtils";
-import { PaletteItem } from "palette/PaletteItem";
+import { PaletteItem } from "./PaletteItem";
 import { DragDrop } from "utils/dragDropUtils";
 import { Canvas } from "utils/canvasUtils";
 

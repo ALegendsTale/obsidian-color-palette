@@ -1,9 +1,9 @@
 import { App, ButtonComponent, ColorComponent, DropdownComponent, Modal, Notice, Setting, SliderComponent, TextComponent } from "obsidian";
-import { Palette, PaletteSettings } from "palette";
+import { Palette, PaletteSettings } from "./Palette";
 import { urlRegex } from "main";
 import colorsea from "colorsea";
 import { Direction, ColorPaletteSettings } from "settings";
-import { Combination, generateColors } from "utils/generateRandom";
+import { Combination, generateColors } from "utils/generateUtils";
 import { getModifiedSettings, parseUrl, pluginToPaletteSettings } from "utils/basicUtils";
 import CanvasImage from "utils/imageUtils";
 
@@ -14,7 +14,7 @@ enum SelectedInput {
     URL = "URL",
 }
 
-export class CreatePaletteModal extends Modal {
+export class EditorModal extends Modal {
     pluginSettings: ColorPaletteSettings
     settings: PaletteSettings
     colors: string[]
@@ -41,7 +41,7 @@ export class CreatePaletteModal extends Modal {
                 for (const child of Array.from(modal.target.children)) {
                     if(child.hasClass('modal')) {
                         for(const modalChild of Array.from(child.children)) {
-                            if(modalChild.hasClass('palette-create')) {
+                            if(modalChild.hasClass('palette-editor')) {
                                 // Get modal bounding rect
                                 this.modalRect = modalChild.getBoundingClientRect();
                             }
@@ -57,13 +57,13 @@ export class CreatePaletteModal extends Modal {
         const { contentEl } = this;
         
         // Header
-        contentEl.createEl('h1', { text: 'Create Palette' })
-        contentEl.addClass('palette-create');
+        contentEl.createEl('h1', { text: 'Editor' })
+        contentEl.addClass('palette-editor');
 
         // Add Colors
         const colorsContainer = contentEl.createEl('section');
         // Create header for colors section
-        colorsContainer.createEl('h3').setText('Add Colors');
+        colorsContainer.createEl('h3').setText('Colors');
 
         // Tabs
         let controlContainer = colorsContainer.appendChild(createDiv());
@@ -104,7 +104,7 @@ export class CreatePaletteModal extends Modal {
             })
 
         let addColorsContainer = colorsContainer.appendChild(createEl('div'));
-        addColorsContainer.addClass('add-colors-container');
+        addColorsContainer.addClass('colors-container');
 
         function changeSelectedInput(selectedInput: SelectedInput) {
             resetStyle();

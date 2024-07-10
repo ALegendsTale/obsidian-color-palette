@@ -1,9 +1,9 @@
 import { Editor, MarkdownPostProcessorContext, Notice, Plugin } from 'obsidian'
-import { CreatePaletteModal } from 'CreatePaletteModal';
-import { GeneratePaletteModal } from 'GeneratePaletteModal';
+import { EditorModal } from 'components/EditorModal';
+import { GenerateModal } from 'components/GenerateModal';
 import { ColorPaletteSettings, defaultSettings, SettingsTab } from 'settings';
 import 'utils/prototypeUtils'
-import { PaletteMRC } from 'paletteMRC';
+import { PaletteMRC } from 'components/PaletteMRC';
 import { createPaletteBlock } from 'utils/basicUtils';
 
 export const urlRegex = /(?:https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(?:\.[a-zA-Z0-9]{2,})(?:\.[a-zA-Z0-9]{2,})?\/(?:palette\/)?([a-zA-Z0-9-]{2,})/
@@ -32,7 +32,7 @@ export default class ColorPalette extends Plugin {
 			id: 'create',
 			name: 'Create',
 			editorCallback: (editor: Editor) => {
-				new CreatePaletteModal(this.app, this.settings, (colors, settings) => {
+				new EditorModal(this.app, this.settings, (colors, settings) => {
 					try {
 						const result = createPaletteBlock({colors, settings});
 						const cursor = editor.getCursor();
@@ -121,7 +121,7 @@ export default class ColorPalette extends Plugin {
 			id: 'generate-random-palette',
 			name: 'Generate random palette',
 			editorCallback: (editor: Editor) => {
-				new GeneratePaletteModal(this.app, editor, this.settings).open();
+				new GenerateModal(this.app, editor, this.settings).open();
 			}
 		})
 

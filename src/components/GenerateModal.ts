@@ -1,13 +1,13 @@
 import { App, Editor, Notice, SuggestModal } from "obsidian";
-import { PaletteSettings } from "palette";
+import { PaletteSettings } from "./Palette";
 import { ColorPaletteSettings } from "settings";
-import { Combination, generateColors } from "utils/generateRandom";
+import { Combination, generateColors } from "utils/generateUtils";
 import validateColor from "validate-color";
 import colorsea from "colorsea";
 import EditorUtils from "utils/editorUtils";
 import { createPaletteBlock, getModifiedSettings, pluginToPaletteSettings } from "utils/basicUtils";
 
-export class GeneratePaletteModal extends SuggestModal<Combination> {
+export class GenerateModal extends SuggestModal<Combination> {
     editor: Editor;
     settings: PaletteSettings
 

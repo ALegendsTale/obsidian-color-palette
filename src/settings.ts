@@ -1,6 +1,6 @@
 import ColorPalette from "main";
 import { App, PluginSettingTab, Setting } from "obsidian";
-import { PaletteSettings } from "palette";
+import { PaletteSettings } from "components/Palette";
 import { pluginToPaletteSettings } from "utils/basicUtils";
 
 export enum Direction {
