@@ -11,7 +11,11 @@ Create beautiful & functional color palettes that enhance the appearance of your
 - Style like a pro with gorgeous gradients.
 - Easily copy color codes by selecting them.
 
-## Usage
+## Full Documentation
+
+[Documentation](/documentation/index.md)
+
+## Quick Start
 
 Palettes can be created manually by adding a codeblock with the color codes desired.
 
@@ -29,7 +33,7 @@ rgb(255, 255, 125);
 </pre>
 
 Palettes can also be created from links.\
-*Only URLs from https://coolors.co & https://colorhunt.co are currently supported.*
+*Only URLs from <https://coolors.co> & <https://colorhunt.co> are currently supported.*
 
 <pre>
 ```palette
