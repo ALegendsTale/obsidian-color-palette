@@ -25,11 +25,18 @@ export class DragDrop {
     }
 
     private dragOver(dropzone: Element, e: DragEvent) {
+        if(e.dataTransfer) {
+            const hasElement = Array.from(e.dataTransfer.items).some((item) => {
+                return item.kind !== 'element';
+            });
+            // Return early if element being dragged is not an element
+            if(hasElement) return;
+        }
+
         e.preventDefault();
         this.result.beforeElement = this.getDragBeforeElement(e.clientX);
         this.result.insertedElement = this.getDraggingElement();
         this.result.afterElement = this.getDragAfterElement(e.clientX);
-
 
         const insertedIndex = this.draggables.indexOf(this.result.insertedElement);
 
