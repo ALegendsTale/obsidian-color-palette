@@ -85,6 +85,7 @@ It also controls this on mobile when touching palettes.
 The override setting defaults to false.
 When set to true, it disables color validation.
 This is useful for creating palettes with atypical inputs (css variables for example).
+The [Obsidian Color Documentation](https://docs.obsidian.md/Reference/CSS+variables/Foundations/Colors) is a great source for finding colors that match Obsidian.
 
 Example:
 Ordinarily using CSS variables would not be permitted.
@@ -92,7 +93,17 @@ When override is set to true, the palette will render.
 
 <pre>
 ```palette
-rgb(var(--ctp-peach))
+var(--color-orange)
+{ "override": true }
+```
+</pre>
+
+Advanced Example:
+Using RGBA with a RGB CSS variable can allow the opacity to be set.
+
+<pre>
+```palette
+rgba(var(--color-green-rgb), .5)
 { "override": true }
 ```
 </pre>
