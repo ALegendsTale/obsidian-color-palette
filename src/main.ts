@@ -2,7 +2,6 @@ import { Editor, MarkdownPostProcessorContext, Notice, Plugin } from 'obsidian'
 import { EditorModal } from 'components/EditorModal';
 import { GenerateModal } from 'components/GenerateModal';
 import { ColorPaletteSettings, defaultSettings, SettingsTab } from 'settings';
-import 'utils/prototypeUtils'
 import { PaletteMRC } from 'components/PaletteMRC';
 import { createPaletteBlock } from 'utils/basicUtils';
 
