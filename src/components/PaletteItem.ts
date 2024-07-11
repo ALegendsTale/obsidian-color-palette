@@ -107,6 +107,13 @@ class EditMode {
             this.setEditable(true);
             this.span.focus();
         })
+        // Remove alias on right click
+        this.span.addEventListener('contextmenu', (e) => {
+            e.stopPropagation();
+            this.span.setText(this.color.toUpperCase());
+            this.settings.alias = '';
+            this.onAlias(this.settings.alias);
+        })
         this.span.addEventListener('keypress', (e) => {
             if(e.key === 'Enter') {
                 this.setAlias();
