@@ -253,7 +253,14 @@ export class Palette {
                 },
                 // onAlias
                 (alias) => {
-                    this.settings.aliases[this.colors.findIndex(val => val === color)] = alias;
+                    // Get the index of the alias relative to the PaletteItem color
+                    const aliasIndex = this.colors.findIndex(val => val === color);
+                    for(let i = 0; i < aliasIndex; i++) {
+                        // Set empty strings to empty indexes
+                        if(!this.settings.aliases[i]) this.settings.aliases[i] = '';
+                    }
+                    // Set modified alias index
+                    this.settings.aliases[aliasIndex] = alias;
                 }
             );
             this.paletteItems.push(paletteItem);
