@@ -57,8 +57,8 @@ export class Palette {
             // Check if palette size is zero
             const isZero = palette.contentRect.width === 0 && palette.contentRect.height === 0;
             for (const child of Array.from(dropzone.children)) {
-                // Reize if child is a canvas element & if its size is not zero
-                if ( child.nodeName === 'CANVAS' && !isZero) {
+                // Reize if size is not zero
+                if (!isZero) {
                     this.reload(true);
                 }
             }  
