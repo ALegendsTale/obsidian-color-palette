@@ -1,5 +1,5 @@
 import ColorPalette from "main";
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import { PaletteSettings } from "components/Palette";
 import { pluginToPaletteSettings } from "utils/basicUtils";
 
@@ -71,13 +71,22 @@ export class SettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Notice Duration")
-			.setDesc("How long error messages are show for in seconds (0 for indefinite)")
+			.setDesc("How long palette error messages are show for in seconds (0 for indefinite)")
 			.addText((text) => {
 				text
 				.setValue((settings.noticeDuration / 1000).toString())
 				.onChange(async (value) => {
-					settings.noticeDuration = Number(value) * 1000;
-					await this.plugin.saveSettings();
+					try {
+                        // Check if valid number
+                        if(!Number.isNaN(Number(value))) {
+							settings.noticeDuration = Number(value) * 1000;
+							await this.plugin.saveSettings();
+                        }
+                        else throw new Error('Please enter a number.');
+                    }
+                    catch(e) {
+                        new Notice(e);
+                    }
 				});
 			});
 
@@ -127,8 +136,17 @@ export class SettingsTab extends PluginSettingTab {
 				text
 				.setValue(settings.height.toString())
 				.onChange(async (value) => {
-					settings.height = Number(value);
-					await this.plugin.saveSettings();
+					try {
+                        // Check if valid number
+                        if(!Number.isNaN(Number(value))) {
+							settings.height = Number(value);
+							await this.plugin.saveSettings();
+                        }
+                        else throw new Error('Please enter a number.');
+                    }
+                    catch(e) {
+                        new Notice(e);
+                    }
 				})
 			})
 
@@ -139,8 +157,17 @@ export class SettingsTab extends PluginSettingTab {
 				text
 				.setValue(settings.width.toString())
 				.onChange(async (value) => {
-					settings.width = Number(value);
-					await this.plugin.saveSettings();
+					try {
+                        // Check if valid number
+                        if(!Number.isNaN(Number(value))) {
+							settings.width = Number(value);
+							await this.plugin.saveSettings();
+                        }
+                        else throw new Error('Please enter a number.');
+                    }
+                    catch(e) {
+                        new Notice(e);
+                    }
 				})
 			})
 

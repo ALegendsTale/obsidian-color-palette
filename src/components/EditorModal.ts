@@ -221,9 +221,18 @@ export class EditorModal extends Modal {
                 .setIcon('arrow-up-to-line')
                 .setTooltip('Right click to clear URL')
                 .onClick(async (e) => {
-                    // Check if any text is present, otherwise prompt user to select image
-                    if(urlInput.getValue() !== '') await updateImagePreview(urlInput.getValue());
-                    else fileInput.click();
+                    try {
+                        // Check if any text is present, otherwise prompt user to select image
+                        if(urlInput.getValue() !== '') {
+                            // Check if URL is valid
+                            if (URL.canParse(urlInput.getValue())) await updateImagePreview(urlInput.getValue());
+                            else throw new Error('URL provided is not valid.');
+                        }
+                        else fileInput.click();
+                    }
+                    catch(e) {
+                        new Notice(e);
+                    }
                 })
             loadButton.buttonEl.addEventListener('contextmenu', () => urlInput.setValue(''));
 
@@ -232,19 +241,24 @@ export class EditorModal extends Modal {
             fileInput.type = 'file';
             fileInput.accept = 'image/*';
             fileInput.addEventListener('change', (e) => {
-                const reader = new FileReader();
-                const file = (e.target as HTMLInputElement).files?.[0];
-                if(file) reader.readAsDataURL(file);
-                
-                reader.addEventListener('load', async () => {
-                    if(typeof reader.result === 'string') {
-                        fileURL = reader.result;
-                        await updateImagePreview(fileURL);
-                    }
-                })
-                reader.addEventListener('error', () => {
-                    throw new Error('Error processing image.');
-                })
+                try {
+                    const reader = new FileReader();
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if(file) reader.readAsDataURL(file);
+                    
+                    reader.addEventListener('load', async () => {
+                        if(typeof reader.result === 'string') {
+                            fileURL = reader.result;
+                            await updateImagePreview(fileURL);
+                        }
+                    })
+                    reader.addEventListener('error', () => {
+                        throw new Error('Error processing image.');
+                    })
+                }
+                catch(e) {
+                    new Notice(e);
+                }
             })
 
             const sliderContainer = new Setting(addColorsContainer)
@@ -362,8 +376,17 @@ export class EditorModal extends Modal {
                 text
                 .setValue(this.settings.height.toString())
                 .onChange((value) => {
-                    this.settings.height = Number(value);
-                    updatePalettePreview();
+                    try {
+                        // Check if valid number
+                        if(!Number.isNaN(Number(value))) {
+                            this.settings.height = Number(value);
+                            updatePalettePreview();
+                        }
+                        else throw new Error('Please enter a number.');
+                    }
+                    catch(e) {
+                        new Notice(e);
+                    }
                 })
             })
 
@@ -374,8 +397,17 @@ export class EditorModal extends Modal {
                 text
                 .setValue(this.settings.width.toString())
                 .onChange((value) => {
-                    this.settings.width = Number(value);
-                    updatePalettePreview();
+                    try {
+                        // Check if valid number
+                        if(!Number.isNaN(Number(value))) {
+                            this.settings.width = Number(value);
+                            updatePalettePreview();
+                        }
+                        else throw new Error('Please enter a number.');
+                    }
+                    catch(e) {
+                        new Notice(e);
+                    }
                 })
             })
 
