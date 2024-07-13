@@ -305,9 +305,9 @@ export class Palette {
         
         // Pulse the Invalid Palette to show its location
         if(this.pluginSettings.errorPulse){
-            this.containerEl.style.setProperty('--notice-duration', ((this.pluginSettings.noticeDuration / 1000) / 2).toString() + 's')
-            this.containerEl.toggleClass('palette-pulse', true);
-            setTimeout(() => this.containerEl.toggleClass('palette-pulse', false), this.pluginSettings.noticeDuration);
+            this.dropzone.style.setProperty('--notice-duration', ((this.pluginSettings.noticeDuration / 1000) / 2).toString() + 's')
+            this.dropzone.toggleClass('palette-pulse', true);
+            setTimeout(() => this.dropzone.toggleClass('palette-pulse', false), this.pluginSettings.noticeDuration);
         }
     }
 }

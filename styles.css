@@ -3,6 +3,7 @@
 .palette-container {
     overflow-x: auto;
     cursor: pointer;
+    position: relative;
 }
 
 /* Palette */
@@ -27,18 +28,6 @@
     height: var(--palette-height);
     width: var(--palette-width);
     position: relative;
-}
-
-.palette-pulse {
-    animation: pulse var(--notice-duration) infinite;
-    transform: scale(1);
-    border: transparent 1px solid;
-}
-
-@keyframes pulse {
-    50% {
-        background-color: #FFFF0080;
-    }
 }
 
 /* Palette Item */
@@ -198,6 +187,33 @@ Canvas
     height: 30%;
     text-align: center;
     user-select: none;
+}
+
+/* Invalid Pulse */
+
+.palette-pulse {
+    animation: pulse var(--notice-duration) infinite;
+}
+
+.palette-pulse > .invalid {
+    animation: pulse-shadow var(--notice-duration) infinite;
+}
+
+.palette-pulse > .invalid > span {
+    /* 1px padding so that box-shadow can show in full on left / right */
+    margin: 0px 1px;
+}
+
+@keyframes pulse {
+    50% {
+        background-color: #FFFF0080;
+    }
+}
+
+@keyframes pulse-shadow {
+    50% {
+        box-shadow: inset 0px 0px 0px 1px #FFFF0080;
+    }
 }
 
 /* Tabs */
