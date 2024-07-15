@@ -1,7 +1,7 @@
 {
 	"id": "color-palette",
 	"name": "Color Palette",
-	"version": "2.13.6",
+	"version": "2.13.7",
 	"minAppVersion": "0.15.0",
 	"description": "Create and insert color palettes into your notes.",
 	"author": "ALegendsTale",
