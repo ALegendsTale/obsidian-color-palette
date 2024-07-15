@@ -37,6 +37,14 @@ Purely aesthetic change which toggles whether the corners on palettes are rounde
 
 Toggles whether hover is active while editing.
 
+## Reload Delay
+
+> Default: 5
+
+Modifies the speed at which the palette will reload while resizing or changing.
+Smaller values means the palette will be more responsive, but require more processing.
+It is recommended to keep this value between 0 - 1000.
+
 ## Palette Defaults
 
 The default values of [Palette Settings](./PaletteSettings.md) if the user does not directly modify them.
