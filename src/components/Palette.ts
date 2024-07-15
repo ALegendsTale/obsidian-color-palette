@@ -1,9 +1,10 @@
 import { Notice } from "obsidian";
 import { Direction, AliasMode, ColorPaletteSettings, defaultSettings } from "settings";
-import { pluginToPaletteSettings } from "utils/basicUtils";
+import { copyToClipboard, pluginToPaletteSettings } from "utils/basicUtils";
 import { PaletteItem } from "./PaletteItem";
 import { DragDrop } from "utils/dragDropUtils";
 import { Canvas } from "utils/canvasUtils";
+import { EventEmitter } from "utils/EventEmitter";
 
 export type PaletteSettings = {
     height: number
@@ -23,6 +24,12 @@ export enum Status {
     INVALID_GRADIENT = 'Invalid Gradient'
 }
 
+type EventMap = {
+    resized: [palette: ResizeObserverEntry],
+    changed: [colors: string[], settings: PaletteSettings],
+    editMode: [editMode: boolean]
+}
+
 export class Palette {
     containerEl: HTMLElement;
     pluginSettings: ColorPaletteSettings;
@@ -34,44 +41,45 @@ export class Palette {
     dragDrop: DragDrop | null;
     dropzone: HTMLDivElement;
     paletteItems: PaletteItem[];
-    onChange: (colors: string[], settings: PaletteSettings) => void;
-    onEditMode: (editMode: boolean) => void;
+    paletteCanvas: Canvas | undefined;
+    public emitter: EventEmitter<EventMap>;
 
-	constructor(colors: string[] | Status, settings: PaletteSettings | Status | undefined, containerEl: HTMLElement, pluginSettings: ColorPaletteSettings, onChange: (colors: string[], settings: PaletteSettings) => void, onEditMode: (editMode: boolean) => void, editMode = false) {
+	constructor(colors: string[] | Status, settings: PaletteSettings | Status | undefined, containerEl: HTMLElement, pluginSettings: ColorPaletteSettings, editMode = false) {
         this.containerEl = containerEl;
         this.containerEl.addClass('palette-container');
         this.pluginSettings = pluginSettings;
+        this.status = Status.VALID;
         this.showNotice = true;
         this.editMode = editMode;
         this.paletteItems = [];
-        this.onChange = onChange;
-        this.onEditMode = onEditMode;
+        this.emitter = new EventEmitter<EventMap>;
 
         this.setDefaults(colors, settings);
         this.load();
 
+        let observerDebouncers = new WeakMap;
+
         // Refresh gradient palettes when Obsidian resizes
         const resizeObserver = new ResizeObserver((palettes) => {
-            const palette = palettes[0];
-            const dropzone = palette.target.children[0];
-            // Check if palette size is zero
-            const isZero = palette.contentRect.width === 0 && palette.contentRect.height === 0;
-            for (const child of Array.from(dropzone.children)) {
-                // Reize if size is not zero
-                if (!isZero) {
-                    this.reload(true);
-                }
-            }  
+            // There is only one palette
+            palettes.forEach((palette) => {
+                // Clear timeout on observerDebouncers palette
+                clearTimeout(observerDebouncers.get(palette.target));
+                // Set a new timeout on palette & store in observerDebouncers
+                observerDebouncers.set(palette.target, setTimeout(() => this.emitter.emit('resized', palette), this.pluginSettings.reloadDelay));
+            })
         })
         // Tracking containerEl (instead of dropzone) ensures resizeObserver persists through reloads
         resizeObserver.observe(this.containerEl);
+
+        // Resized event after user has stopped dragging
+        this.emitter.on('resized', (palette) => this.onResized(palette));
 	}
 
     /**
      * Sets the initial defaults
      */
     public setDefaults(colors: string[] | Status, settings: PaletteSettings | Status | undefined) {
-        this.status = Status.VALID;
         // Settings are invalid
         if(typeof settings === 'string') {
             this.settings = pluginToPaletteSettings(this.pluginSettings);
@@ -115,7 +123,7 @@ export class Palette {
                 });
                 this.colors = this.paletteItems.map((item) => item.color);
                 this.settings.aliases = this.paletteItems.map((item) => item.settings.alias);
-                this.onChange(this.colors, this.settings);
+                this.emitter.emit('changed', this.colors, this.settings);
                 this.reload();
             });
         }
@@ -125,25 +133,64 @@ export class Palette {
 	}
 
     /**
-     * Removes palette contents
+     * Removes liseteners
      */
-    public unload(){        
-        // Remove palette contents
+    public unload(){
         this.containerEl.empty();
         this.paletteItems = [];
+        this.paletteCanvas = undefined;
     }
 
     /**
      * Reloads the palette contents
      * @param resize Whether the palette is reloading because of a resize (defaults to false)
      */
-    public reload(resize = false){
+    public reload(resize: { height: number, width: number } = {height: 0, width: 0}){
+        // Check if palette size is zero
+        const isZero = resize.height === 0 && resize.width === 0;
+        if(!isZero) {
+            // Set width if size is not zero
+            this.setWidth(this.getPaletteWidth(resize.width));
+            return;
+        }
         // Only show notice on non-resize reloads
         this.showNotice = !resize;
         this.unload();
         this.setDefaults(this.colors, this.settings);
         this.load();
         this.showNotice = true;
+    }
+
+    private onResized(palette: ResizeObserverEntry) {
+        const size = {height: palette.contentRect.height, width: palette.contentRect.width};
+        // Check if palette size is zero
+        const isZero = size.height === 0 && size.width === 0;
+        // Resize if size is not zero
+        if (!isZero) this.reload({height: size.height, width: size.width});
+    }
+
+    /**
+     * Sets the width of the palette
+     */
+    public setWidth(width: number) {
+        // Create new gradient if canvas
+        if(this.settings.gradient && this.paletteCanvas) this.paletteCanvas.createGradient(this.colors, width, this.settings.height, this.settings.direction);
+        // Set palette width
+        this.dropzone.style.setProperty('--palette-width', `${width}px`);
+        this.containerEl.toggleClass('palette-scroll', width > defaultSettings.width);
+    }
+
+    /**
+     * @returns `user` OR `auto` width based on which is more approperiate
+     */
+    public getPaletteWidth(resizeOffset = 0) {
+        const paletteOffset = resizeOffset !== 0 ? resizeOffset : this.dropzone.offsetWidth;
+        // Set user-set width if it is greater than the default width
+        if(this.settings.width > defaultSettings.width) return this.settings.width;
+        // Automatically set width if offset is less than settings width
+        if(paletteOffset < this.settings.width && paletteOffset > 0) return paletteOffset;
+        // Set user-set width
+        else return this.settings.width;
     }
 
     /**
@@ -156,23 +203,11 @@ export class Palette {
 
     public setEditMode(editMode: boolean) {
         this.editMode = editMode;
-        this.onEditMode(editMode);
+        this.emitter.emit('editMode', editMode);
     }
 
     public getEditMode(): boolean {
         return this.editMode;
-    }
-    
-    /**
-     * @returns `user` OR `auto` width based on which is more approperiate
-     */
-    public getPaletteWidth() {
-        // Set user-set width if it is greater than the default width
-        if(this.settings.width > defaultSettings.width) return this.settings.width;
-        // Automatically set width if offset is less than settings width
-        if(this.dropzone.offsetWidth < this.settings.width && this.dropzone.offsetWidth > 0) return this.dropzone.offsetWidth;
-        // Set user-set width
-        else return this.settings.width;
     }
     
     /**
@@ -188,17 +223,18 @@ export class Palette {
         this.dropzone.style.setProperty('--palette-direction', settings.direction === Direction.Row ? Direction.Column : Direction.Row);
         this.dropzone.style.setProperty('--not-palette-direction', settings.direction);
         this.dropzone.style.setProperty('--palette-height', `${settings.height}px`);
-        const paletteWidth = this.getPaletteWidth();
-        this.dropzone.style.setProperty('--palette-width', `${paletteWidth}px`);
         this.dropzone.toggleClass('palette-hover', settings.hover);
 
         try{
             // Throw error & create Invalid Palette
             if(this.status !== Status.VALID) throw new PaletteError(this.status);
             this.settings.gradient ?
-            this.createGradientPalette(this.dropzone, colors, settings, paletteWidth)
+            this.createGradientPalette(this.dropzone, colors)
             :
             this.createColorPalette(this.dropzone, colors, settings, this.pluginSettings.aliasMode);
+
+            // Set width of palettes
+            this.setWidth(this.getPaletteWidth());
         }
         catch(err){
             if(err instanceof PaletteError) this.createInvalidPalette(err.status, err.message);
@@ -206,20 +242,11 @@ export class Palette {
         }
     }
 
-    private createGradientPalette(container: HTMLElement, colors: string[], settings: PaletteSettings, paletteWidth: number){
+    private createGradientPalette(container: HTMLElement, colors: string[]){
         if(colors.length <= 1) throw new PaletteError(Status.INVALID_GRADIENT);
 
-        const canvas = new Canvas(container);
-
-        try {
-            canvas.createGradient(colors, paletteWidth, settings.height, settings.direction, (hex, e) => {
-                new Notice(`Copied ${hex.toUpperCase()}`);
-                navigator.clipboard.writeText(hex.toUpperCase())
-            });
-        }
-        catch(e) {
-            throw new PaletteError(Status.INVALID_GRADIENT, e);
-        }
+        this.paletteCanvas = new Canvas(container);
+        this.paletteCanvas.emitter.on('click', (hex) => copyToClipboard(hex));
     }
 
     private createColorPalette(container: HTMLElement, colors: string[], settings: PaletteSettings, aliasMode: AliasMode){
@@ -248,7 +275,7 @@ export class Palette {
                     let settings = this.settings;
                     colors.splice(deletedIndex, 1);
                     settings.aliases.splice(deletedIndex, 1);
-                    this.onChange(colors, settings);
+                    this.emitter.emit('changed', colors, settings);
                     this.reload();
                 },
                 // onAlias

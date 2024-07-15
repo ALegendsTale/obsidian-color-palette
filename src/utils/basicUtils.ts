@@ -1,5 +1,6 @@
 import colorsea from "colorsea";
 import { PaletteSettings } from "components/Palette";
+import { Notice } from "obsidian";
 import { ColorPaletteSettings, defaultSettings } from "settings";
 
 /**
@@ -121,4 +122,9 @@ export function toNString(array: string[]) {
         result += string + '\n';
     }
     return result.trim();
+}
+
+export function copyToClipboard(text: string) {
+    new Notice(`Copied ${text.toUpperCase()}`);
+    navigator.clipboard.writeText(text.toUpperCase());
 }

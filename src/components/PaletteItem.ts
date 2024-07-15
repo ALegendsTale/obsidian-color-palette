@@ -36,9 +36,9 @@ export class PaletteItem {
     private load() {
         const csColor = colorsea(this.color);
         
-        // set --palette-background-color css variable
+        // set background color
         this.container.style.setProperty('--palette-background-color', this.color);
-        // set --palette-column-flex-basis css variable
+        // set width
         this.container.style.setProperty('--palette-column-flex-basis', (this.settings.height / this.settings.colorCount / 2).toString() + 'px');
 
 

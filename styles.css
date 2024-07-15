@@ -1,9 +1,12 @@
 /* Palette Container */
 
 .palette-container {
-    overflow-x: auto;
     cursor: pointer;
     position: relative;
+}
+
+.palette-container.palette-scroll {
+    overflow-x: auto;
 }
 
 /* Palette */

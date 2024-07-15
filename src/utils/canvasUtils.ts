@@ -1,6 +1,11 @@
 import { Direction } from "settings";
 import colorsea from "colorsea";
 import validateColor from "validate-color";
+import { EventEmitter } from "./EventEmitter";
+
+type EventMap = {
+    click: [hex: string],
+}
 
 export class Canvas {
     container: HTMLElement;
@@ -8,6 +13,7 @@ export class Canvas {
     tooltip: HTMLElement;
     tooltipText: HTMLSpanElement;
     context: CanvasRenderingContext2D;
+    emitter: EventEmitter<EventMap>;
 
     constructor(container: HTMLElement) {
         this.container = container;
@@ -19,10 +25,13 @@ export class Canvas {
         this.tooltipText = this.tooltip.appendChild(document.createElement('span'));
         // Non-null asserted context
         this.context = this.canvas.getContext('2d', {willReadFrequently: true, alpha: true})!;
+        this.emitter = new EventEmitter<EventMap>();
 
         // Check if touch device & add the event listener to the element to track position for the tooltip
         if(!this.isTouchEnabled()) this.canvas.addEventListener("mousemove", (e) => this.setTooltipPosition(e.clientX, e.clientY));
         else this.canvas.addEventListener("touchmove", (e) => this.setTooltipPosition(e.touches[0].clientX, e.touches[0].clientY));
+
+        this.canvas.addEventListener('click', (e) => this.emitter.emit('click', this.getCanvasHex(e.clientX, e.clientY)));
     }
 
     /**
@@ -33,7 +42,7 @@ export class Canvas {
      * @param direction
      * @param onClick canvas click callback
      */
-    public createGradient(colors: string[], width: number, height: number, direction: Direction, onClick: (hex: string, e: MouseEvent) => void) {
+    public createGradient(colors: string[], width: number, height: number, direction: Direction) {
         this.canvas.width = width;
         this.canvas.height = height;
 
@@ -53,14 +62,8 @@ export class Canvas {
         this.context.fillStyle = gradient || '#000';
         this.context.fillRect(0, 0, width, height);
 
-        this.canvas.addEventListener('click', (e) => onClick(this.getCanvasHex(e.clientX, e.clientY), e));
-
-        // Loop through colors but skip last one
-        for(const [i, color] of Object.entries(colors).filter((e, i) => i !== colors.length - 1)){
-            this.canvas.toggleClass('gradient', true);
-            this.canvas.style.setProperty('--palette-background-color', `${color}, ${colors[Number(i) + 1] || 'transparent'}`);
-            this.canvas.style.setProperty('--palette-column-flex-basis', (height / colors.length / 2).toString() + 'px');
-        }
+        this.canvas.toggleClass('gradient', true);
+        this.canvas.style.setProperty('--palette-column-flex-basis', (height / colors.length / 2).toString() + 'px');
     }
 
     // Retrieves the hex from the mouse position

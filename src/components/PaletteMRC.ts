@@ -40,6 +40,8 @@ export class PaletteMRC extends MarkdownRenderChild {
     }
 
     unload(): void {
+        // Remove palette listeners on unload
+        this.palette.emitter.clear();
         // Remove palette from state
         this.plugin.palettes?.remove(this);
     }
@@ -58,17 +60,18 @@ export class PaletteMRC extends MarkdownRenderChild {
         if(typeof colors !== 'string' && typeof settings !== 'string') this.editModeChanges = {colors, settings};
 
         // Create new palette
-        this.palette = new Palette(colors, settings, this.containerEl, this.pluginSettings, (colors, settings) => {
+        this.palette = new Palette(colors, settings, this.containerEl, this.pluginSettings);
+        this.palette.emitter.on('changed', (colors, settings) => {
             const modifiedSettings = getModifiedSettings(settings);
             // Save stored changes
             this.editModeChanges = { colors, settings: modifiedSettings };
-        }, 
-        (editMode) => {
+        })
+        this.palette.emitter.on('editMode', (editMode) => {
             if(!editMode) {
                 // Set palette input to stored changes
                 this.setPaletteInput(createPaletteBlock({ colors: this.editModeChanges.colors, settings: this.editModeChanges.settings }));
             }
-        });
+        })
     }
 
     /**

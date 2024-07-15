@@ -19,6 +19,7 @@ export interface ColorPaletteSettings {
 	aliasMode: AliasMode;
 	corners: boolean;
 	hoverWhileEditing: boolean;
+	reloadDelay: number;
 	height: number;
 	width: number;
 	direction: Direction,
@@ -33,6 +34,7 @@ export const defaultSettings: ColorPaletteSettings = {
 	aliasMode: AliasMode.Both,
 	corners: true,
 	hoverWhileEditing: false,
+	reloadDelay: 5,
 	height: 150,
 	width: 700,
 	direction: Direction.Column,
@@ -43,7 +45,8 @@ export const defaultSettings: ColorPaletteSettings = {
 
 export class SettingsTab extends PluginSettingTab {
 	plugin: ColorPalette;
-	settings: PaletteSettings
+	settings: PaletteSettings;
+	reloadDelay: number;
 
 	constructor(app: App, plugin: ColorPalette) {
 		super(app, plugin);
@@ -54,6 +57,7 @@ export class SettingsTab extends PluginSettingTab {
 		const { containerEl } = this;
 		let { settings } = this.plugin;
 		this.settings = pluginToPaletteSettings(settings);
+		this.reloadDelay = settings.reloadDelay;
 
 		containerEl.empty();
 
@@ -127,6 +131,27 @@ export class SettingsTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				})
 			})
+
+		new Setting(containerEl)
+		.setName("Reload Delay")
+		.setDesc("How long it takes in milliseconds for palettes to be updated after changes have been made (Larger values are less responsive).")
+		.addText((text) => {
+			text
+			.setValue(settings.reloadDelay.toString())
+			.onChange(async (value) => {
+				try {
+					// Check if valid number
+					if(!Number.isNaN(Number(value))) {
+						settings.reloadDelay = Number(value);
+						await this.plugin.saveSettings();
+					}
+					else throw new Error('Please enter a number.');
+				}
+				catch(e) {
+					new Notice(e);
+				}
+			});
+		});
 
 		containerEl.createEl('h2').setText('Palette Defaults');
 		
@@ -223,8 +248,9 @@ export class SettingsTab extends PluginSettingTab {
 	// Called when settings are exited
 	hide() {
 		const settingsChanged = JSON.stringify(this.settings) !== JSON.stringify(pluginToPaletteSettings(this.plugin.settings));
+		const reloadDelayChanged = this.reloadDelay !== this.plugin.settings.reloadDelay;
 		// Update palettes if PaletteSettings have changed
-		if (this.plugin?.palettes && settingsChanged) {
+		if (this.plugin?.palettes && (settingsChanged || reloadDelayChanged)) {
 			for (let paletteMRC of this.plugin.palettes) {
 				paletteMRC.update();
 			}

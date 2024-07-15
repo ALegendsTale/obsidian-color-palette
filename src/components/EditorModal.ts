@@ -53,15 +53,13 @@ export class EditorModal extends Modal {
         resizeObserver.observe(this.containerEl);
     }
 
-    onOpen(): void {
-        const { contentEl } = this;
-        
+    onOpen(): void {        
         // Header
-        contentEl.createEl('h1', { text: 'Editor' })
-        contentEl.addClass('palette-editor');
+        this.contentEl.createEl('h1', { text: 'Editor' })
+        this.contentEl.addClass('palette-editor');
 
         // Add Colors
-        const colorsContainer = contentEl.createEl('section');
+        const colorsContainer = this.contentEl.createEl('section');
         // Create header for colors section
         colorsContainer.createEl('h3').setText('Colors');
 
@@ -70,11 +68,11 @@ export class EditorModal extends Modal {
         controlContainer.addClass('control-container');
 
         // Preview
-        const previewContainer = contentEl.createEl('section');
+        const previewContainer = this.contentEl.createEl('section');
         previewContainer.createEl('h3');
 
         // Settings
-        const settingsContainer = contentEl.createEl('section');
+        const settingsContainer = this.contentEl.createEl('section');
         // Create header for settings section
         settingsContainer.createEl('h3').setText('Settings');
 
@@ -350,15 +348,12 @@ export class EditorModal extends Modal {
         // Fill palette initially with random colors
         this.colors = this.palette ? this.palette.colors : generateColors(Combination.Random).colors;
         this.settings = this.palette ? this.palette.settings : this.settings;
-        const palette = new Palette(this.colors, this.settings, paletteContainer, this.pluginSettings, (colors, settings) => {
+        const palette = new Palette(this.colors, this.settings, paletteContainer, this.pluginSettings, true);
+        palette.emitter.on('changed', (colors, settings) => {
             let modifiedSettings = getModifiedSettings(settings);
             this.colors = colors;
             if(modifiedSettings) this.settings = {...this.settings, ...modifiedSettings};
-        },
-        (editMode) => {
-            // Should never be called
-        },
-        true);
+        })
         palettePreview.appendChild(palette.containerEl);
 
         /**
@@ -479,7 +474,8 @@ export class EditorModal extends Modal {
     }
 
     onClose(): void {
-        let { contentEl } = this;
-        contentEl.empty();
+        // Clear palette listeners
+        this.palette?.emitter.clear();
+        this.contentEl.empty();
     }
 }
