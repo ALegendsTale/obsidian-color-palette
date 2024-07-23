@@ -133,9 +133,14 @@ export class Palette {
 	}
 
     /**
-     * Removes liseteners
+     * Unloads the palette
      */
     public unload(){
+        // Remove listeners
+        this.emitter.clear();
+        // Remove paletteItem listeners
+        this.paletteItems.forEach((item) => item.unload());
+        // Remove children
         this.containerEl.empty();
         this.paletteItems = [];
         this.paletteCanvas = undefined;
@@ -261,35 +266,36 @@ export class Palette {
                     hover: settings.hover, 
                     alias: settings.aliases?.[i] || '',
                     colorCount: colors.length,
-                },
-                // onClick
-                (e: MouseEvent) => {
-                    this.createNotice(`Copied ${color}`);
-                    navigator.clipboard.writeText(color);
-                },
-                // onTrash
-                (e: MouseEvent) => {
-                    e.stopPropagation();
-                    const deletedIndex = this.colors.indexOf(color);
-                    let colors = this.colors;
-                    let settings = this.settings;
-                    colors.splice(deletedIndex, 1);
-                    settings.aliases.splice(deletedIndex, 1);
-                    this.emitter.emit('changed', colors, settings);
-                    this.reload();
-                },
-                // onAlias
-                (alias) => {
-                    // Get the index of the alias relative to the PaletteItem color
-                    const aliasIndex = this.colors.findIndex(val => val === color);
-                    for(let i = 0; i < aliasIndex; i++) {
-                        // Set empty strings to empty indexes
-                        if(!this.settings.aliases[i]) this.settings.aliases[i] = '';
-                    }
-                    // Set modified alias index
-                    this.settings.aliases[aliasIndex] = alias;
                 }
             );
+            
+            paletteItem.emitter.on('click', (e: MouseEvent) => {
+                this.createNotice(`Copied ${color}`);
+                navigator.clipboard.writeText(color);
+            })
+
+            paletteItem.emitter.on('trash', (e: MouseEvent) => {
+                e.stopPropagation();
+                const deletedIndex = this.colors.indexOf(color);
+                let colors = this.colors;
+                let settings = this.settings;
+                colors.splice(deletedIndex, 1);
+                settings.aliases.splice(deletedIndex, 1);
+                this.emitter.emit('changed', colors, settings);
+                this.reload();
+            })
+
+            paletteItem.emitter.on('alias', (alias) => {
+                // Get the index of the alias relative to the PaletteItem color
+                const aliasIndex = this.colors.findIndex(val => val === color);
+                for(let i = 0; i < aliasIndex; i++) {
+                    // Set empty strings to empty indexes
+                    if(!this.settings.aliases[i]) this.settings.aliases[i] = '';
+                }
+                // Set modified alias index
+                this.settings.aliases[aliasIndex] = alias;
+            })
+
             this.paletteItems.push(paletteItem);
         }
     }

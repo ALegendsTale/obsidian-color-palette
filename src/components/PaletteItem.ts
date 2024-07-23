@@ -2,6 +2,7 @@ import colorsea from "colorsea";
 import { ButtonComponent } from "obsidian";
 import { AliasMode, Direction } from "settings";
 import { getForegroundColor } from "utils/basicUtils";
+import { EventEmitter } from "utils/EventEmitter";
 
 type PaletteItemSettings = {
     aliasMode: AliasMode,
@@ -14,21 +15,23 @@ type PaletteItemSettings = {
     colorCount: number,
 }
 
+type EventMap = {
+    click: [e: MouseEvent];
+    trash: [e: MouseEvent];
+    alias: [alias: string];
+}
+
 export class PaletteItem {
     container: HTMLDivElement;
     color: string;
     settings: PaletteItemSettings;
-    private onClick: (e: MouseEvent) => void;
-    private onTrash: (e: MouseEvent) => void;
-    private onAlias: (alias: string) => void;
+    public emitter: EventEmitter<EventMap>
 
-    constructor(container: HTMLElement, color: string, settings: PaletteItemSettings, onClick: (e: MouseEvent) => void, onTrash: (e: MouseEvent) => void, onAlias: (alias: string) => void){
+    constructor(container: HTMLElement, color: string, settings: PaletteItemSettings){
         this.container = container.createEl('div');
         this.color = color.trim();
         this.settings = settings;
-        this.onClick = onClick;
-        this.onTrash = onTrash;
-        this.onAlias = onAlias;
+        this.emitter = new EventEmitter<EventMap>;
 
         this.load();
     }
@@ -45,7 +48,7 @@ export class PaletteItem {
         const incompatibleSettings = this.settings.direction === Direction.Row;
         // Create if edit mode is active & if there are incompatibleSettings
         if(this.settings.editMode && !incompatibleSettings) {
-            new EditMode(this.container, this.color, this.settings, (e) => this.onTrash(e), (alias) => this.onAlias(alias));
+            new EditMode(this.container, this.color, this.settings, (e) => this.emitter.emit('trash', e), (alias) => this.emitter.emit('alias', alias));
         }
         else {
             // Display hex if alias mode is set to both OR if alias is not set
@@ -58,7 +61,14 @@ export class PaletteItem {
             childAlias.style.setProperty('--palette-color', getForegroundColor(csColor));
         }
 
-        this.container.addEventListener('click', (e) => this.onClick(e));
+        this.container.addEventListener('click', (e) => this.emitter.emit('click', e));
+    }
+
+    /**
+     * Removes listeners
+     */
+    public unload() {
+        this.emitter.clear();
     }
 }
 

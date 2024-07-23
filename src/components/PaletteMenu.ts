@@ -10,7 +10,7 @@ export class PaletteMenu extends Menu {
     app: App;
     context: MarkdownPostProcessorContext;
     palette: Palette;
-    onChange: (colors: string[] | undefined, settings: Partial<PaletteSettings> | undefined) => void;
+    private onChange: (colors: string[] | undefined, settings: Partial<PaletteSettings> | undefined) => void;
 
     constructor(app: App, context: MarkdownPostProcessorContext, palette: Palette, onChange: (colors: string[] | undefined, settings: Partial<PaletteSettings> | undefined) => void) {
         super();

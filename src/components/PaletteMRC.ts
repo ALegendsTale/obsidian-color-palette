@@ -41,7 +41,7 @@ export class PaletteMRC extends MarkdownRenderChild {
 
     unload(): void {
         // Remove palette listeners on unload
-        this.palette.emitter.clear();
+        this.palette.unload();
         // Remove palette from state
         this.plugin.palettes?.remove(this);
     }
