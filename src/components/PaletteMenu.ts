@@ -4,7 +4,7 @@ import colorsea from "colorsea";
 import { App, MarkdownPostProcessorContext, Menu, Notice } from "obsidian";
 import { Palette, PaletteSettings } from "./Palette";
 import { Direction } from "settings";
-import { createPaletteBlock, getModifiedSettings } from "utils/basicUtils";
+import { copyToClipboard, createPaletteBlock, getModifiedSettings } from "utils/basicUtils";
 
 export class PaletteMenu extends Menu {
     app: App;
@@ -124,7 +124,7 @@ export class PaletteMenu extends Menu {
                 .setIcon("scissors")
                 .onClick(async () => {
                     // Copy palette to clipboard
-                    await navigator.clipboard.writeText(input);
+                    await copyToClipboard(input, this.palette.pluginSettings.copyFormat);
                     // Remove palette
                     this.onChange(undefined, undefined);
                 })
@@ -136,7 +136,7 @@ export class PaletteMenu extends Menu {
                 .setIcon("copy")
                 .onClick(async () => {
                     // Copy palette to clipboard
-                    await navigator.clipboard.writeText(input);
+                    await copyToClipboard(input, this.palette.pluginSettings.copyFormat);
                 })
         });
     }

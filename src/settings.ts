@@ -13,6 +13,11 @@ export enum AliasMode {
 	Alias = 'Prefer Alias'
 }
 
+export enum CopyFormat {
+	Raw = 'Raw',
+	Value = 'Value'
+}
+
 export interface ColorPaletteSettings {
 	noticeDuration: number;
 	errorPulse: boolean;
@@ -20,6 +25,7 @@ export interface ColorPaletteSettings {
 	corners: boolean;
 	hoverWhileEditing: boolean;
 	reloadDelay: number;
+	copyFormat: CopyFormat;
 	height: number;
 	width: number;
 	direction: Direction,
@@ -35,6 +41,7 @@ export const defaultSettings: ColorPaletteSettings = {
 	corners: true,
 	hoverWhileEditing: false,
 	reloadDelay: 5,
+	copyFormat: CopyFormat.Raw,
 	height: 150,
 	width: 700,
 	direction: Direction.Column,
@@ -63,7 +70,7 @@ export class SettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Palette Error Pulse")
-			.setDesc("Whether the affected palette should pulse when encountering an error")
+			.setDesc("Whether the affected palette should pulse when encountering an error.")
 			.addToggle((toggle) => {
 				toggle
 				.setValue(settings.errorPulse)
@@ -75,7 +82,7 @@ export class SettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Notice Duration")
-			.setDesc("How long palette error messages are show for in seconds (0 for indefinite)")
+			.setDesc("How long palette error messages are show for in seconds (0 for indefinite).")
 			.addText((text) => {
 				text
 				.setValue((settings.noticeDuration / 1000).toString())
@@ -133,25 +140,39 @@ export class SettingsTab extends PluginSettingTab {
 			})
 
 		new Setting(containerEl)
-		.setName("Reload Delay")
-		.setDesc("How long it takes in milliseconds for palettes to be updated after changes have been made (Larger values are less responsive).")
-		.addText((text) => {
-			text
-			.setValue(settings.reloadDelay.toString())
-			.onChange(async (value) => {
-				try {
-					// Check if valid number
-					if(!Number.isNaN(Number(value))) {
-						settings.reloadDelay = Number(value);
-						await this.plugin.saveSettings();
+			.setName("Reload Delay")
+			.setDesc("How long it takes in milliseconds for palettes to be updated after changes have been made (Larger values are less responsive).")
+			.addText((text) => {
+				text
+				.setValue(settings.reloadDelay.toString())
+				.onChange(async (value) => {
+					try {
+						// Check if valid number
+						if(!Number.isNaN(Number(value))) {
+							settings.reloadDelay = Number(value);
+							await this.plugin.saveSettings();
+						}
+						else throw new Error('Please enter a number.');
 					}
-					else throw new Error('Please enter a number.');
-				}
-				catch(e) {
-					new Notice(e);
-				}
+					catch(e) {
+						new Notice(e);
+					}
+				});
 			});
-		});
+
+		new Setting(containerEl)
+			.setName('Copy Format')
+			.setDesc('Choice of format when copying colors.')
+			.addDropdown((dropdown) => {
+				dropdown
+				.addOption(CopyFormat.Raw, CopyFormat.Raw)
+				.addOption(CopyFormat.Value, CopyFormat.Value)
+				.setValue(this.plugin.settings.copyFormat)
+				.onChange(async (value) => {
+					settings.copyFormat = value as CopyFormat;
+					await this.plugin.saveSettings();
+				})
+			})
 
 		containerEl.createEl('h2').setText('Palette Defaults');
 		

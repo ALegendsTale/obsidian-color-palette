@@ -338,7 +338,7 @@ export class EditorModal extends Modal {
             })
         }
 
-        // Set intiial selectedInput
+        // Set initial selectedInput
         changeSelectedInput(this.selectedInput);
 
         let palettePreview = previewContainer.appendChild(createDiv());

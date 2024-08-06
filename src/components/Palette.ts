@@ -186,7 +186,7 @@ export class Palette {
     }
 
     /**
-     * @returns `user` OR `auto` width based on which is more approperiate
+     * @returns `user` OR `auto` width based on which is more appropriate
      */
     public getPaletteWidth(resizeOffset = 0) {
         const paletteOffset = resizeOffset !== 0 ? resizeOffset : this.dropzone.offsetWidth;
@@ -236,7 +236,7 @@ export class Palette {
             this.settings.gradient ?
             this.createGradientPalette(this.dropzone, colors)
             :
-            this.createColorPalette(this.dropzone, colors, settings, this.pluginSettings.aliasMode);
+            this.createColorPalette(this.dropzone, colors, settings);
 
             // Set width of palettes
             this.setWidth(this.getPaletteWidth());
@@ -251,14 +251,14 @@ export class Palette {
         if(colors.length <= 1) throw new PaletteError(Status.INVALID_GRADIENT);
 
         this.paletteCanvas = new Canvas(container);
-        this.paletteCanvas.emitter.on('click', (hex) => copyToClipboard(hex));
+        this.paletteCanvas.emitter.on('click', async (color) => await copyToClipboard(color.toUpperCase(), this.pluginSettings.copyFormat));
     }
 
-    private createColorPalette(container: HTMLElement, colors: string[], settings: PaletteSettings, aliasMode: AliasMode){
+    private createColorPalette(container: HTMLElement, colors: string[], settings: PaletteSettings){
         for(const [i, color] of colors.entries()){
             const paletteItem = new PaletteItem(container, color, 
                 { 
-                    aliasMode: aliasMode, 
+                    aliasMode: this.pluginSettings.aliasMode, 
                     editMode: this.editMode, 
                     hoverWhileEditing: this.pluginSettings.hoverWhileEditing, 
                     height: settings.height, 
@@ -269,10 +269,7 @@ export class Palette {
                 }
             );
             
-            paletteItem.emitter.on('click', (e: MouseEvent) => {
-                this.createNotice(`Copied ${color}`);
-                navigator.clipboard.writeText(color);
-            })
+            paletteItem.emitter.on('click', async (e: MouseEvent) => await copyToClipboard(color.toUpperCase(), this.pluginSettings.copyFormat));
 
             paletteItem.emitter.on('trash', (e: MouseEvent) => {
                 e.stopPropagation();

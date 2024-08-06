@@ -61,7 +61,7 @@ export default class CanvasImage extends Canvas {
      */
     public async getPalette(numColors = 7, quality = 10) {
         /*
-        Quanitze has an issue with number of colors which has been addressed here https://github.com/olivierlesnicki/quantize/issues/9
+        Quantize has an issue with number of colors which has been addressed here https://github.com/olivierlesnicki/quantize/issues/9
         `nColors` is a simple fix for this.
         */
         const nColors = numColors <= 7 ? numColors : numColors + 1;

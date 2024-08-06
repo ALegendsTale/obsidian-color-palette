@@ -130,7 +130,7 @@ export class PaletteMRC extends MarkdownRenderChild {
      * Calculates colors and settings based on codeblock contents
      */
     private calcColorsAndSettings(input: string) {
-        // Splits input by newline creaitng an array
+        // Splits input by newline creating an array
         const split = input.split('\n')
         // Returns true if palette settings are defined
         const hasSettings = split.some((val) => val.includes(('{')));

@@ -108,7 +108,6 @@ rgba(var(--color-green-rgb), .5)
 ```
 </pre>
 
-
 ## Aliases
 
 Aliases are names which accompany colors.

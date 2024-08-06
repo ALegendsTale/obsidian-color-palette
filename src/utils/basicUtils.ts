@@ -1,7 +1,7 @@
 import colorsea from "colorsea";
 import { PaletteSettings } from "components/Palette";
 import { Notice } from "obsidian";
-import { ColorPaletteSettings, defaultSettings } from "settings";
+import { ColorPaletteSettings, CopyFormat, defaultSettings } from "settings";
 
 /**
  * Get settings without their default values
@@ -124,7 +124,14 @@ export function toNString(array: string[]) {
     return result.trim();
 }
 
-export function copyToClipboard(text: string) {
-    new Notice(`Copied ${text.toUpperCase()}`);
-    navigator.clipboard.writeText(text.toUpperCase());
+export async function copyToClipboard(text: string, copyFormat?: CopyFormat) {
+    let copiedText = text;
+
+    // Copy only color value if CopyFormat is set to value & when not a codeblock
+    if(copyFormat === CopyFormat.Value && !text.includes('`')) {
+        if(copiedText.includes('#')) copiedText = copiedText.split('#')[1];
+        else if(copiedText.includes('(')) copiedText = copiedText.split('(')[1].split(')')[0];
+    }
+    new Notice(`Copied ${copiedText}`);
+    await navigator.clipboard.writeText(copiedText);
 }
