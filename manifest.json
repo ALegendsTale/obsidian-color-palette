@@ -6,5 +6,9 @@
 	"description": "Create and insert color palettes into your notes.",
 	"author": "ALegendsTale",
 	"authorUrl": "https://github.com/ALegendsTale",
+	"fundingUrl": {
+		"GitHub Sponsor": "https://github.com/sponsors/ALegendsTale",
+		"PayPal": "https://www.paypal.com/donate/?hosted_button_id=BHHFMGX822K4S"
+	},
 	"isDesktopOnly": false
 }

@@ -300,3 +300,15 @@ Canvas
 .palette-editor > section > .palette-preview {
     
 }
+
+.color-palette-settings {
+    & > h2 {
+        font-size: 20px;
+    }
+}
+
+.color-palette-donate {
+    height: 100%;
+    padding: 0;
+    margin: 2%;
+}

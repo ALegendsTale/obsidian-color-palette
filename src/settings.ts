@@ -68,38 +68,8 @@ export class SettingsTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		new Setting(containerEl)
-			.setName("Palette Error Pulse")
-			.setDesc("Whether the affected palette should pulse when encountering an error.")
-			.addToggle((toggle) => {
-				toggle
-				.setValue(settings.errorPulse)
-				.onChange(async (value) => {
-					settings.errorPulse = value;
-					await this.plugin.saveSettings();
-				})
-			})
-
-		new Setting(containerEl)
-			.setName("Notice Duration")
-			.setDesc("How long palette error messages are show for in seconds (0 for indefinite).")
-			.addText((text) => {
-				text
-				.setValue((settings.noticeDuration / 1000).toString())
-				.onChange(async (value) => {
-					try {
-                        // Check if valid number
-                        if(!Number.isNaN(Number(value))) {
-							settings.noticeDuration = Number(value) * 1000;
-							await this.plugin.saveSettings();
-                        }
-                        else throw new Error('Please enter a number.');
-                    }
-                    catch(e) {
-                        new Notice(e);
-                    }
-				});
-			});
+		containerEl.createEl('h2').setText('General');
+		containerEl.addClass('color-palette-settings');
 
 		new Setting(containerEl)
 			.setName('Alias Mode')
@@ -174,7 +144,7 @@ export class SettingsTab extends PluginSettingTab {
 				})
 			})
 
-		containerEl.createEl('h2').setText('Palette Defaults');
+		containerEl.createEl('h2').setText('Defaults');
 		
 		new Setting(containerEl)
 			.setName('Height')
@@ -263,6 +233,61 @@ export class SettingsTab extends PluginSettingTab {
 					settings.override = value;
 					await this.plugin.saveSettings();
 				})
+			})
+
+		containerEl.createEl('h2').setText('Other');
+
+		new Setting(containerEl)
+			.setName("Palette Error Pulse")
+			.setDesc("Whether the affected palette should pulse when encountering an error.")
+			.addToggle((toggle) => {
+				toggle
+				.setValue(settings.errorPulse)
+				.onChange(async (value) => {
+					settings.errorPulse = value;
+					await this.plugin.saveSettings();
+				})
+			})
+
+		new Setting(containerEl)
+			.setName("Notice Duration")
+			.setDesc("How long palette error messages are show for in seconds (0 for indefinite).")
+			.addText((text) => {
+				text
+				.setValue((settings.noticeDuration / 1000).toString())
+				.onChange(async (value) => {
+					try {
+                        // Check if valid number
+                        if(!Number.isNaN(Number(value))) {
+							settings.noticeDuration = Number(value) * 1000;
+							await this.plugin.saveSettings();
+                        }
+                        else throw new Error('Please enter a number.');
+                    }
+                    catch(e) {
+                        new Notice(e);
+                    }
+				});
+			});
+
+		new Setting(containerEl)
+			.setName('Donate')
+			.setDesc('If you like this plugin, consider donating to support continued development.')
+			.addButton((button) => {
+				button
+				.onClick(() => open('https://github.com/sponsors/ALegendsTale'))
+				.setClass('color-palette-donate')
+				
+				const image = button.buttonEl.appendChild(createEl('img'));
+				image.src = 'https://img.shields.io/badge/Sponsor-%E2%9D%A4-%23EA4AAA?style=flat&logo=Github';
+			})
+			.addButton((button) => {
+				button
+				.onClick(() => open('https://www.paypal.com/donate/?hosted_button_id=BHHFMGX822K4S'))
+				.setClass('color-palette-donate')
+				
+				const image = button.buttonEl.appendChild(createEl('img'));
+				image.src = 'https://img.shields.io/badge/Paypal-%23003087?style=flat&logo=Paypal';
 			})
 	}
 
