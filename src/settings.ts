@@ -23,7 +23,7 @@ export interface ColorPaletteSettings {
 	errorPulse: boolean;
 	aliasMode: AliasMode;
 	corners: boolean;
-	hoverWhileEditing: boolean;
+	stabilityWhileEditing: boolean;
 	reloadDelay: number;
 	copyFormat: CopyFormat;
 	height: number;
@@ -31,6 +31,7 @@ export interface ColorPaletteSettings {
 	direction: Direction,
 	gradient: boolean,
 	hover: boolean,
+	hideText: boolean,
 	override: boolean
 }
 
@@ -39,7 +40,7 @@ export const defaultSettings: ColorPaletteSettings = {
 	errorPulse: true,
 	aliasMode: AliasMode.Both,
 	corners: true,
-	hoverWhileEditing: false,
+	stabilityWhileEditing: true,
 	reloadDelay: 5,
 	copyFormat: CopyFormat.Raw,
 	height: 150,
@@ -47,6 +48,7 @@ export const defaultSettings: ColorPaletteSettings = {
 	direction: Direction.Column,
 	gradient: false,
 	hover: true,
+	hideText: false,
 	override: false
 };
 
@@ -73,7 +75,7 @@ export class SettingsTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Alias Mode')
-			.setDesc('What will be shown when aliases option is set in local palette options. Defaults to showing both hex and alias.')
+			.setDesc('What will be shown when aliases option is set in local palette options. Defaults to showing both color and alias.')
 			.addDropdown((dropdown) => {
 				dropdown
 				.addOption(AliasMode.Both, AliasMode.Both)
@@ -98,13 +100,13 @@ export class SettingsTab extends PluginSettingTab {
 			})
 
 		new Setting(containerEl)
-			.setName("Hover while editing")
-			.setDesc("Whether hover mode is active while editing.")
+			.setName("Stability While Editing")
+			.setDesc("Keeps the palette from moving while in edit mode.")
 			.addToggle((toggle) => {
 				toggle
-				.setValue(settings.hoverWhileEditing)
+				.setValue(settings.stabilityWhileEditing)
 				.onChange(async (value) => {
-					settings.hoverWhileEditing = value;
+					settings.stabilityWhileEditing = value;
 					await this.plugin.saveSettings();
 				})
 			})
@@ -219,6 +221,18 @@ export class SettingsTab extends PluginSettingTab {
 				.setValue(settings.hover)
 				.onChange(async (value) => {
 					settings.hover = value;
+					await this.plugin.saveSettings();
+				})
+			})
+
+		new Setting(containerEl)
+			.setName("Hide Text")
+			.setDesc("Disables color and alias visibility")
+			.addToggle((toggle) => {
+				toggle
+				.setValue(settings.hideText)
+				.onChange(async (value) => {
+					settings.hideText = value;
 					await this.plugin.saveSettings();
 				})
 			})

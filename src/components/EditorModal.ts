@@ -442,6 +442,18 @@ export class EditorModal extends Modal {
                 })
             })
 
+			new Setting(settingsContainer)
+				.setName("Hide Text")
+				.setDesc("Disables color and alias visibility")
+				.addToggle((toggle) => {
+						toggle
+						.setValue(this.settings.hideText)
+						.onChange(async (value) => {
+							this.settings.hideText = value;
+							updatePalettePreview();
+						})
+				})
+
         new Setting(settingsContainer)
             .setName("Override")
             .setDesc("Disables color validation for full control (advanced)")

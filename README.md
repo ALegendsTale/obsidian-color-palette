@@ -56,6 +56,7 @@ Optional settings can be applied to each palette within the codeblock.
 - direction (row/column)
 - gradient (true/false)
 - hover (true/false)
+- hideText (true/false)
 - override (true/false)
 - aliases (string array)
 

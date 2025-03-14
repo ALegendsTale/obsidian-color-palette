@@ -71,12 +71,25 @@ The gradient setting toggles whether palette colors will appear as a gradient.
 
 Hover controls whether palettes have any effect when hovered over with the mouse cursor.
 It also controls this on mobile when touching palettes.
+When disabled, color / alias text will show by default unless Hide Text is enabled.
 
 <pre>
 ```palette
 #8ec178
 #25136d
 { "hover": false }
+```
+</pre>
+
+## Hide Text
+
+Hide Text toggles whether palettes display color / alias text.
+
+<pre>
+```palette
+#8ec178
+#25136d
+{ "hideText": true }
 ```
 </pre>
 

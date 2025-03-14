@@ -108,19 +108,31 @@ Canvas
     flex-basis: 80px;
 }
 
-.palette.palette-hover > div:hover > span {
-    display: block;
-}
-
 /* Palette Item Text */
 
 .palette > div > span {
-    display: none;
+    display: block;
     text-align: center;
     font-size: 100%;
     font-weight: bold;
     color: var(--palette-color);
     user-select: none;
+}
+
+.palette.palette-hover > div > span {
+	display: none;
+}
+
+.palette.palette-hover > div:hover > span {
+	display: block;
+}
+
+.palette.palette-hide-text > div > span {
+	display: none;
+}
+
+.palette.palette-hide-text > div:hover > span {
+	display: none;
 }
 
 /* Edit Mode */
@@ -138,6 +150,14 @@ Canvas
     align-items: center;
     margin: 16px 0;
     gap: 16px;
+}
+
+.palette.palette-hide-text > div > .edit-container {
+	display: none;
+}
+
+.palette.palette-hide-text > div:hover > .edit-container {
+	display: flex;
 }
 
 .palette > div > .edit-container > span {
@@ -177,7 +197,7 @@ Canvas
     height: var(--palette-height);
     width: var(--palette-width);
     background-color: #000000C0;
-    border-radius: var(--palette-corners);;
+    border-radius: var(--palette-corners);
 }
 
 .palette > .invalid > span {

@@ -6,10 +6,11 @@ import { EventEmitter } from "utils/EventEmitter";
 
 type PaletteItemSettings = {
     aliasMode: AliasMode,
-    hoverWhileEditing: boolean,
+    stabilityWhileEditing: boolean,
     height: number,
     direction: Direction,
     hover: boolean,
+	 hideText: boolean,
     alias: string,
     editMode: boolean,
     colorCount: number,

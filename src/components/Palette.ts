@@ -12,6 +12,7 @@ export type PaletteSettings = {
     direction: Direction
     gradient: boolean
     hover: boolean
+	 hideText: boolean
     override: boolean
     aliases: string[]
 }
@@ -114,7 +115,8 @@ export class Palette {
 
         // Adds Drag & Drop to palettes in edit mode which are not gradients
         if(this.editMode && !this.settings.gradient){
-            this.dropzone.toggleClass('palette-hover', this.pluginSettings.hoverWhileEditing ? this.settings.hover : false);
+				this.dropzone.toggleClass('palette-hover', !this.pluginSettings.stabilityWhileEditing);
+				this.dropzone.toggleClass('palette-hide-text', !this.pluginSettings.stabilityWhileEditing);
 
             this.dragDrop = new DragDrop([this.dropzone], Array.from(this.dropzone.children), (e, res) => {
                 // Sort palette items according to drop order
@@ -229,6 +231,7 @@ export class Palette {
         this.dropzone.style.setProperty('--not-palette-direction', settings.direction);
         this.dropzone.style.setProperty('--palette-height', `${settings.height}px`);
         this.dropzone.toggleClass('palette-hover', settings.hover);
+		  this.dropzone.toggleClass('palette-hide-text', settings.hideText);
 
         try{
             // Throw error & create Invalid Palette
@@ -260,10 +263,11 @@ export class Palette {
                 { 
                     aliasMode: this.pluginSettings.aliasMode, 
                     editMode: this.editMode, 
-                    hoverWhileEditing: this.pluginSettings.hoverWhileEditing, 
+                    stabilityWhileEditing: this.pluginSettings.stabilityWhileEditing, 
                     height: settings.height, 
                     direction: settings.direction,
                     hover: settings.hover, 
+						  hideText: settings.hideText,
                     alias: settings.aliases?.[i] || '',
                     colorCount: colors.length,
                 }

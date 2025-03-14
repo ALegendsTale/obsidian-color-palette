@@ -60,6 +60,7 @@ export function convertStringSettings(settings: PaletteSettings) {
         "direction": "${settings.direction}", 
         "gradient": ${settings.gradient}, 
         "hover": ${settings.hover}, 
+		  "hideText": ${settings.hideText},
         "override": ${settings.override}, 
         "aliases": ${JSON.stringify(settings.aliases)}
         }`
@@ -91,6 +92,7 @@ export function pluginToPaletteSettings(pluginSettings: ColorPaletteSettings): P
         direction: pluginSettings.direction, 
         gradient: pluginSettings.gradient, 
         hover: pluginSettings.hover, 
+		  hideText: pluginSettings.hideText,
         override: pluginSettings.override, 
         aliases: [] 
     };

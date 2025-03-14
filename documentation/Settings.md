@@ -31,11 +31,11 @@ Dropdown which has `Both` and `Prefer Alias` options.
 
 Purely aesthetic change which toggles whether the corners on palettes are rounded.
 
-### Hover while editing
+### Stability While Editing
 
-> Default: False
+> Default: True
 
-Toggles whether hover is active while editing.
+Keeps the palette from moving while in edit mode.
 
 ### Reload Delay
 
@@ -76,6 +76,10 @@ The default values of [Palette Settings](./PaletteSettings.md) if the user does 
 ### Hover
 
 > Default: True
+
+### Hide Text
+
+> Default: False
 
 ### Override
 
