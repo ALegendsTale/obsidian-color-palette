@@ -1,56 +1,7 @@
+import { PaletteSettings, AliasMode, CopyFormat, Direction } from "@alegendstale/holly-components/color-palette/utils";
+import { pluginToPaletteSettings } from "@alegendstale/holly-components/utils";
 import ColorPalette from "main";
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
-import { PaletteSettings } from "components/Palette";
-import { pluginToPaletteSettings } from "utils/basicUtils";
-
-export enum Direction {
-    Row = 'row',
-    Column = 'column'
-}
-
-export enum AliasMode {
-	Both = 'Both',
-	Alias = 'Prefer Alias'
-}
-
-export enum CopyFormat {
-	Raw = 'Raw',
-	Value = 'Value'
-}
-
-export interface ColorPaletteSettings {
-	noticeDuration: number;
-	errorPulse: boolean;
-	aliasMode: AliasMode;
-	corners: boolean;
-	stabilityWhileEditing: boolean;
-	reloadDelay: number;
-	copyFormat: CopyFormat;
-	height: number;
-	width: number;
-	direction: Direction,
-	gradient: boolean,
-	hover: boolean,
-	hideText: boolean,
-	override: boolean
-}
-
-export const defaultSettings: ColorPaletteSettings = {
-	noticeDuration: 10000,
-	errorPulse: true,
-	aliasMode: AliasMode.Both,
-	corners: true,
-	stabilityWhileEditing: true,
-	reloadDelay: 5,
-	copyFormat: CopyFormat.Raw,
-	height: 150,
-	width: 700,
-	direction: Direction.Column,
-	gradient: false,
-	hover: true,
-	hideText: false,
-	override: false
-};
 
 export class SettingsTab extends PluginSettingTab {
 	plugin: ColorPalette;
@@ -100,13 +51,13 @@ export class SettingsTab extends PluginSettingTab {
 			})
 
 		new Setting(containerEl)
-			.setName("Stability While Editing")
+			.setName("Stabilize While Editing")
 			.setDesc("Keeps the palette from moving while in edit mode.")
 			.addToggle((toggle) => {
 				toggle
-				.setValue(settings.stabilityWhileEditing)
+				.setValue(settings.stabilizeWhileEditing)
 				.onChange(async (value) => {
-					settings.stabilityWhileEditing = value;
+					settings.stabilizeWhileEditing = value;
 					await this.plugin.saveSettings();
 				})
 			})
@@ -214,13 +165,13 @@ export class SettingsTab extends PluginSettingTab {
 			})
 
 		new Setting(containerEl)
-			.setName("Hover")
+			.setName("Prevent Hover")
 			.setDesc("Toggles whether palettes can be hovered")
 			.addToggle((toggle) => {
 				toggle
-				.setValue(settings.hover)
+				.setValue(settings.preventHover)
 				.onChange(async (value) => {
-					settings.hover = value;
+					settings.preventHover = value;
 					await this.plugin.saveSettings();
 				})
 			})

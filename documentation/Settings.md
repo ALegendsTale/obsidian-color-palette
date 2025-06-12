@@ -31,7 +31,7 @@ Dropdown which has `Both` and `Prefer Alias` options.
 
 Purely aesthetic change which toggles whether the corners on palettes are rounded.
 
-### Stability While Editing
+### Stabilize While Editing
 
 > Default: True
 

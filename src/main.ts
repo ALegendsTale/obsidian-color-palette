@@ -1,13 +1,14 @@
 import { Editor, MarkdownPostProcessorContext, Notice, Plugin } from 'obsidian'
 import { EditorModal } from 'components/EditorModal';
 import { GenerateModal } from 'components/GenerateModal';
-import { ColorPaletteSettings, defaultSettings, SettingsTab } from 'settings';
+import { SettingsTab } from 'settings';
+import { ColorPaletteSettings, defaultSettings } from '@alegendstale/holly-components/color-palette/utils';
 import { PaletteMRC } from 'components/PaletteMRC';
-import { createPaletteBlock } from 'utils/basicUtils';
+import { createPaletteBlock } from '@alegendstale/holly-components/utils';
 
 export const urlRegex = /(?:https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(?:\.[a-zA-Z0-9]{2,})(?:\.[a-zA-Z0-9]{2,})?\/(?:palette\/)?([a-zA-Z0-9-]{2,})/
 
-export default class ColorPalette extends Plugin {
+export default class ColorPalettePlugin extends Plugin {
 	settings: ColorPaletteSettings;
 	palettes?: PaletteMRC[];
 

@@ -12,7 +12,9 @@
 	"author": "ALegendsTale",
 	"license": "GNU GPLv3",
 	"dependencies": {
+		"@alegendstale/holly-components": "^0.2.39",
 		"colorsea": "^1.2.2",
+		"lit": "^3.3.0",
 		"quantize": "^1.0.2",
 		"validate-color": "^2.2.4"
 	},
