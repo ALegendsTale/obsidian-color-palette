@@ -1,11 +1,11 @@
 import { App, ButtonComponent, ColorComponent, DropdownComponent, Modal, Notice, Setting, SliderComponent, TextComponent } from "obsidian";
 import { Palette, PaletteSettings } from "./Palette";
-import { urlRegex } from "main";
+import { urlRegex } from "src/main";
 import colorsea from "colorsea";
 import { Direction, ColorPaletteSettings } from "settings";
-import { Combination, generateColors } from "utils/generateUtils";
-import { getModifiedSettings, parseUrl, pluginToPaletteSettings } from "utils/basicUtils";
-import CanvasImage from "utils/imageUtils";
+import { Combination, generateColors } from "src/utils/generateUtils";
+import { getModifiedSettings, parseUrl, pluginToPaletteSettings } from "src/utils/basicUtils";
+import CanvasImage from "src/utils/imageUtils";
 
 enum SelectedInput {
     Color_Picker = "Color Picker",

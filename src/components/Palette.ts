@@ -1,10 +1,10 @@
 import { Notice } from "obsidian";
 import { Direction, AliasMode, ColorPaletteSettings, defaultSettings } from "settings";
-import { copyToClipboard, pluginToPaletteSettings } from "utils/basicUtils";
-import { PaletteItem } from "./PaletteItem";
-import { DragDrop } from "utils/dragDropUtils";
-import { Canvas } from "utils/canvasUtils";
-import { EventEmitter } from "utils/EventEmitter";
+import { copyToClipboard, pluginToPaletteSettings } from "src/utils/basicUtils";
+import { PaletteItem, PaletteItemSettings } from "./PaletteItem";
+import { DragDrop } from "src/utils/dragDropUtils";
+import { Canvas } from "src/utils/canvasUtils";
+import { EventEmitter } from "src/utils/EventEmitter";
 
 export type PaletteSettings = {
     height: number
@@ -12,7 +12,7 @@ export type PaletteSettings = {
     direction: Direction
     gradient: boolean
     hover: boolean
-	 hideText: boolean
+    hideText: boolean
     override: boolean
     aliases: string[]
 }
@@ -34,7 +34,7 @@ type EventMap = {
 export class Palette {
     containerEl: HTMLElement;
     pluginSettings: ColorPaletteSettings;
-	colors: string[];
+    colors: string[];
     settings: PaletteSettings;
     status: Status
     showNotice: boolean
@@ -45,7 +45,7 @@ export class Palette {
     paletteCanvas: Canvas | undefined;
     public emitter: EventEmitter<EventMap>;
 
-	constructor(colors: string[] | Status, settings: PaletteSettings | Status | undefined, containerEl: HTMLElement, pluginSettings: ColorPaletteSettings, editMode = false) {
+    constructor(colors: string[] | Status, settings: PaletteSettings | Status | undefined, containerEl: HTMLElement, pluginSettings: ColorPaletteSettings, editMode = false) {
         this.containerEl = containerEl;
         this.containerEl.addClass('palette-container');
         this.pluginSettings = pluginSettings;
@@ -75,33 +75,33 @@ export class Palette {
 
         // Resized event after user has stopped dragging
         this.emitter.on('resized', (palette) => this.onResized(palette));
-	}
+    }
 
     /**
      * Sets the initial defaults
      */
     public setDefaults(colors: string[] | Status, settings: PaletteSettings | Status | undefined) {
         // Settings are invalid
-        if(typeof settings === 'string') {
+        if (typeof settings === 'string') {
             this.settings = pluginToPaletteSettings(this.pluginSettings);
             this.status = Status.INVALID_SETTINGS;
         }
         // Settings are valid
-        if(typeof settings === 'object') {
-            this.settings = {...pluginToPaletteSettings(this.pluginSettings), ...settings};
+        if (typeof settings === 'object') {
+            this.settings = { ...pluginToPaletteSettings(this.pluginSettings), ...settings };
         }
         // Settings were not set by user
-        if(typeof settings === 'undefined') {
+        if (typeof settings === 'undefined') {
             this.settings = pluginToPaletteSettings(this.pluginSettings);
         }
         // Colors are invalid
-        if(typeof colors === 'string') {
+        if (typeof colors === 'string') {
             this.colors = [];
             // Set status to Invalid Colors & Settings if colors were also invalid
             this.status = this.status === Status.INVALID_SETTINGS ? Status.INVALID_COLORS_AND_SETTINGS : Status.INVALID_COLORS;
         }
         // Colors are valid
-        if(typeof colors === 'object') {
+        if (typeof colors === 'object') {
             this.colors = colors;
         }
     }
@@ -114,9 +114,9 @@ export class Palette {
         this.createPalette(this.colors, this.settings);
 
         // Adds Drag & Drop to palettes in edit mode which are not gradients
-        if(this.editMode && !this.settings.gradient){
-				this.dropzone.toggleClass('palette-hover', !this.pluginSettings.stabilityWhileEditing);
-				this.dropzone.toggleClass('palette-hide-text', !this.pluginSettings.stabilityWhileEditing);
+        if (this.editMode && !this.settings.gradient) {
+            this.dropzone.toggleClass('palette-hover', !this.pluginSettings.stabilityWhileEditing);
+            this.dropzone.toggleClass('palette-hide-text', !this.pluginSettings.stabilityWhileEditing);
 
             this.dragDrop = new DragDrop([this.dropzone], Array.from(this.dropzone.children), (e, res) => {
                 // Sort palette items according to drop order
@@ -132,12 +132,12 @@ export class Palette {
 
         // Add edit-mode class if set on load
         this.dropzone.toggleClass('edit-mode', this.editMode);
-	}
+    }
 
     /**
      * Unloads the palette
      */
-    public unload(){
+    public unload() {
         // Remove listeners
         this.emitter.clear();
         // Remove paletteItem listeners
@@ -152,10 +152,10 @@ export class Palette {
      * Reloads the palette contents
      * @param resize Whether the palette is reloading because of a resize (defaults to false)
      */
-    public reload(resize: { height: number, width: number } = {height: 0, width: 0}){
+    public reload(resize: { height: number, width: number } = { height: 0, width: 0 }) {
         // Check if palette size is zero
         const isZero = resize.height === 0 && resize.width === 0;
-        if(!isZero) {
+        if (!isZero) {
             // Set width if size is not zero
             this.setWidth(this.getPaletteWidth(resize.width));
             return;
@@ -169,11 +169,11 @@ export class Palette {
     }
 
     private onResized(palette: ResizeObserverEntry) {
-        const size = {height: palette.contentRect.height, width: palette.contentRect.width};
+        const size = { height: palette.contentRect.height, width: palette.contentRect.width };
         // Check if palette size is zero
         const isZero = size.height === 0 && size.width === 0;
         // Resize if size is not zero
-        if (!isZero) this.reload({height: size.height, width: size.width});
+        if (!isZero) this.reload({ height: size.height, width: size.width });
     }
 
     /**
@@ -181,7 +181,7 @@ export class Palette {
      */
     public setWidth(width: number) {
         // Create new gradient if canvas
-        if(this.settings.gradient && this.paletteCanvas) this.paletteCanvas.createGradient(this.colors, width, this.settings.height, this.settings.direction);
+        if (this.settings.gradient && this.paletteCanvas) this.paletteCanvas.createGradient(this.colors, width, this.settings.height, this.settings.direction);
         // Set palette width
         this.dropzone.style.setProperty('--palette-width', `${width}px`);
         this.containerEl.toggleClass('palette-scroll', width > defaultSettings.width);
@@ -193,9 +193,9 @@ export class Palette {
     public getPaletteWidth(resizeOffset = 0) {
         const paletteOffset = resizeOffset !== 0 ? resizeOffset : this.dropzone.offsetWidth;
         // Set user-set width if it is greater than the default width
-        if(this.settings.width > defaultSettings.width) return this.settings.width;
+        if (this.settings.width > defaultSettings.width) return this.settings.width;
         // Automatically set width if offset is less than settings width
-        if(paletteOffset < this.settings.width && paletteOffset > 0) return paletteOffset;
+        if (paletteOffset < this.settings.width && paletteOffset > 0) return paletteOffset;
         // Set user-set width
         else return this.settings.width;
     }
@@ -205,7 +205,9 @@ export class Palette {
      * @param message Message to display
      */
     public createNotice(message: string) {
-        this.showNotice && new Notice(message, this.pluginSettings.noticeDuration);
+        if (this.showNotice && typeof Notice === 'function') {
+    new Notice(message, this.pluginSettings.noticeDuration);
+}
     }
 
     public setEditMode(editMode: boolean) {
@@ -216,13 +218,13 @@ export class Palette {
     public getEditMode(): boolean {
         return this.editMode;
     }
-    
+
     /**
      * Create new palette contents based on colors & settings
      * @param colors 
      * @param settings 
      */
-    private createPalette(colors: string[], settings: PaletteSettings){
+    private createPalette(colors: string[], settings: PaletteSettings) {
         this.dropzone = this.containerEl.createEl('div');
         this.dropzone.addClass('palette')
         // Set default corner style
@@ -231,50 +233,57 @@ export class Palette {
         this.dropzone.style.setProperty('--not-palette-direction', settings.direction);
         this.dropzone.style.setProperty('--palette-height', `${settings.height}px`);
         this.dropzone.toggleClass('palette-hover', settings.hover);
-		  this.dropzone.toggleClass('palette-hide-text', settings.hideText);
+        this.dropzone.toggleClass('palette-hide-text', settings.hideText);
 
-        try{
+        try {
             // Throw error & create Invalid Palette
-            if(this.status !== Status.VALID) throw new PaletteError(this.status);
+            if (this.status !== Status.VALID) throw new PaletteError(this.status);
             this.settings.gradient ?
-            this.createGradientPalette(this.dropzone, colors)
-            :
-            this.createColorPalette(this.dropzone, colors, settings);
+                this.createGradientPalette(this.dropzone, colors)
+                :
+                this.createColorPalette(this.dropzone, colors, settings);
 
             // Set width of palettes
             this.setWidth(this.getPaletteWidth());
         }
-        catch(err){
-            if(err instanceof PaletteError) this.createInvalidPalette(err.status, err.message);
-            else this.createNotice(err);
+        catch (e) {
+            let message: string = 'An unknown error occurred';
+            if (e instanceof Error) {
+                // Use e.message for a specific error description
+                message = e.message; 
+                if (e instanceof PaletteError) this.createInvalidPalette(e.status, e.message);
+                else this.createNotice(e.message); // Pass the message string directly
+            } else {
+                 // Fallback for non-Error objects caught
+                 this.createNotice('An unknown error occurred during palette creation.');
+            }
         }
     }
 
-    private createGradientPalette(container: HTMLElement, colors: string[]){
-        if(colors.length <= 1) throw new PaletteError(Status.INVALID_GRADIENT);
+    private createGradientPalette(container: HTMLElement, colors: string[]) {
+        if (colors.length <= 1) throw new PaletteError(Status.INVALID_GRADIENT);
 
         this.paletteCanvas = new Canvas(container);
         this.paletteCanvas.emitter.on('click', async (color) => await copyToClipboard(color.toUpperCase(), this.pluginSettings.copyFormat));
     }
 
-    private createColorPalette(container: HTMLElement, colors: string[], settings: PaletteSettings){
-        for(const [i, color] of colors.entries()){
-            const paletteItem = new PaletteItem(container, color, 
-                { 
-                    aliasMode: this.pluginSettings.aliasMode, 
-                    editMode: this.editMode, 
-                    stabilityWhileEditing: this.pluginSettings.stabilityWhileEditing, 
-                    height: settings.height, 
-                    direction: settings.direction,
-                    hover: settings.hover, 
-						  hideText: settings.hideText,
-                    alias: settings.aliases?.[i] || '',
-                    colorCount: colors.length,
-                }
-            );
-            
-            paletteItem.emitter.on('click', async (e: MouseEvent) => await copyToClipboard(color.toUpperCase(), this.pluginSettings.copyFormat));
+    private createColorPalette(container: HTMLElement, colors: string[], settings: PaletteSettings) {
+        for (const [i, color] of colors.entries()) {
+            const paletteItemSettings: PaletteItemSettings = {
+                aliasMode: this.pluginSettings.aliasMode,
+                editMode: this.editMode,
+                stabilityWhileEditing: this.pluginSettings.stabilityWhileEditing,
+                height: settings.height,
+                direction: settings.direction,
+                hover: settings.hover,
+                hideText: settings.hideText,
+                alias: settings.aliases?.[i] || '',
+                colorCount: colors.length,
+            };
 
+            const paletteItem = new PaletteItem(container, color, paletteItemSettings);
+
+            paletteItem.emitter.on('click', async (e: MouseEvent) => await copyToClipboard(color.toUpperCase(), this.pluginSettings.copyFormat));
             paletteItem.emitter.on('trash', (e: MouseEvent) => {
                 e.stopPropagation();
                 const deletedIndex = this.colors.indexOf(color);
@@ -286,12 +295,12 @@ export class Palette {
                 this.reload();
             })
 
-            paletteItem.emitter.on('alias', (alias) => {
+            paletteItem.emitter.on('alias', (alias: string) => {
                 // Get the index of the alias relative to the PaletteItem color
                 const aliasIndex = this.colors.findIndex(val => val === color);
-                for(let i = 0; i < aliasIndex; i++) {
+                for (let i = 0; i < aliasIndex; i++) {
                     // Set empty strings to empty indexes
-                    if(!this.settings.aliases[i]) this.settings.aliases[i] = '';
+                    if (!this.settings.aliases[i]) this.settings.aliases[i] = '';
                 }
                 // Set modified alias index
                 this.settings.aliases[aliasIndex] = alias;
@@ -305,7 +314,7 @@ export class Palette {
      * Create invalid palette based on palette status
      * @param type Palette status type
      */
-    private createInvalidPalette(type: Status, message = ''){
+    private createInvalidPalette(type: Status, message = '') {
         this.status = type;
         this.dropzone.style.setProperty('--palette-height', '150px');
         this.dropzone.style.setProperty('--palette-width', `100%`);
@@ -313,8 +322,9 @@ export class Palette {
         invalidSection.toggleClass('invalid', true);
         const invalidSpan = invalidSection.createEl('span');
 
+        // TODO: improve messaging with error text
         let defaultMessage = 'Invalid palette';
-        switch(type) {
+        switch (type) {
             case Status.INVALID_COLORS:
                 invalidSpan.setText(Status.INVALID_COLORS);
                 defaultMessage = 'Colors are defined incorrectly';
@@ -336,9 +346,9 @@ export class Palette {
                 this.createNotice(`Palette:\n${message ? message : defaultMessage}`);
                 break;
         }
-        
+
         // Pulse the Invalid Palette to show its location
-        if(this.pluginSettings.errorPulse){
+        if (this.pluginSettings.errorPulse) {
             this.dropzone.style.setProperty('--notice-duration', ((this.pluginSettings.noticeDuration / 1000) / 2).toString() + 's')
             this.dropzone.toggleClass('palette-pulse', true);
             setTimeout(() => this.dropzone.toggleClass('palette-pulse', false), this.pluginSettings.noticeDuration);
@@ -349,8 +359,8 @@ export class Palette {
 class PaletteError extends Error {
     status: Status;
     message: string;
-    
-    constructor(status: Status, message = '') {
+
+    constructor(status: Status, message: string = '') {
         super(message);
         this.status = status;
     }

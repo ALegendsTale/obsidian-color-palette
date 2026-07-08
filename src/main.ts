@@ -1,9 +1,9 @@
 import { Editor, MarkdownPostProcessorContext, Notice, Plugin } from 'obsidian'
-import { EditorModal } from 'components/EditorModal';
-import { GenerateModal } from 'components/GenerateModal';
-import { ColorPaletteSettings, defaultSettings, SettingsTab } from 'settings';
-import { PaletteMRC } from 'components/PaletteMRC';
-import { createPaletteBlock } from 'utils/basicUtils';
+import { EditorModal } from './components/EditorModal';
+import { GenerateModal } from './components/GenerateModal';
+import { ColorPaletteSettings, defaultSettings, SettingsTab } from './settings';
+import { PaletteMRC } from './components/PaletteMRC';
+import { createPaletteBlock } from './utils/basicUtils';
 
 export const urlRegex = /(?:https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)?[a-zA-Z0-9]{2,}(?:\.[a-zA-Z0-9]{2,})(?:\.[a-zA-Z0-9]{2,})?\/(?:palette\/)?([a-zA-Z0-9-]{2,})/
 
@@ -43,9 +43,9 @@ export default class ColorPalette extends Plugin {
 							ch: 0
 						})
 						new Notice(`Added ${result}`);
-					} 
-					catch (error) {
-						new Notice(error);
+					} catch (e: unknown) {
+						const errorMessage = e instanceof Error ? e.message : String(e);
+						new Notice(errorMessage);
 					}
 				})
 				.open();
@@ -76,10 +76,10 @@ export default class ColorPalette extends Plugin {
 						ch: 0
 					});
 					new Notice(`Converted ${editorSelection || clipboardText}`);
-				} 
-				catch (error) {
-					new Notice(error);
-				}
+			} catch (e: unknown) {
+				const errorMessage = e instanceof Error ? e.message : String(e);
+				new Notice(errorMessage);
+			}
 			}
 		})
 
@@ -116,7 +116,7 @@ export default class ColorPalette extends Plugin {
 					else {
 						const settings = JSON.parse(content[1]);
 						// Create palette with settings
-						createPaletteBlock({ colors, settings });
+						newBlock = createPaletteBlock({ colors, settings });
 					}
 
 					if(newBlock) {
@@ -124,9 +124,9 @@ export default class ColorPalette extends Plugin {
 						new Notice(`Converted codeblock link to hex`);
 					}
 					else throw new Error('Selected codeblock can not be converted to hex.');
-				} 
-				catch (error) {
-					new Notice(error);
+				} catch (e: unknown) {
+					const errorMessage = e instanceof Error ? e.message : String(e);
+					new Notice(errorMessage);
 				}
 			}
 		})

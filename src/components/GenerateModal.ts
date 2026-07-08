@@ -1,11 +1,11 @@
 import { App, Editor, Notice, SuggestModal } from "obsidian";
 import { PaletteSettings } from "./Palette";
 import { ColorPaletteSettings } from "settings";
-import { Combination, generateColors } from "utils/generateUtils";
+import { Combination, generateColors } from "src/utils/generateUtils";
 import validateColor from "validate-color";
 import colorsea from "colorsea";
-import EditorUtils from "utils/editorUtils";
-import { createPaletteBlock, getModifiedSettings, pluginToPaletteSettings } from "utils/basicUtils";
+import EditorUtils from "src/utils/editorUtils";
+import { createPaletteBlock, getModifiedSettings, pluginToPaletteSettings } from "src/utils/basicUtils";
 
 export class GenerateModal extends SuggestModal<Combination> {
     editor: Editor;

@@ -1,16 +1,16 @@
 import colorsea from "colorsea";
 import { ButtonComponent } from "obsidian";
 import { AliasMode, Direction } from "settings";
-import { getForegroundColor } from "utils/basicUtils";
-import { EventEmitter } from "utils/EventEmitter";
+import { getForegroundColor } from "src/utils/basicUtils";
+import { EventEmitter } from "src/utils/EventEmitter";
 
-type PaletteItemSettings = {
+export type PaletteItemSettings = { //TODO: either remove export or isolate in seperate file
     aliasMode: AliasMode,
     stabilityWhileEditing: boolean,
     height: number,
     direction: Direction,
     hover: boolean,
-	 hideText: boolean,
+    hideText: boolean,
     alias: string,
     editMode: boolean,
     colorCount: number,
@@ -28,7 +28,7 @@ export class PaletteItem {
     settings: PaletteItemSettings;
     public emitter: EventEmitter<EventMap>
 
-    constructor(container: HTMLElement, color: string, settings: PaletteItemSettings){
+    constructor(container: HTMLElement, color: string, settings: PaletteItemSettings) {
         this.container = container.createEl('div');
         this.color = color.trim();
         this.settings = settings;
@@ -39,7 +39,6 @@ export class PaletteItem {
 
     private load() {
         const csColor = colorsea(this.color);
-        
         // set background color
         this.container.style.setProperty('--palette-background-color', this.color);
         // set width
@@ -48,12 +47,12 @@ export class PaletteItem {
 
         const incompatibleSettings = this.settings.direction === Direction.Row;
         // Create if edit mode is active & if there are incompatibleSettings
-        if(this.settings.editMode && !incompatibleSettings) {
+        if (this.settings.editMode && !incompatibleSettings) {
             new EditMode(this.container, this.color, this.settings, (e) => this.emitter.emit('trash', e), (alias) => this.emitter.emit('alias', alias));
         }
         else {
             // Display hex if alias mode is set to both OR if alias is not set
-            if(this.settings.aliasMode === AliasMode.Both || this.settings.alias == null || this.settings.alias.trim() === ''){
+            if (this.settings.aliasMode === AliasMode.Both || this.settings.alias == null || this.settings.alias.trim() === '') {
                 let childText = this.container.createEl('span', { text: this.color.toUpperCase() });
                 childText.style.setProperty('--palette-color', getForegroundColor(csColor));
             }
@@ -126,7 +125,7 @@ class EditMode {
             this.onAlias(this.settings.alias);
         })
         this.span.addEventListener('keypress', (e) => {
-            if(e.key === 'Enter') {
+            if (e.key === 'Enter') {
                 this.setAlias();
                 this.setEditable(false);
             }
@@ -136,22 +135,22 @@ class EditMode {
             this.setAlias();
             this.setEditable(false);
         })
-        
+
         this.storedAlias = this.span.getText();
     }
 
     setAlias() {
         // Reset span text to original if user left it empty
-        if(this.span.getText().trim() === '') this.span.setText(this.storedAlias);
+        if (this.span.getText().trim() === '') this.span.setText(this.storedAlias);
         // Set alias color if user modified text
-        else if(this.span.getText() !== this.color) {
+        else if (this.span.getText() !== this.color) {
             this.settings.alias = this.span.getText();
             this.onAlias(this.settings.alias);
         }
     }
 
     setEditable(editable: boolean) {
-        if(editable === true) {
+        if (editable === true) {
             this.storedAlias = this.span.getText();
             this.span.setText('');
         }

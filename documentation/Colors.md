@@ -58,6 +58,16 @@ https://colorhunt.co/palette/3ec1d3f6f7d7ff9a00ff165d
 ```
 </pre>
 
+### Internal Links
+
+Colors can be pulled via internal links. The color and name must be [properties](https://help.obsidian.md/properties) on the linked file.
+
+<pre>
+```palette
+[[Link]]
+```
+</pre>
+
 ## Delimiters
 
 Colors can be specified when creating palettes in many different ways.

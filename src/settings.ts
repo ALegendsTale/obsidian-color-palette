@@ -1,7 +1,7 @@
-import ColorPalette from "main";
+import type ColorPalette from "src/main";
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
-import { PaletteSettings } from "components/Palette";
-import { pluginToPaletteSettings } from "utils/basicUtils";
+import { PaletteSettings } from "src/components/Palette";
+import { pluginToPaletteSettings } from "src/utils/basicUtils";
 
 export enum Direction {
     Row = 'row',
@@ -32,7 +32,9 @@ export interface ColorPaletteSettings {
 	gradient: boolean,
 	hover: boolean,
 	hideText: boolean,
-	override: boolean
+	override: boolean,
+	propertyKeyAlias: string;
+	propertyKeyColor: string;
 }
 
 export const defaultSettings: ColorPaletteSettings = {
@@ -49,7 +51,9 @@ export const defaultSettings: ColorPaletteSettings = {
 	gradient: false,
 	hover: true,
 	hideText: false,
-	override: false
+	override: false,
+	propertyKeyAlias: "Name",
+	propertyKeyColor: "Color"
 };
 
 export class SettingsTab extends PluginSettingTab {
@@ -60,6 +64,11 @@ export class SettingsTab extends PluginSettingTab {
 	constructor(app: App, plugin: ColorPalette) {
 		super(app, plugin);
 		this.plugin = plugin;
+	}
+
+	isReservedProperty(property: string): boolean{
+		const reservedProperties = ["tags","aliases","cssclasses","publish","permalink","description","image","cover","tag","alias","cssclass"];
+		return reservedProperties.includes(property);
 	}
 
 	display() {
@@ -283,6 +292,48 @@ export class SettingsTab extends PluginSettingTab {
                     }
 				});
 			});
+
+		new Setting(containerEl)
+			// TODO: Convert to taking in a set of names
+			.setName('Property - Aliases')
+			.setDesc('Which property is used as a label. (Case sensitive)')
+			.addText((text) => {
+				text
+				.setValue(settings.propertyKeyAlias.toString())
+				.onChange(async (value) => {
+					try {
+						if(!this.isReservedProperty(value)){
+						settings.propertyKeyAlias = String(value);
+						await this.plugin.saveSettings();
+						}
+                        else throw new Error('\''+value+'\' is reserved. Please use something else.');
+                    }
+                    catch(e) {
+                        new Notice(e);
+                    }
+				})
+			})
+
+		new Setting(containerEl)
+			// TODO: Convert to taking in a set of color key strings
+			.setName('Property - Color')
+			.setDesc('Which property holds the color. (Case sensitive)')
+			.addText((text) => {
+				text
+				.setValue(settings.propertyKeyColor.toString())
+				.onChange(async (value) => {
+					try {
+						if(!this.isReservedProperty(value)){
+						settings.propertyKeyColor = String(value);
+						await this.plugin.saveSettings();
+						}
+                        else throw new Error('\''+value+'\' is reserved. Please use something else.');
+                    }
+                    catch(e) {
+                        new Notice(e);
+                    }
+				})
+			})
 
 		new Setting(containerEl)
 			.setName('Donate')

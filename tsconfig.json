@@ -1,24 +1,36 @@
 {
   "compilerOptions": {
-    "baseUrl": "src",
+    "baseUrl": ".", // TODO: REGRESSION TEST THIS CHANGE FOR TYPESCRIPT 7.0
+    // "baseUrl": ".",
+    "paths": {
+      "src": ["./src/"],
+      "settings": ["./src/settings"],
+      "test": ["./test"],
+      "_mocks_": ["../_mocks_"]
+    },
     "inlineSourceMap": true,
     "inlineSources": true,
-    "module": "ESNext",
+    "module": "nodenext",
     "target": "ES2018",
-    "allowJs": true,
+    "allowJs": true, //change to false
     "noImplicitAny": true,
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "importHelpers": true,
     "isolatedModules": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-	"strictNullChecks": true,
+    "strictNullChecks": true,
     "lib": [
       "DOM",
       "ES5",
       "ES6",
       "ES7"
-    ]
+    ],
+    "types": [
+      "jest",
+      "node"
+    ],
+    "rootDir": "./",
   },
   "include": [
     "**/*.ts"

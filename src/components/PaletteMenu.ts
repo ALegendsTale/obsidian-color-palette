@@ -4,7 +4,7 @@ import colorsea from "colorsea";
 import { App, MarkdownPostProcessorContext, Menu, Notice } from "obsidian";
 import { Palette, PaletteSettings } from "./Palette";
 import { Direction } from "settings";
-import { copyToClipboard, createPaletteBlock, getModifiedSettings } from "utils/basicUtils";
+import { copyToClipboard, createPaletteBlock, getModifiedSettings } from "src/utils/basicUtils";
 
 export class PaletteMenu extends Menu {
     app: App;
